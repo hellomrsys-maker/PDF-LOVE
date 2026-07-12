@@ -9,15 +9,24 @@ rembg==2.0.59
 onnxruntime==1.19.2
 httpx==0.27.2
 slowapi==0.1.9
+pikepdf==9.4.2
+pdf2docx==0.5.8
+python-pptx==1.0.2
+openpyxl==3.1.5
 
 # Notes:
 # - pytesseract is a Python wrapper; the actual Tesseract engine must be
 #   installed on the OS (see Dockerfile: apt-get install tesseract-ocr).
-# - rembg downloads an open-weight ONNX model on first run (free, Apache-2.0
-#   license, no API key). It runs entirely on your server.
-# - httpx is used only to talk to your own local Ollama instance for
-#   summarization — not any paid LLM API.
+# - pikepdf wraps qpdf (C++) — used to merge Tesseract's per-page
+#   searchable-PDF output into one document.
+# - pdf2docx does layout-aware PDF -> Word using PyMuPDF's C core.
+# - rembg downloads an open-weight ONNX model on first run (free,
+#   Apache-2.0 license, no API key). It runs entirely on your server.
+# - httpx is used only to talk to your own local Ollama instance — not
+#   any paid LLM API.
+# - LibreOffice and Ghostscript are OS packages (see Dockerfile), not
+#   pip packages; /capabilities reports whether they are present.
 #
 # Optional upgrade path (still free/open-source, better accuracy):
-#   paddleocr / paddlepaddle   -> swap in for pytesseract on tables/multilingual docs
+#   paddleocr / paddlepaddle  -> swap in for pytesseract on tables/multilingual docs
 #   realesrgan                -> add an /upscale endpoint for image super-resolution

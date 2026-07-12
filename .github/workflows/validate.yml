@@ -49,6 +49,28 @@ jobs:
           console.log(names.length, 'tool names, no duplicates.');
           "
 
+  frontend-vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify all self-hosted libraries are present and non-empty
+        run: |
+          for f in pdf-lib.min.js pdf.min.js pdf.worker.min.js jszip.min.js \
+                   mammoth.browser.min.js jspdf.umd.min.js html2canvas.min.js \
+                   qrcode.min.js jsqr.js jsbarcode.all.min.js qpdf.js qpdf.wasm; do
+            test -s "frontend/vendor/$f" || { echo "MISSING: vendor/$f"; exit 1; }
+          done
+          echo "All 12 vendor assets present."
+      - name: Service worker precache list matches vendor directory
+        run: |
+          node -e "
+          const fs = require('fs');
+          const sw = fs.readFileSync('frontend/sw.js','utf8');
+          const missing = fs.readdirSync('frontend/vendor').filter(f => !sw.includes('./vendor/'+f));
+          if(missing.length){ console.error('Not precached in sw.js:', missing); process.exit(1); }
+          console.log('Every vendor asset is precached for offline use.');
+          "
+
   backend:
     runs-on: ubuntu-latest
     steps:
@@ -57,13 +79,40 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install minimal deps for import check
-        run: pip install fastapi slowapi uvicorn python-multipart
+        run: pip install fastapi slowapi uvicorn python-multipart Pillow
       - name: Python syntax check
-        run: python3 -m py_compile backend/main.py
+        run: python3 -m py_compile backend/main.py backend/native_ops.py
+      - name: Compile the native C image kernel
+        run: |
+          cd backend
+          gcc -O3 -shared -fPIC -Wall -Wextra -Werror -o native/imgproc.so native/imgproc.c
       - name: Import check (catches missing imports/decorator errors)
         run: |
           cd backend
           python3 -c "import main; print('Backend app imports cleanly:', main.app.title)"
+      - name: C kernel end-to-end test (and Pillow fallback agreement)
+        run: |
+          cd backend
+          python3 - <<'PY'
+          import collections
+          import native_ops
+          from PIL import Image, ImageDraw
+          assert native_ops.native_available(), "imgproc.so should load after compile"
+          img = Image.new("RGB", (400, 300), (210, 205, 195))
+          d = ImageDraw.Draw(img)
+          d.text((20, 20), "CI kernel test 0123456789", fill=(60, 55, 50))
+          for name, lib in (("C", native_ops._lib), ("fallback", None)):
+              native_ops._lib = lib
+              out = native_ops.enhance_for_ocr(img)
+              c = collections.Counter(out.tobytes())
+              assert set(c) <= {0, 255}, f"{name}: not binarized"
+              assert c[255] > c[0] > 50, f"{name}: text/background split looks wrong"
+              # inverted scans must be flipped back to dark-on-light
+              inv = Image.eval(img, lambda v: 255 - v)
+              ci = collections.Counter(native_ops.enhance_for_ocr(inv).tobytes())
+              assert ci[255] > ci[0], f"{name}: inverted scan not corrected"
+              print(name, "path OK")
+          PY
 
   compose-config:
     runs-on: ubuntu-latest

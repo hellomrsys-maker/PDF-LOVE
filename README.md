@@ -1,70 +1,113 @@
 # Dockbench
 
-A PDF & image toolkit that processes files on-device by default, with an
-optional self-hosted backend for the handful of tools that genuinely need
-server compute (OCR, background removal, AI summarize). Every dependency
-in this project is free and open-source — there is no paid API anywhere
-in the stack.
+A 95-tool PDF & image workbench that processes files **on your device by
+default**, with an optional self-hosted backend for the handful of jobs
+that genuinely need server compute. Every dependency in this project is
+free and open-source — there is no paid API anywhere in the stack, and
+after the first page load the core app runs **fully offline**.
+
+## Why it beats the alternatives
+
+| | Dockbench | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
+|---|---|---|---|
+| Files stay on-device | ✅ for ~85 of 95 tools | ❌ every tool uploads | ❌ every tool goes to the server |
+| Works offline (PWA) | ✅ core app + encryption | ❌ | ❌ needs the server |
+| Daily limits / subscription | none | 1-2 free tasks/day, then $4-10/mo | none |
+| Real AES-256 encrypt/decrypt in the browser | ✅ (qpdf → WebAssembly) | server-side | server-side |
+| OCR → searchable PDF | ✅ (self-hosted, C-accelerated cleanup) | ✅ (their cloud) | ✅ |
+| Office ↔ PDF (full fidelity) | ✅ (self-hosted LibreOffice) | ✅ (their cloud) | ✅ |
+| AI summarize/translate/chat | ✅ on-device (Transformers.js) or your own Ollama | ☁ their cloud AI | partial |
+| External services required | none (one optional: live FX rates) | their cloud | none |
+
+The design principle: **keep the high-frequency tools 100% local** for the
+trust story and zero hosting cost, and reserve the server for jobs where
+real engines (Tesseract, LibreOffice, Ghostscript) are the difference
+between a toy and a tool — while keeping that server yours, free, and
+open-source.
 
 ## Structure
 
 ```
-docktool/
 ├── frontend/
-│   └── index.html      ← the entire client-side app (open it in a browser, done)
-├── backend/
-│   ├── main.py          ← FastAPI app: /ocr, /remove-bg, /summarize
-│   ├── requirements.txt
-│   └── Dockerfile
-└── docker-compose.yml   ← backend + local LLM (Ollama), one command
+│   ├── index.html        ← the entire client-side app (~95 tools)
+│   ├── vendor/           ← all JS/WASM libraries, self-hosted (no CDN needed)
+│   ├── manifest.json, sw.js  ← installable PWA, offline-capable
+│   ├── nginx.conf        ← production static hosting + /api/ reverse proxy
+│   └── Dockerfile        ← nginx-based image
+├── backend/               ← optional, for the server-assisted tools
+│   ├── main.py           ← FastAPI app (see endpoints below)
+│   ├── native/imgproc.c  ← C scan-cleanup kernel (compiled in Docker)
+│   ├── native_ops.py     ← ctypes bridge with pure-Python fallback
+│   └── Dockerfile        ← gunicorn + Tesseract + Ghostscript + LibreOffice
+├── docker-compose.yml    ← frontend + backend + local LLM (Ollama)
+└── .github/workflows/validate.yml  ← CI: syntax, wiring, C kernel tests
 ```
 
-## 1. Frontend — no setup required
+## 1. Frontend — no setup, no build step, no CDN
 
-`frontend/index.html` is a complete, self-contained web app. It uses
-`pdf-lib`, `pdf.js`, and `JSZip` from a CDN, and does everything else
-with the browser's Canvas API. There is no build step.
+`frontend/index.html` plus `frontend/vendor/` is the complete client-side
+app. Every library it uses (pdf-lib, pdf.js, JSZip, mammoth, jsPDF,
+html2canvas, qrcode, jsQR, JsBarcode, and qpdf compiled to WebAssembly)
+is **self-hosted in `vendor/`** — zero external requests, and each script
+tag still carries a pinned-version CDN fallback in case a stray copy of
+the HTML is served without the vendor directory.
 
-- **Open it directly** by double-clicking the file, or
-- **Serve it statically** (recommended, avoids some browser file:// restrictions):
+- **Serve it statically**:
   ```bash
   cd frontend
-  python3 -m http.server 5500
-  # visit http://localhost:5500
+  python3 -m http.server 5500   # visit http://localhost:5500
   ```
-- **Deploy it anywhere that hosts static files** — Netlify, Vercel, GitHub
-  Pages, S3+CloudFront, your own nginx box. There is no server-side
-  rendering and no backend dependency for the tools in the first two
-  sections (PDF tools, image tools). Hosting cost is effectively zero.
+- **Deploy it anywhere that hosts static files** — Netlify, GitHub Pages,
+  S3, your own nginx. Hosting cost is effectively zero.
+- **Install it as an app** — the service worker precaches everything, so
+  after one visit the whole toolbox (including AES-256 encryption) works
+  in airplane mode.
 
-Working today, fully client-side:
-- Merge PDF, Split PDF, Organize PDF (reorder/remove pages), Crop PDF, Rotate PDF
-- Images → PDF, PDF → JPG
-- PDF → Word (.docx, text-only), PDF → Markdown, Word (.docx) → PDF
-- PDF Editor (click-to-place text), Add Watermark, Redact/remove watermark (rasterized), Add Page Numbers, Sign PDF (draw + place signature)
-- Compress Image, Resize Image
+On-device highlights (~85 tools): merge, split (range or per-page),
+organize, crop, rotate, N-up, compress, repair, compare, scan-to-PDF,
+extract images, **flatten forms**, **sanitize (strip scripts/attachments/
+metadata)**, grayscale, Bates numbering, headers/footers, watermark,
+search-&-redact (SSNs/emails/phones), sign, stamp, forms, **protect/unlock
+with real AES-256 in the browser**, PDF↔Word/Markdown/text, Markdown→PDF,
+images↔PDF (JPG/PNG/WebP/GIF/BMP), image compress/resize/convert/rotate,
+**EXIF viewer & stripper**, passport photos, ID/business cards, favicon
+generator, QR/barcode, plus text, utility, finance, and fully on-device AI
+tools (summarize, translate, voice-to-text, image captioning via
+Transformers.js — model downloads once, then offline).
 
-Every one of these tools reads the file with the File API, processes it
-in memory, and triggers a browser download — the bytes never touch a
-`fetch()` or `XMLHttpRequest` call. You can verify this yourself: open
-devtools → Network tab → use any tool above → no request fires.
+Every on-device tool reads the file with the File API, processes it in
+memory, and triggers a browser download — the bytes never touch a network
+request. Verify it yourself: devtools → Network tab → use any tool → no
+request fires.
 
-## 2. Backend — optional, only for OCR / background removal / AI summarize
+## 2. Backend — optional, self-hosted, C-accelerated
 
-These three tools need real compute that doesn't fit in a browser tab
-(large OCR models, background-removal neural nets, LLM inference). They
-are **not required** to use the rest of the app, and the frontend labels
-them clearly as "server-assisted" so users always know which bucket a
-tool falls into before they use it.
-
-Everything here is open-source and self-hosted, so there's no per-call
-API bill — you pay only for your own server:
+The server-assisted tools use real engines, all C/C++ under a Python
+orchestration layer — "C for the hot path, Python for the glue":
 
 | Tool | Engine | License |
 |---|---|---|
-| OCR | Tesseract 5 (via pytesseract) + PyMuPDF for PDF rendering | Apache-2.0 |
-| Background removal | rembg | Apache-2.0 (models MIT/Apache) |
-| Summarize | Ollama running Llama 3.2 locally | Llama license (free for this use) |
+| OCR (text or **searchable PDF**) | Tesseract 5 (C++) + `native/imgproc.c` cleanup kernel | Apache-2.0 |
+| Office → PDF (full fidelity) | LibreOffice headless (C++) | MPL-2.0 |
+| PDF → Word (layout-aware) | pdf2docx on MuPDF (C) | GPL-3 / AGPL-3 |
+| PDF → PowerPoint / Excel | PyMuPDF rendering / table detection (C) | AGPL-3 |
+| Deep PDF compression | Ghostscript (C) | AGPL-3 |
+| PDF/A archival conversion | Ghostscript (C) | AGPL-3 |
+| Background removal | rembg + onnxruntime (C++) | Apache-2.0 |
+| Summarize / Chat with PDF | Ollama running Llama 3.2 locally | Llama license (free for this use) |
+
+### The native C kernel
+
+`backend/native/imgproc.c` is this project's own scan-cleanup kernel,
+compiled with `-O3` in the Docker build and driven from Python via ctypes
+(`native_ops.py`). It preprocesses every scanned page before OCR —
+grayscale → percentile contrast stretch → inverted-scan detection → Otsu
+binarization — in exactly **two passes over the pixels**; everything in
+between is computed on a 256-bin histogram and folded into a single
+lookup table. Faded scans, photographed documents, and white-on-black
+pages all come out clean, which is what actually moves Tesseract's
+accuracy. If the shared library isn't built, `native_ops.py` silently
+falls back to a pure-Pillow implementation, so the API runs anywhere.
 
 ### Run it
 
@@ -74,100 +117,70 @@ docker exec -it $(docker compose ps -q ollama) ollama pull llama3.2
 ```
 
 This starts:
-- `backend` on `http://localhost:8000` (FastAPI, auto docs at `/docs`)
-- `ollama` on `http://localhost:11434` (local LLM runtime)
+- `frontend` on `http://localhost` (nginx, proxies `/api/*` to the backend
+  so the browser only ever talks to one origin — no CORS setup needed)
+- `backend` on port 8000 inside the compose network (FastAPI, docs at `/docs`)
+- `ollama` for the local LLM tools
 
-Then in `frontend/index.html`, set `API_BASE` (top of the `<script>`
-block) to your backend's URL, and wire the three server-assisted tool
-stubs (`toolServerStub` calls) to `fetch()` the corresponding endpoint —
-each stub already documents exactly which endpoint it needs.
+The frontend auto-detects the backend at `/api`. Pointing it somewhere
+else takes one line in the browser console:
+`localStorage.setItem('dockbench.apiBase', 'https://your-server:8000')`.
 
 ### Endpoints
 
-- `POST /ocr` — form fields: `file`, `language` (default `eng`) → `{ "text": "..." }`
-- `POST /remove-bg` — form field: `file` → PNG image bytes
-- `POST /summarize` — form fields: `text`, `max_words` → `{ "summary": "..." }`
+- `POST /ocr` — `file`, `language` (default `eng`), `output` (`text` |
+  `pdf` for a searchable PDF), `enhance` (C kernel cleanup, default on)
+- `POST /convert` — `file`, `target` (`pdf` from any Office format;
+  `docx` / `pptx` / `xlsx` from PDF)
+- `POST /compress-pdf` — `file`, `level` (`balanced` | `strong` | `extreme`);
+  never returns a bigger file than the input
+- `POST /pdfa` — `file` → ISO 19005 PDF/A-2b
+- `POST /remove-bg` — `file` → transparent PNG
+- `POST /summarize` — `text`, `max_words`
+- `POST /chat` — `question`, `context` (the frontend extracts text
+  on-device and sends only relevant excerpts, never the file)
+- `GET /capabilities` — which engines this deployment has (the frontend
+  can use it to enable exactly what will work)
 - `GET /health` — liveness check
 
-Files are processed entirely in memory and never written to disk or
-logged. Set `ALLOWED_ORIGINS` in the environment to your real frontend
-domain before going to production (defaults to `*` for local dev).
+Privacy contract: nothing about file contents or names is ever logged;
+pure-Python endpoints work entirely in memory; the engines that require
+real files (LibreOffice, Ghostscript) get a private per-request temp
+directory deleted the moment the response is built. Rate limits
+(10-20/min/IP on heavy endpoints) keep one user from starving the box.
+`MAX_FILE_MB` (default 50) caps upload size.
 
-## Why this split
+## Production notes
 
-This mirrors what the current wave of privacy-first PDF/image tools
-(BentoPDF, PDFCraft, DropFile, and others) have converged on in 2026:
-keep the high-frequency, low-compute tools 100% local for the trust
-story and near-zero hosting cost, and reserve a server only for the
-handful of tools where server compute is genuinely the difference
-between a toy feature and a useful one — while keeping that server
-free/open-source so it never becomes a per-request cost center.
+- **Set `ALLOWED_ORIGINS`** in `docker-compose.yml` to your real domain.
+- **HTTPS**: put Caddy / nginx + Let's Encrypt or a cloud LB in front.
+- **Scale out**: `docker compose up -d --scale backend=3` — Docker's DNS
+  round-robins across replicas on one host; use a real LB across hosts.
+- **Structured logs**: every request gets an `X-Request-ID`, logged with
+  method/path/status/timing only.
+- **Health checks** are wired into compose so the frontend won't route to
+  a backend that isn't ready.
+- **Heavy traffic?** Consider a task queue (Celery/RQ) in front of `/ocr`
+  and `/convert` so slow jobs don't hold workers hostage.
+- The backend image includes LibreOffice + Ghostscript + Tesseract, so it
+  is a few GB — that is the price of full-fidelity conversion with zero
+  per-call cost. Strip engines you don't need from `backend/Dockerfile`
+  and `/capabilities` will report accordingly.
+- Extra OCR languages: add e.g. `tesseract-ocr-deu` to the Dockerfile.
 
-## Production deployment & scaling
+## CI
 
-```
-docktool/
-├── frontend/
-│   ├── index.html
-│   ├── manifest.json, sw.js
-│   ├── nginx.conf        ← production static hosting + /api/ reverse proxy
-│   └── Dockerfile        ← nginx-based image
-├── backend/
-│   ├── main.py           ← rate-limited, structured-logging FastAPI app
-│   ├── Dockerfile        ← gunicorn + multiple uvicorn workers
-│   └── requirements.txt
-├── docker-compose.yml    ← frontend + backend + ollama, health-checked
-└── .github/workflows/validate.yml  ← CI: syntax, duplicate, and import checks
-```
-
-**Run it in production:**
-```bash
-docker compose up -d
-docker exec -it $(docker compose ps -q ollama) ollama pull llama3.2
-```
-This builds the frontend behind nginx (port 80) and proxies `/api/*` straight
-to the backend container, so the browser only ever talks to one origin —
-no CORS configuration needed once deployed this way.
-
-**What changed for real production use, and why:**
-- **CDN libraries load with `defer`, not blocking initial paint** — the
-  page renders before pdf-lib/pdf.js/etc. finish downloading. The app's
-  main script waits for `DOMContentLoaded` (which fires after deferred
-  scripts run, per spec) before touching any of them, so nothing breaks.
-- **Rate limiting** on the three heavy backend endpoints (`/ocr`, `/remove-bg`,
-  `/summarize`) via slowapi — 10–20 requests/minute per IP — so one user
-  can't accidentally (or deliberately) starve the CPU/GPU for everyone else.
-- **Structured logging with request IDs** — every request gets a short ID,
-  logged with method/path/status/timing (never file contents or names),
-  and returned as an `X-Request-ID` response header for tracing.
-- **Multi-worker backend** — `gunicorn` manages several `uvicorn` worker
-  processes so the API uses more than one CPU core. Tune `--workers` in
-  `backend/Dockerfile` to your box; more workers means more memory since
-  each one can hold its own model instance.
-- **Horizontal scaling** — `docker compose up -d --scale backend=3` runs
-  three backend replicas; Docker's internal DNS round-robins between them
-  automatically on a single host. For multi-host, put a real load balancer
-  (nginx, traefik, or a cloud LB) in front.
-- **Health checks** — the backend's `/health` endpoint is wired into
-  `docker-compose.yml` so `frontend` won't start routing traffic to it
-  until it's actually ready, and orchestrators (Docker, Kubernetes) can
-  restart it automatically if it stops responding.
-- **CI validation** — `.github/workflows/validate.yml` runs the exact
-  checks used throughout development: JS syntax, every tool card resolving
-  to a real function, no duplicate tool names, Python syntax, and a real
-  import of the backend app. All of these were run and passed locally
-  before this was written, not just assumed.
-
-**What's still your call to configure before going fully live:**
-- Set `ALLOWED_ORIGINS` in `docker-compose.yml` to your real domain, not `localhost`
-- Put the whole thing behind HTTPS (e.g. Caddy or nginx + Let's Encrypt in front of this stack, or a cloud load balancer that terminates TLS)
-- If you expect real traffic, consider a task queue (Celery/RQ) in front of `/ocr` and `/remove-bg` instead of handling them inline, so slow requests don't hold a worker hostage
+`.github/workflows/validate.yml` runs on every push: JS syntax of the
+whole inline app, every tool card resolving to a real function, no
+duplicate tool names, all 12 vendor assets present and precached by the
+service worker, Python syntax, a real import of the backend app, a
+`-Wall -Wextra -Werror` compile of the C kernel, and an end-to-end
+binarization test of both the C path and the Pillow fallback (including
+inverted-scan correction).
 
 ## Roadmap (not yet built)
 
-- Wire the three server-assisted stubs to the live backend
-- PDF password protect/unlock, watermark, page numbers (client-side, pdf-lib)
-- Office ↔ PDF conversion via a self-hosted LibreOffice-headless service
 - PaddleOCR as a swap-in for better table/multilingual accuracy
 - Batch/queue support on the backend for bulk processing
-- PWA manifest + service worker for offline installability
+- A visual pipeline builder (chain tools like "split → OCR → compress")
+- WebGPU acceleration for the on-device AI models as browser support lands

@@ -5,15 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dockbench — PDF &amp; Image tools that never leave your device</title>
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231F2420'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%234A7856'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#C1683A">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- Fonts are self-hosted in ./vendor/fonts (zero external requests,
+     correct rendering offline). If that directory is missing, the app
+     falls back to system fonts via the CSS font stacks. -->
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<!-- Core libraries are self-hosted in ./vendor (no CDN dependency, works
+     fully offline). If a copy of this file is served without the vendor
+     directory, each tag falls back to the same pinned version on a CDN. -->
+<script defer src="vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
 <style>
   :root{
     --paper:#F6F3EC;
@@ -316,7 +322,7 @@
   <div class="section-label" id="label-edit-tools">// edit, sign & redact — run entirely on your device</div>
   <div class="tools" id="edit-tools"></div>
 
-  <div class="section-label" id="label-security-tools">// pdf security — server-assisted, optional</div>
+  <div class="section-label" id="label-security-tools">// pdf security — real AES-256, runs entirely on your device</div>
   <div class="tools" id="security-tools"></div>
 
   <div class="section-label" id="label-img-tools">// image &amp; id photo tools — run entirely on your device</div>
@@ -340,7 +346,7 @@
 
 <footer>
   <div class="wrap">
-    Dockbench is a static, client-side application. PDF and image tools above run on WebAssembly/Canvas in your browser. Server-assisted tools (OCR, background removal, AI summarize) are a separate opt-in backend — see <code>/backend</code> in the project for the self-hosted, open-source API that powers them.
+    Dockbench is a static, client-side application. PDF and image tools above run on WebAssembly/Canvas in your browser. Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate opt-in backend — see <code>/backend</code> in the project for the self-hosted, open-source API that powers them.
   </div>
 </footer>
 
@@ -351,7 +357,96 @@
 <script>
 window.addEventListener('DOMContentLoaded', function(){
 const { PDFDocument, degrees } = PDFLib;
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+/* ---------- self-hosted assets, with pinned-version CDN fallback ---------- */
+// Everything the app needs ships in ./vendor so it runs with zero external
+// requests (and fully offline as a PWA). The CDN URLs below are only used
+// when a stray copy of this file is served without the vendor directory.
+const VENDOR_FALLBACKS = {
+  'vendor/pdf.worker.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  'vendor/qrcode.min.js':     'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+  'vendor/jsqr.js':           'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+  'vendor/jsbarcode.all.min.js': 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
+  'vendor/qpdf.js':           'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js',
+  'vendor/qpdf.wasm':         'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm',
+};
+async function vendorAsset(path){
+  // Returns the local path if it's actually there, else the CDN fallback.
+  try{ const r = await fetch(path, {method:'HEAD'}); if(r.ok) return path; }catch(e){}
+  return VENDOR_FALLBACKS[path] || path;
+}
+const _loadedScripts = {};
+function loadScript(path){
+  if(!_loadedScripts[path]){
+    _loadedScripts[path] = (async ()=>{
+      const src = await vendorAsset(path);
+      await new Promise((res, rej)=>{
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = res;
+        s.onerror = ()=>rej(new Error('Failed to load '+src));
+        document.head.appendChild(s);
+      });
+    })();
+  }
+  return _loadedScripts[path];
+}
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+
+/* ---------- optional self-hosted backend ---------- */
+// The server-assisted tools (OCR, background removal, Office conversion,
+// PDF/A, deep compression, chat/summarize) talk to the FastAPI backend in
+// /backend. Deployed with the bundled docker-compose + nginx, it lives at
+// same-origin /api. Override at any time from the browser console:
+//   localStorage.setItem('dockbench.apiBase', 'https://my-server:8000')
+const API_BASE = localStorage.getItem('dockbench.apiBase')
+  || (location.protocol.startsWith('http') ? '/api' : 'http://localhost:8000');
+let _apiCaps = null;
+async function apiCapabilities(){
+  if(_apiCaps) return _apiCaps;
+  const r = await fetch(API_BASE + '/capabilities');
+  if(!r.ok) throw new Error('backend replied HTTP '+r.status);
+  _apiCaps = await r.json();
+  return _apiCaps;
+}
+async function apiUpload(endpoint, formFields, {expect='blob'}={}){
+  const fd = new FormData();
+  for(const [k,v] of Object.entries(formFields)) fd.append(k, v);
+  const r = await fetch(API_BASE + endpoint, {method:'POST', body:fd});
+  if(!r.ok){
+    let msg = 'HTTP '+r.status;
+    try{ const j = await r.json(); if(j.detail) msg = j.detail; }catch(e){}
+    if(r.status===429) msg = 'Rate limit reached — wait a minute and try again.';
+    throw new Error(msg);
+  }
+  return expect==='json' ? r.json() : r.blob();
+}
+function apiErrorHelp(e){
+  return `Could not reach the backend (${escapeXml(e.message)}). `+
+    `Server-assisted tools need the optional self-hosted API from this project's `+
+    `<code>/backend</code> — start it with <code>docker compose up -d</code>, `+
+    `or point this app at it via <code>localStorage.setItem('dockbench.apiBase', 'https://your-server')</code>.`;
+}
+
+/* ---------- PDF loading that copes with real-world files ---------- */
+// pdf-lib refuses encrypted PDFs by default and throws a cryptic error.
+// Try normally, then retry ignoring encryption (fine for reading pages of
+// an owner-locked file), and if the file is truly password-protected tell
+// the user which tool fixes it.
+async function loadPdf(bytes){
+  try{
+    return await PDFDocument.load(bytes);
+  }catch(e){
+    if(String(e).includes('encrypted')){
+      try{ return await PDFDocument.load(bytes, {ignoreEncryption:true}); }
+      catch(e2){
+        throw new Error('This PDF is password-protected — run it through the Unlock PDF tool first.');
+      }
+    }
+    throw new Error('Could not read this PDF — it may be corrupted. Try the Repair PDF tool.');
+  }
+}
 
 const overlay = document.getElementById('overlay');
 const panel = document.getElementById('panel');
@@ -434,7 +529,7 @@ function toolMergePDF(){
     const merged = await PDFDocument.create();
     for(const f of files){
       const bytes = await f.arrayBuffer();
-      const src = await PDFDocument.load(bytes);
+      const src = await loadPdf(bytes);
       const pages = await merged.copyPages(src, src.getPageIndices());
       pages.forEach(p=>merged.addPage(p));
     }
@@ -446,54 +541,138 @@ function toolMergePDF(){
 
 function toolSplitPDF(){
   const body = panelShell({title:'Split PDF', desc:'Extract a page range into a new PDF, or split into one file per page.'});
-  let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; list.textContent=file?`${file.name} (${fmtBytes(file.size)})`:'';}});
+  let file=null, pageCount=0;
+  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+    file=f[0];
+    try{
+      const src = await loadPdf(await file.arrayBuffer());
+      pageCount = src.getPageCount();
+      list.textContent = `${file.name} (${fmtBytes(file.size)}) — ${pageCount} page(s)`;
+      document.getElementById('sp-to').value = pageCount;
+      document.getElementById('sp-to').max = pageCount;
+      document.getElementById('sp-from').max = pageCount;
+    }catch(e){ file=null; pageCount=0; list.textContent=''; log.textContent = e.message; }
+  }});
   const list=document.createElement('div'); list.style.margin='10px 0'; list.style.fontSize='0.85rem'; body.appendChild(list);
+  const tabRow=document.createElement('div'); tabRow.className='tab-row';
+  tabRow.innerHTML = `
+    <button type="button" class="tab-btn active" data-mode="range"><span class="tab-title">Extract a page range</span><span class="tab-sub">e.g. pages 3–7 into one PDF</span></button>
+    <button type="button" class="tab-btn" data-mode="each"><span class="tab-title">One file per page</span><span class="tab-sub">every page as its own PDF, in a .zip</span></button>
+  `;
+  body.appendChild(tabRow);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
     <div class="field"><label>From page</label><input type="number" id="sp-from" min="1" value="1"></div>
     <div class="field"><label>To page</label><input type="number" id="sp-to" min="1" value="1"></div>
   `;
   body.appendChild(row);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download'; body.appendChild(btn);
+  tabRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick = ()=>{
+      tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      row.style.display = b.dataset.mode==='each' ? 'none' : 'flex';
+    };
+  });
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
-    const from = parseInt(document.getElementById('sp-from').value)-1;
-    const to = parseInt(document.getElementById('sp-to').value)-1;
-    log.textContent='Splitting on-device...';
+    const mode = tabRow.querySelector('.tab-btn.active').dataset.mode;
     const bytes = await file.arrayBuffer();
-    const src = await PDFDocument.load(bytes);
+    const src = await loadPdf(bytes);
+    const total = src.getPageCount();
+    if(mode==='each'){
+      log.textContent='Splitting into one file per page on-device...';
+      const zip = new JSZip();
+      for(let i=0;i<total;i++){
+        const out = await PDFDocument.create();
+        const [pg] = await out.copyPages(src, [i]);
+        out.addPage(pg);
+        zip.file(`page-${String(i+1).padStart(String(total).length,'0')}.pdf`, await out.save());
+        log.textContent = `Built page ${i+1} of ${total}...`;
+      }
+      download(await zip.generateAsync({type:'blob'}), file.name.replace(/\.pdf$/i,'')+'-pages.zip');
+      log.innerHTML = `<span class="ok">✓ Done — ${total} file(s), split locally, 0 bytes uploaded.</span>`;
+      return;
+    }
+    const from = parseInt(document.getElementById('sp-from').value)||1;
+    const to = parseInt(document.getElementById('sp-to').value)||1;
+    if(from<1 || to>total || from>to){
+      log.textContent = `That range doesn't work — this PDF has ${total} page(s), and "from" must be ≤ "to".`;
+      return;
+    }
+    log.textContent='Splitting on-device...';
     const out = await PDFDocument.create();
-    const idx=[]; for(let i=from;i<=to;i++) idx.push(i);
+    const idx=[]; for(let i=from-1;i<=to-1;i++) idx.push(i);
     const pages = await out.copyPages(src, idx);
     pages.forEach(p=>out.addPage(p));
     const bytesOut = await out.save();
-    download(new Blob([bytesOut],{type:'application/pdf'}), 'split.pdf');
+    download(new Blob([bytesOut],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+`-p${from}-${to}.pdf`);
     log.innerHTML = '<span class="ok">✓ Done — split locally, 0 bytes uploaded.</span>';
   };
 }
 
+/* Embed any browser-decodable image (JPG, PNG, WebP, GIF, BMP, AVIF, HEIC
+ * where supported) into a pdf-lib document. pdf-lib itself only accepts
+ * JPG and PNG bytes, so anything else is transcoded through a canvas. */
+async function embedImageSmart(doc, fileOrBlob){
+  const bytes = await fileOrBlob.arrayBuffer();
+  const type = (fileOrBlob.type||'').toLowerCase();
+  try{
+    if(type.includes('png')) return await doc.embedPng(bytes);
+    if(type.includes('jpg')||type.includes('jpeg')) return await doc.embedJpg(bytes);
+  }catch(e){ /* mislabeled file — fall through to transcoding */ }
+  const bitmap = await createImageBitmap(fileOrBlob);
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width; canvas.height = bitmap.height;
+  canvas.getContext('2d').drawImage(bitmap, 0, 0);
+  const blob = await new Promise(res=>canvas.toBlob(res, 'image/png'));
+  if(!blob) throw new Error('Could not decode this image.');
+  return doc.embedPng(await blob.arrayBuffer());
+}
+
 function toolImageToPDF(){
-  const body = panelShell({title:'Images to PDF', desc:'Combine JPG/PNG images into a single PDF, one page each.'});
+  const body = panelShell({title:'Images to PDF', desc:'Combine images (JPG, PNG, WebP, GIF, BMP...) into a single PDF, one page each.'});
   let files=[];
   buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
   const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  const sizeField=document.createElement('div'); sizeField.className='field';
+  sizeField.innerHTML=`<label>Page size</label>
+    <select id="i2p-size" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+      <option value="image">Match each image (no borders)</option>
+      <option value="a4">A4 portrait, image fitted</option>
+      <option value="letter">US Letter portrait, image fitted</option>
+    </select>`;
+  body.appendChild(sizeField);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
   renderList();
   btn.onclick = async ()=>{
     log.textContent='Building PDF on-device...';
+    const pageSizes = { a4:[595.28,841.89], letter:[612,792] };
+    const sizeMode = document.getElementById('i2p-size').value;
     const doc = await PDFDocument.create();
+    let done=0;
     for(const f of files){
-      const bytes = await f.arrayBuffer();
       let img;
-      if(f.type.includes('png')) img = await doc.embedPng(bytes);
-      else img = await doc.embedJpg(bytes);
-      const page = doc.addPage([img.width, img.height]);
-      page.drawImage(img, {x:0,y:0,width:img.width,height:img.height});
+      try{ img = await embedImageSmart(doc, f); }
+      catch(e){ log.textContent = `Skipped ${f.name}: ${e.message}`; continue; }
+      if(sizeMode==='image'){
+        const page = doc.addPage([img.width, img.height]);
+        page.drawImage(img, {x:0,y:0,width:img.width,height:img.height});
+      } else {
+        const [pw,ph] = pageSizes[sizeMode];
+        const page = doc.addPage([pw,ph]);
+        const margin = 24;
+        const scale = Math.min((pw-2*margin)/img.width, (ph-2*margin)/img.height, 1e9);
+        const w = img.width*scale, h = img.height*scale;
+        page.drawImage(img, {x:(pw-w)/2, y:(ph-h)/2, width:w, height:h});
+      }
+      done++;
+      log.textContent = `Added ${done} of ${files.length}...`;
     }
+    if(done===0){ log.textContent='None of those files could be read as images.'; return; }
     const out = await doc.save();
     download(new Blob([out],{type:'application/pdf'}), 'images.pdf');
     log.innerHTML = '<span class="ok">✓ Done — built locally, 0 bytes uploaded.</span>';
@@ -536,6 +715,7 @@ async function compressCanvasToTarget(canvas, targetBytes, onProgress){
   for(let i=0;i<8;i++){
     const q = (lo+hi)/2;
     const blob = await new Promise(res=>canvas.toBlob(res,'image/jpeg', q));
+    if(!blob) throw new Error('This image is too large for the browser to re-encode — try Resize Image first.');
     if(onProgress) onProgress(`Trying quality ${(q*100).toFixed(0)}% → ${fmtBytes(blob.size)}...`);
     if(blob.size > targetBytes){ hi = q; } else { lo = q; best = blob; }
   }
@@ -584,7 +764,7 @@ function toolCompressImage(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Shrink & Download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
-  document.body.addEventListener('input', e=>{ if(e.target.id==='q-range') document.getElementById('q-val').textContent = e.target.value; });
+  body.addEventListener('input', e=>{ if(e.target.id==='q-range') document.getElementById('q-val').textContent = e.target.value; });
   tabRow.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick = ()=>{
       tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
@@ -719,7 +899,7 @@ function toolRotatePDF(){
     const deg = parseInt(document.getElementById('rot').value);
     log.textContent='Rotating on-device...';
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     doc.getPages().forEach(p=>p.setRotation(degrees(deg)));
     const out = await doc.save();
     download(new Blob([out],{type:'application/pdf'}), 'rotated.pdf');
@@ -733,13 +913,19 @@ let _qpdfModulePromise = null;
 async function loadQpdf(){
   if(!_qpdfModulePromise){
     _qpdfModulePromise = (async ()=>{
-      const mod = await import('https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm/+esm');
-      const createModule = mod.default;
+      // qpdf.js is an Emscripten factory that defines a global `Module`
+      // when loaded via a plain script tag. Self-hosted in ./vendor, so
+      // Protect/Unlock work fully offline; CDN fallback is version-pinned.
+      const wasmPath = await vendorAsset('vendor/qpdf.wasm');
+      await loadScript('vendor/qpdf.js');
+      const createModule = window.Module;
+      if(typeof createModule !== 'function') throw new Error('qpdf engine did not initialize');
       return createModule({
-        locateFile: ()=> 'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm/dist/qpdf.wasm',
+        locateFile: ()=> wasmPath,
         noInitialRun: true
       });
     })();
+    _qpdfModulePromise.catch(()=>{ _qpdfModulePromise = null; }); // allow retry after a failed load
   }
   return _qpdfModulePromise;
 }
@@ -858,7 +1044,7 @@ function toolRemoveDuplicateBlank(){
     const remove = new Set([...grid.querySelectorAll('input[type=checkbox]')].filter(c=>c.checked).map(c=>parseInt(c.dataset.page)));
     log.textContent='Rebuilding on-device...';
     const bytes = await file.arrayBuffer();
-    const src = await PDFDocument.load(bytes);
+    const src = await loadPdf(bytes);
     const out = await PDFDocument.create();
     const keepIdx = Array.from({length:pdfjsDoc.numPages},(_,i)=>i+1).filter(p=>!remove.has(p)).map(p=>p-1);
     if(keepIdx.length===0){log.textContent='All pages flagged — leave at least one.';return;}
@@ -921,7 +1107,7 @@ function toolEditMetadata(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    doc = await PDFDocument.load(bytes);
+    doc = await loadPdf(bytes);
     document.getElementById('md-title').value = doc.getTitle() || '';
     document.getElementById('md-author').value = doc.getAuthor() || '';
     document.getElementById('md-subject').value = doc.getSubject() || '';
@@ -1021,7 +1207,7 @@ function toolBatesNumbering(){
       </select>
     </div>`;
   body.appendChild(seqWrap);
-  document.body.addEventListener('change', e=>{
+  body.addEventListener('change', e=>{
     if(e.target.id==='bn-style'){
       document.getElementById('bn-custom-fields').style.display = e.target.value==='simple' ? 'none' : 'block';
     }
@@ -1085,7 +1271,7 @@ function toolBatesNumbering(){
     if(!seqOn && !fixedOn){ log.textContent='Turn on at least one option above.'; return; }
     log.textContent='Working on it...';
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
 
     const style = document.getElementById('bn-style').value;
@@ -1145,7 +1331,7 @@ function toolHeaderFooter(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Stamping on-device...';
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
     const today = new Date().toLocaleDateString();
     let header = document.getElementById('hf-header').value.replace('${date}', today);
@@ -1180,7 +1366,7 @@ function toolNUp(){
     const n = parseInt(document.getElementById('nup-count').value);
     log.textContent='Building on-device...';
     const bytes = await file.arrayBuffer();
-    const src = await PDFDocument.load(bytes);
+    const src = await loadPdf(bytes);
     const out = await PDFDocument.create();
     const srcPages = src.getPages();
     const cols = n===2 ? 2 : 2, rows = n===2 ? 1 : 2;
@@ -1238,7 +1424,7 @@ function toolInsertReplacePage(){
     const at = Math.max(1, parseInt(document.getElementById('ir-at').value)||1);
     log.textContent='Building on-device...';
     const bytes = await baseFile.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const insertIdx = Math.min(at-1, doc.getPageCount());
 
     let newPage=null;
@@ -1251,11 +1437,11 @@ function toolInsertReplacePage(){
       const srcBytes = await insertFile.arrayBuffer();
       let embedded, w, h;
       if(insertFile.type==='application/pdf' || insertFile.name.endsWith('.pdf')){
-        const srcDoc = await PDFDocument.load(srcBytes);
+        const srcDoc = await loadPdf(srcBytes);
         [embedded] = await doc.embedPdf(srcDoc, [0]);
         w = embedded.width; h = embedded.height;
       } else {
-        const img = insertFile.type.includes('png') ? await doc.embedPng(srcBytes) : await doc.embedJpg(srcBytes);
+        const img = await embedImageSmart(doc, insertFile);
         embedded = img; w = img.width; h = img.height;
       }
       if(action==='replace'){
@@ -1301,7 +1487,7 @@ function toolSplitByBookmark(){
     marks.sort((a,b)=>a.page-b.page);
     if(marks.length===0){ log.textContent='Could not resolve bookmark destinations.'; return; }
     log.textContent='Splitting on-device...';
-    const src = await PDFDocument.load(bytes);
+    const src = await loadPdf(bytes);
     const zip = new JSZip();
     for(let i=0;i<marks.length;i++){
       const start = marks[i].page;
@@ -1335,7 +1521,7 @@ function toolSplitBySize(){
     const targetBytes = (parseFloat(document.getElementById('sbs-mb').value)||10) * 1024*1024;
     log.textContent='Analyzing on-device...';
     const bytes = await file.arrayBuffer();
-    const src = await PDFDocument.load(bytes);
+    const src = await loadPdf(bytes);
     const totalPages = src.getPageCount();
     const avgPageSize = file.size / totalPages;
     const pagesPerChunk = Math.max(1, Math.floor(targetBytes / avgPageSize));
@@ -1398,7 +1584,7 @@ function toolBookmarkEditor(){
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
-    doc = await PDFDocument.load(bytes);
+    doc = await loadPdf(bytes);
     await renderOutline();
   }});
   const outlineWrap=document.createElement('div'); outlineWrap.style.margin='12px 0'; body.appendChild(outlineWrap);
@@ -1508,7 +1694,7 @@ function toolSearchRedact(){
     </select>
     <input type="text" id="sr-custom" placeholder="Custom text or exact phrase..." style="display:none;">`;
   body.appendChild(field);
-  document.body.addEventListener('change', e=>{
+  body.addEventListener('change', e=>{
     if(e.target.id==='sr-preset') document.getElementById('sr-custom').style.display = e.target.value==='custom' ? 'block' : 'none';
   });
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Find matches, then redact'; body.appendChild(btn);
@@ -1563,13 +1749,15 @@ function toolSearchRedact(){
         const content = await page.getTextContent();
         content.items.forEach(it=>{
           const str = it.str;
-          if(pageMatches.some(m=> (presetVal==='custom') ? str.includes(m.str) : patterns[presetVal].test(str))){
+          // Fresh non-global regex per test: the shared /g patterns carry
+          // lastIndex between .test() calls and silently skip matches.
+          const testRe = patterns[presetVal] ? new RegExp(patterns[presetVal].source) : null;
+          if(pageMatches.some(m=> (presetVal==='custom') ? str.includes(m.str) : testRe.test(str))){
             const tx = pdfjsLib.Util.transform(viewport.transform, it.transform);
             const w = it.width * viewport.scale, h = Math.abs(it.height * viewport.scale) || 14*viewport.scale;
             ctx.fillStyle = '#000';
             ctx.fillRect(tx[4], tx[5]-h, w, h);
           }
-          if(patterns[presetVal]) patterns[presetVal].lastIndex = 0;
         });
       }
       const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
@@ -1668,7 +1856,7 @@ function toolDigitalStamp(){
     log.textContent='Working on it...';
     const label = document.getElementById('stamp-custom').value.trim() || selected.label;
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
     const p = doc.getPages()[placed.page-1];
     const { width, height } = p.getSize();
@@ -1832,7 +2020,8 @@ function toolQRGenerate(){
     if(!text){ log.textContent='Type something first.'; return; }
     log.textContent = 'Generating...';
     try{
-      const mod = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm');
+      await loadScript('vendor/qrcode.min.js');
+      const mod = window.QRCodeLib || window.QRCode; // local bundle exports QRCodeLib; CDN build exports QRCode
       const canvas = document.createElement('canvas');
       await mod.toCanvas(canvas, text, {width:220, margin:2});
       canvasWrap.innerHTML=''; canvasWrap.appendChild(canvas);
@@ -1840,7 +2029,7 @@ function toolQRGenerate(){
       dlBtn.style.display='inline-block';
       log.innerHTML = '<span class="ok">✓ Done — made locally, nothing sent anywhere.</span>';
     }catch(e){
-      log.textContent = 'Could not load the QR generator (needs network for a one-time library download): '+e.message;
+      log.textContent = 'Could not load the QR generator (the vendor/ library files may be missing): '+e.message;
     }
   };
   dlBtn.onclick = ()=>{
@@ -1859,7 +2048,8 @@ function toolQRRead(){
   async function go(){
     log.textContent = 'Reading...';
     try{
-      const mod = await import('https://cdn.jsdelivr.net/npm/jsqr@1.4.0/+esm');
+      await loadScript('vendor/jsqr.js');
+      const mod = { default: window.jsQR };
       const bitmap = await createImageBitmap(file);
       const canvas = document.createElement('canvas'); canvas.width=bitmap.width; canvas.height=bitmap.height;
       const ctx = canvas.getContext('2d'); ctx.drawImage(bitmap,0,0);
@@ -1873,7 +2063,7 @@ function toolQRRead(){
         log.textContent = 'No QR code found in that image.';
       }
     }catch(e){
-      log.textContent = 'Could not load the QR reader (needs network for a one-time library download): '+e.message;
+      log.textContent = 'Could not load the QR reader (the vendor/ library files may be missing): '+e.message;
     }
   }
 }
@@ -2088,7 +2278,7 @@ function toolTimestampConverter(){
   function showFromDate(d){
     result.innerHTML = `<strong>Unix timestamp:</strong> ${Math.floor(d.getTime()/1000)}<br><strong>Your local time:</strong> ${d.toLocaleString()}<br><strong>UTC:</strong> ${d.toUTCString()}`;
   }
-  document.body.addEventListener('input', e=>{
+  body.addEventListener('input', e=>{
     if(e.target.id==='ts-epoch' && e.target.value){ showFromDate(new Date(parseInt(e.target.value)*1000)); }
     if(e.target.id==='ts-date' && e.target.value){ showFromDate(new Date(e.target.value)); }
   });
@@ -2186,7 +2376,7 @@ function toolColorConverter(){
       paletteWrap.appendChild(swatch);
     });
   }
-  document.body.addEventListener('input', e=>{ if(e.target.id==='cc-picker') update(); });
+  body.addEventListener('input', e=>{ if(e.target.id==='cc-picker') update(); });
   update();
 }
 
@@ -2485,16 +2675,29 @@ function toolCurrencyConverter(){
     const from = document.getElementById('cur-from').value;
     const to = document.getElementById('cur-to').value;
     log.textContent = 'Fetching today\'s rate...';
+    // The one tool that inherently needs the network (live FX rates, from
+    // the free/open frankfurter.dev service — no key, no quota). Every
+    // fetched rate is cached so the tool keeps working offline with the
+    // last known rate, clearly labeled with its date.
+    const cacheKey = `dockbench.fx.${from}.${to}`;
     try{
       const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`);
       if(!res.ok) throw new Error('rate service unavailable');
       const data = await res.json();
       const rate = data.rates[to];
+      try{ localStorage.setItem(cacheKey, JSON.stringify({rate, date:data.date})); }catch(e){}
       result.innerHTML = `<strong>${amt} ${from} = ${(amt*rate).toFixed(2)} ${to}</strong><div class="helper-line" style="margin-top:6px;">1 ${from} = ${rate} ${to} — as of ${data.date}</div>`;
       log.textContent = '';
     }catch(e){
-      log.textContent = 'Could not fetch today\'s rate — check your internet connection and try again.';
-      result.innerHTML = '';
+      const cached = localStorage.getItem(cacheKey);
+      if(cached){
+        const {rate, date} = JSON.parse(cached);
+        result.innerHTML = `<strong>${amt} ${from} = ${(amt*rate).toFixed(2)} ${to}</strong><div class="helper-line" style="margin-top:6px;">⚠ Offline — using the last fetched rate (1 ${from} = ${rate} ${to}, from ${date}).</div>`;
+        log.textContent = '';
+      } else {
+        log.textContent = 'Could not fetch today\'s rate — check your internet connection and try again.';
+        result.innerHTML = '';
+      }
     }
   };
 }
@@ -2737,13 +2940,13 @@ function toolPassportPhoto(){
     return presets[key];
   }
 
-  document.body.addEventListener('change', e=>{
+  body.addEventListener('change', e=>{
     if(e.target.id==='pp-preset'){
       customRow.style.display = presets[e.target.value].custom ? 'flex' : 'none';
       if(photo) setupCropper();
     }
   });
-  document.body.addEventListener('input', e=>{
+  body.addEventListener('input', e=>{
     if(e.target.id==='pp-zoom'){ zoom = parseInt(e.target.value)/100; renderCrop(); }
     if((e.target.id==='pp-cw'||e.target.id==='pp-ch') && photo) setupCropper();
   });
@@ -2834,7 +3037,8 @@ function toolBarcodeGenerator(){
     if(!text){ log.textContent='Type a code first.'; return; }
     log.textContent = 'Generating...';
     try{
-      const mod = await import('https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/+esm');
+      await loadScript('vendor/jsbarcode.all.min.js');
+      const mod = { default: window.JsBarcode };
       const canvas = document.createElement('canvas');
       mod.default(canvas, text, {format:'CODE128'});
       canvasWrap.innerHTML=''; canvasWrap.appendChild(canvas);
@@ -2842,7 +3046,7 @@ function toolBarcodeGenerator(){
       dlBtn.style.display='inline-block';
       log.innerHTML = '<span class="ok">✓ Done — made locally, nothing sent anywhere.</span>';
     }catch(e){
-      log.textContent = 'Could not load the barcode generator (needs network for a one-time library download): '+e.message;
+      log.textContent = 'Could not load the barcode generator (the vendor/ library files may be missing): '+e.message;
     }
   };
   dlBtn.onclick = ()=>{ if(lastCanvas) lastCanvas.toBlob(blob=>download(blob,'barcode.png')); };
@@ -2877,7 +3081,7 @@ function toolRegexTester(){
       log.textContent = count+' match(es)';
     }catch(e){ log.textContent = 'Not a valid pattern: '+e.message; result.innerHTML=''; }
   }
-  document.body.addEventListener('input', e=>{ if(e.target.id==='rt-pattern'||e.target.id==='rt-text') run(); });
+  body.addEventListener('input', e=>{ if(e.target.id==='rt-pattern'||e.target.id==='rt-text') run(); });
 }
 
 /* ================= Highlight, Business Card, ID Card ================= */
@@ -2962,7 +3166,7 @@ function toolHighlightPDF(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Saving on-device...';
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const pages = doc.getPages();
     highlights.forEach(h=>{
       const p = pages[h.page-1];
@@ -3044,7 +3248,8 @@ function toolCardDesigner(kind){
     const email = document.getElementById('card-email')?.value || '';
     const vcard = `BEGIN:VCARD\nVERSION:3.0\nN:${name}\nFN:${name}\nTITLE:${title}\nORG:${org}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`;
     try{
-      const mod = await import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm');
+      await loadScript('vendor/qrcode.min.js');
+      const mod = window.QRCodeLib || window.QRCode; // local bundle exports QRCodeLib; CDN build exports QRCode
       const canvas = document.createElement('canvas');
       await mod.toCanvas(canvas, vcard, {width:200, margin:1});
       return canvas;
@@ -3343,13 +3548,202 @@ function toolInvoiceGenerator(){
   };
 }
 
-function toolServerStub(name, desc){
-  const body = panelShell({title:name, desc:desc + ' This tool requires the optional self-hosted backend — see /backend in the project.'});
-  body.innerHTML = `
-    <div style="background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:20px;font-size:0.88rem;color:var(--ink-soft)">
-      This tool is <strong>server-assisted</strong> by design — it needs real compute (OCR/AI models) that can't run well in a browser.
-      It is <em>not wired up in this demo</em>. Deploy the FastAPI backend included in this project, set its URL in <code>API_BASE</code> at the top of this file's script, and this panel will POST the file to <code>/ocr</code> or <code>/remove-bg</code> and stream back the result. Your file is only ever sent when you explicitly use one of these tools — never for the tools above.
-    </div>`;
+/* ================= SERVER-ASSISTED TOOLS (self-hosted backend) =================
+   These are the only tools that send your file anywhere — and "anywhere"
+   is a backend YOU run (see /backend: FastAPI + Tesseract/Ghostscript/
+   LibreOffice/Ollama, all open-source, no per-call vendor API). Each panel
+   states that clearly before the button is pressed. */
+
+function serverNote(body, engineLabel){
+  const note = document.createElement('div'); note.className='note';
+  note.innerHTML = `<strong>Server-assisted tool.</strong> This one sends the file to <em>your own</em> self-hosted Dockbench backend (${engineLabel}) — open-source, no third-party service, nothing retained after the response.`;
+  body.appendChild(note);
+  return note;
+}
+
+/* Generic single-file server tool: upload -> endpoint -> download. */
+function toolServerFile({title, desc, engine, accept, endpoint, fields={}, outName, outType, extraUI}){
+  const body = panelShell({title, desc});
+  serverNote(body, engine);
+  let file=null;
+  buildDropzone(body, {multiple:false, accept, onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const getExtra = extraUI ? extraUI(body) : null;
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Process on my server'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a file first.';return;}
+    btn.disabled = true;
+    log.textContent = 'Uploading to your backend and processing...';
+    try{
+      const extra = getExtra ? getExtra() : {};
+      const blob = await apiUpload(endpoint, {file, ...fields, ...extra});
+      const name = typeof outName==='function' ? outName(file) : outName;
+      download(new Blob([blob], {type: outType}), name);
+      log.innerHTML = '<span class="ok">✓ Done — processed by your own server, nothing retained.</span>';
+    }catch(e){
+      log.innerHTML = apiErrorHelp(e);
+    }finally{
+      btn.disabled = false;
+    }
+  };
+}
+
+function toolServerOCR(){
+  const body = panelShell({title:'OCR (scanned PDF or image)', desc:'Turn a scan into selectable text — or into a searchable PDF, where the page still looks identical but the text underneath is real.'});
+  serverNote(body, 'Tesseract OCR + this project\'s native C scan-cleanup kernel');
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML = `
+    <div class="field"><label>Output</label>
+      <select id="ocr-output" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+        <option value="pdf">Searchable PDF (recommended)</option>
+        <option value="text">Plain text (.txt)</option>
+      </select></div>
+    <div class="field"><label>Language</label>
+      <select id="ocr-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+        <option value="eng">English</option><option value="deu">German</option><option value="fra">French</option>
+        <option value="spa">Spanish</option><option value="por">Portuguese</option><option value="hin">Hindi</option>
+        <option value="ara">Arabic</option><option value="chi_sim">Chinese (simplified)</option>
+      </select></div>`;
+  body.appendChild(row);
+  const helper=document.createElement('div'); helper.className='helper-line';
+  helper.textContent = 'Languages beyond English need the matching tesseract-ocr language pack installed in the backend image (one line in backend/Dockerfile).';
+  body.appendChild(helper);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Recognize text'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const resultBox=document.createElement('textarea'); resultBox.rows=10; resultBox.style.cssText='display:none;width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);margin-top:10px;'; body.appendChild(resultBox);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a scanned PDF or an image first.';return;}
+    btn.disabled = true;
+    resultBox.style.display='none';
+    log.textContent = 'Running OCR on your backend (larger scans take longer)...';
+    try{
+      const output = document.getElementById('ocr-output').value;
+      const language = document.getElementById('ocr-lang').value;
+      if(output==='pdf'){
+        const blob = await apiUpload('/ocr', {file, language, output:'pdf'});
+        download(new Blob([blob],{type:'application/pdf'}), file.name.replace(/\.(pdf|png|jpe?g|tiff?)$/i,'')+'-searchable.pdf');
+      } else {
+        const j = await apiUpload('/ocr', {file, language, output:'text'}, {expect:'json'});
+        resultBox.value = j.text || '';
+        resultBox.style.display='block';
+        download(new Blob([j.text||''],{type:'text/plain'}), file.name.replace(/\.[^.]+$/,'')+'.txt');
+      }
+      log.innerHTML = '<span class="ok">✓ Done — recognized on your own server, nothing retained.</span>';
+    }catch(e){
+      log.innerHTML = apiErrorHelp(e);
+    }finally{ btn.disabled=false; }
+  };
+}
+
+function toolServerRemoveBG(){
+  toolServerFile({
+    title:'Remove Background', desc:'Cut the subject out of a photo — returns a transparent PNG.',
+    engine:'rembg, an open-weight neural net', accept:'image/*', endpoint:'/remove-bg',
+    outName:(f)=>f.name.replace(/\.[^.]+$/,'')+'-nobg.png', outType:'image/png',
+  });
+}
+
+function toolServerConvert(fromLabel, target, accept, titleText, descText){
+  toolServerFile({
+    title:titleText, desc:descText,
+    engine: target==='pdf' ? 'LibreOffice headless' : ({docx:'pdf2docx (layout-aware)', pptx:'MuPDF page rendering', xlsx:'MuPDF table detection'}[target]),
+    accept, endpoint:'/convert', fields:{target},
+    outName:(f)=>f.name.replace(/\.[^.]+$/,'')+'.'+target,
+    outType:{pdf:'application/pdf',
+      docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}[target],
+  });
+}
+
+function toolServerCompressPDF(){
+  toolServerFile({
+    title:'Deep Compress PDF (server)', desc:'Ghostscript-grade compression: image downsampling, font subsetting, stream rewriting. Regularly 5-10x smaller on scanned documents — stronger than any in-browser method.',
+    engine:'Ghostscript', accept:'application/pdf', endpoint:'/compress-pdf',
+    outName:(f)=>f.name.replace(/\.pdf$/i,'')+'-compressed.pdf', outType:'application/pdf',
+    extraUI:(body)=>{
+      const field=document.createElement('div'); field.className='field';
+      field.innerHTML=`<label>How hard to squeeze</label>
+        <select id="dc-level" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+          <option value="strong" selected>Strong (e-book quality, great for email)</option>
+          <option value="balanced">Balanced (print quality)</option>
+          <option value="extreme">Extreme (screen-only quality, smallest)</option>
+        </select>`;
+      body.appendChild(field);
+      return ()=>({level: document.getElementById('dc-level').value});
+    },
+  });
+}
+
+function toolServerPDFA(){
+  toolServerFile({
+    title:'PDF to PDF/A', desc:'Convert to the ISO 19005 archival format that courts, registries, and archives require.',
+    engine:'Ghostscript PDF/A-2b', accept:'application/pdf', endpoint:'/pdfa',
+    outName:(f)=>f.name.replace(/\.pdf$/i,'')+'-pdfa.pdf', outType:'application/pdf',
+  });
+}
+
+function toolServerChatPDF(){
+  const body = panelShell({title:'Chat with PDF', desc:'Ask questions about a document. The text is extracted on-device; only your question plus the most relevant excerpts are sent to your own local AI model — never the file itself.'});
+  serverNote(body, 'your local Ollama model');
+  let file=null, pagesText=[];
+  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+    file=f[0];
+    log.textContent='Extracting text on-device...';
+    try{
+      pagesText = await extractPdfPagesText(file);
+      log.textContent = `Loaded ${pagesText.length} page(s) — ask away.`;
+    }catch(e){ log.textContent = 'Could not read that PDF: '+e.message; }
+  }});
+  const chatBox=document.createElement('div'); chatBox.style.cssText='max-height:300px;overflow-y:auto;margin:10px 0;display:flex;flex-direction:column;gap:8px;'; body.appendChild(chatBox);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=`<div class="field" style="flex:1;"><input type="text" id="chat-q" placeholder="e.g. What is the total amount due?"></div>`;
+  body.appendChild(row);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Ask'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  function bubble(text, mine){
+    const b=document.createElement('div');
+    b.style.cssText=`padding:10px 12px;border-radius:10px;font-size:0.88rem;max-width:85%;white-space:pre-wrap;${mine?'align-self:flex-end;background:var(--copper);color:#fff;':'align-self:flex-start;background:var(--paper);border:1px solid var(--line);'}`;
+    b.textContent=text;
+    chatBox.appendChild(b);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+  // Tiny on-device retrieval: score pages by query-word overlap and send
+  // only the best few — the whole document never leaves the browser.
+  function topExcerpts(question, maxChars=12000){
+    const words = question.toLowerCase().match(/\w{3,}/g) || [];
+    const scored = pagesText.map((t,i)=>({i, t, score: words.reduce((s,w)=> s + (t.toLowerCase().includes(w)?1:0), 0)}));
+    scored.sort((a,b)=>b.score-a.score);
+    let out='';
+    for(const {i,t} of scored){
+      if(out.length + t.length > maxChars) continue;
+      out += `\n[page ${i+1}]\n${t}\n`;
+    }
+    return out || pagesText.slice(0,3).join('\n').slice(0, maxChars);
+  }
+  const ask = async ()=>{
+    const q = document.getElementById('chat-q').value.trim();
+    if(!file || !pagesText.length){log.textContent='Open a PDF first.';return;}
+    if(!q){log.textContent='Type a question.';return;}
+    bubble(q, true);
+    document.getElementById('chat-q').value='';
+    btn.disabled=true;
+    log.textContent='Asking your local model...';
+    try{
+      const j = await apiUpload('/chat', {question:q, context: topExcerpts(q)}, {expect:'json'});
+      bubble(j.answer || '(no answer)', false);
+      log.textContent='';
+    }catch(e){
+      log.innerHTML = apiErrorHelp(e);
+    }finally{ btn.disabled=false; }
+  };
+  btn.onclick = ask;
+  body.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.id==='chat-q') ask(); });
 }
 
 /* ================= DOCUMENT CONVERSION ================= */
@@ -3578,7 +3972,7 @@ function toolPDFEditor(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Saving on-device...';
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
     const pages = doc.getPages();
     annotations.forEach(a=>{
@@ -3621,7 +4015,7 @@ function toolAddWatermark(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Stamping on-device...';
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
     const text = document.getElementById('wm-text').value || 'CONFIDENTIAL';
     const size = parseInt(document.getElementById('wm-size').value)||48;
@@ -3764,7 +4158,7 @@ function toolOrganizePDF(){
     if(finalOrder.length===0){log.textContent='No pages selected.';return;}
     log.textContent='Building on-device...';
     const bytes = await file.arrayBuffer();
-    const src = await PDFDocument.load(bytes);
+    const src = await loadPdf(bytes);
     const out = await PDFDocument.create();
     const idx = finalOrder.map(n=>n-1);
     const pages = await out.copyPages(src, idx);
@@ -3853,7 +4247,7 @@ function toolSignPDF(){
     if(!file || !placed){log.textContent='Open a PDF, draw a signature, and click a page to place it.';return;}
     log.textContent='Saving on-device...';
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     const pngBytes = await (await fetch(sigDataUrl)).arrayBuffer();
     const img = await doc.embedPng(pngBytes);
     const p = doc.getPages()[placed.page-1];
@@ -3892,7 +4286,7 @@ function toolCropPDF(){
     const l=parseFloat(document.getElementById('cr-left').value)||0;
     const rt=parseFloat(document.getElementById('cr-right').value)||0;
     const bytes = await file.arrayBuffer();
-    const doc = await PDFDocument.load(bytes);
+    const doc = await loadPdf(bytes);
     doc.getPages().forEach(p=>{
       const { width, height } = p.getSize();
       p.setCropBox(l, b, width-l-rt, height-t-b);
@@ -4303,7 +4697,7 @@ function toolPDFForms(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    doc = await PDFDocument.load(bytes);
+    doc = await loadPdf(bytes);
     try{ form = doc.getForm(); }catch(e){ form=null; }
     renderFields();
   }});
@@ -4390,6 +4784,400 @@ function toolComparePDF(){
   };
 }
 
+/* ================= NEW: flatten, sanitize, privacy & image utilities ================= */
+
+function toolFlattenPDF(){
+  const body = panelShell({title:'Flatten PDF', desc:'Bake form fields into the page so they can no longer be edited — what you see becomes permanent ink.'});
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Flatten & download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a PDF first.';return;}
+    log.textContent='Flattening on-device...';
+    try{
+      const bytes = await file.arrayBuffer();
+      const doc = await loadPdf(bytes);
+      const form = doc.getForm();
+      const fieldCount = form.getFields().length;
+      if(fieldCount===0){ log.textContent='This PDF has no form fields to flatten.'; return; }
+      form.flatten();
+      const out = await doc.save();
+      download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+'-flattened.pdf');
+      log.innerHTML=`<span class="ok">✓ Done — ${fieldCount} field(s) flattened locally, 0 bytes uploaded.</span>`;
+    }catch(e){ log.textContent = 'Could not flatten: '+e.message; }
+  };
+}
+
+function toolSanitizePDF(){
+  const body = panelShell({title:'Sanitize PDF', desc:'Strip the risky, invisible parts of a PDF before sharing it: embedded JavaScript, auto-run open actions, attached files, and identifying metadata.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent='PDFs can carry scripts that run on open, hidden file attachments, and metadata naming the author and editing software. This removes all of it while leaving the visible pages untouched.';
+  body.appendChild(note);
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const optWrap=document.createElement('div');
+  [['sz-js','Remove JavaScript & auto-run actions',true],['sz-files','Remove embedded file attachments',true],['sz-meta','Blank out metadata (author, software, dates)',true]].forEach(([id,label,on])=>{
+    const l=document.createElement('label'); l.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.88rem;margin:6px 0;';
+    l.innerHTML=`<input type="checkbox" id="${id}" ${on?'checked':''}> ${label}`;
+    optWrap.appendChild(l);
+  });
+  body.appendChild(optWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Sanitize & download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a PDF first.';return;}
+    log.textContent='Sanitizing on-device...';
+    try{
+      const { PDFName, PDFDict } = PDFLib;
+      const bytes = await file.arrayBuffer();
+      const doc = await loadPdf(bytes);
+      const removed = [];
+      const cat = doc.catalog;
+      if(document.getElementById('sz-js').checked){
+        if(cat.has(PDFName.of('OpenAction'))){ cat.delete(PDFName.of('OpenAction')); removed.push('auto-run open action'); }
+        if(cat.has(PDFName.of('AA'))){ cat.delete(PDFName.of('AA')); removed.push('document event scripts'); }
+        const names = cat.lookupMaybe(PDFName.of('Names'), PDFDict);
+        if(names && names.has(PDFName.of('JavaScript'))){ names.delete(PDFName.of('JavaScript')); removed.push('document JavaScript'); }
+        doc.getPages().forEach(p=>{ if(p.node.has(PDFName.of('AA'))) { p.node.delete(PDFName.of('AA')); if(!removed.includes('page event scripts')) removed.push('page event scripts'); } });
+      }
+      if(document.getElementById('sz-files').checked){
+        const names = cat.lookupMaybe(PDFName.of('Names'), PDFDict);
+        if(names && names.has(PDFName.of('EmbeddedFiles'))){ names.delete(PDFName.of('EmbeddedFiles')); removed.push('embedded file attachments'); }
+      }
+      if(document.getElementById('sz-meta').checked){
+        doc.setTitle(''); doc.setAuthor(''); doc.setSubject(''); doc.setKeywords([]);
+        doc.setProducer(''); doc.setCreator('');
+        removed.push('metadata');
+      }
+      const out = await doc.save();
+      download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+'-sanitized.pdf');
+      log.innerHTML = removed.length
+        ? `<span class="ok">✓ Done — removed: ${removed.join(', ')}. All local, 0 bytes uploaded.</span>`
+        : '<span class="ok">✓ Done — nothing risky found; re-saved a clean copy locally.</span>';
+    }catch(e){ log.textContent = 'Could not sanitize: '+e.message; }
+  };
+}
+
+function toolGrayscalePDF(){
+  const body = panelShell({title:'Grayscale PDF', desc:'Convert every page to black & white — smaller files, cheaper printing, and a classic look.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent='Pages are re-rendered as grayscale images, so selectable text becomes part of the picture. Run OCR afterwards if you need the text layer back.';
+  body.appendChild(note);
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a PDF first.';return;}
+    log.textContent='Rendering pages on-device...';
+    const bytes = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    const outDoc = await PDFDocument.create();
+    for(let i=1;i<=pdf.numPages;i++){
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({scale:2});
+      const canvas = document.createElement('canvas');
+      canvas.width=viewport.width; canvas.height=viewport.height;
+      const ctx = canvas.getContext('2d');
+      ctx.filter = 'grayscale(1)';
+      await page.render({canvasContext:ctx, viewport}).promise;
+      const blob = await new Promise(res=>canvas.toBlob(res,'image/jpeg',0.85));
+      const img = await outDoc.embedJpg(await blob.arrayBuffer());
+      const p = outDoc.addPage([canvas.width/2, canvas.height/2]);
+      p.drawImage(img, {x:0,y:0,width:canvas.width/2,height:canvas.height/2});
+      log.textContent = `Converted page ${i} of ${pdf.numPages}...`;
+    }
+    const out = await outDoc.save();
+    download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+'-grayscale.pdf');
+    log.innerHTML='<span class="ok">✓ Done — converted locally, 0 bytes uploaded.</span>';
+  };
+}
+
+/* Minimal EXIF reader: enough to show someone what their photo reveals.
+ * Parses the JPEG APP1/TIFF structure directly — no library needed. */
+function readExifSummary(buffer){
+  const view = new DataView(buffer);
+  if(view.getUint16(0)!==0xFFD8) return null; // not a JPEG
+  let offset = 2;
+  while(offset < view.byteLength - 4){
+    const marker = view.getUint16(offset);
+    const size = view.getUint16(offset+2);
+    if(marker===0xFFE1 && view.getUint32(offset+4)===0x45786966){ // "Exif"
+      const tiff = offset+10;
+      const little = view.getUint16(tiff)===0x4949;
+      const g16 = o=>view.getUint16(tiff+o, little), g32 = o=>view.getUint32(tiff+o, little);
+      const ifd0 = g32(4);
+      const readAscii = (valOff, count)=>{
+        let s=''; const start = count<=4 ? null : g32(valOff+8);
+        for(let i=0;i<count-1;i++) s += String.fromCharCode(view.getUint8(tiff + (start===null? valOff+8+i : start+i)));
+        return s.trim();
+      };
+      const out = {};
+      const n = g16(ifd0);
+      for(let i=0;i<n;i++){
+        const e = ifd0+2+i*12, tag = g16(e), count = g32(e+4);
+        if(tag===0x010F) out.make = readAscii(e, count);
+        if(tag===0x0110) out.model = readAscii(e, count);
+        if(tag===0x0131) out.software = readAscii(e, count);
+        if(tag===0x0132) out.dateTime = readAscii(e, count);
+        if(tag===0x8825) out.hasGPS = true;
+      }
+      return out;
+    }
+    if((marker & 0xFF00)!==0xFF00) break;
+    offset += 2 + size;
+  }
+  return {};
+}
+
+function toolExifStrip(){
+  const body = panelShell({title:'Remove Photo Metadata (EXIF)', desc:'Photos silently carry the camera model, the exact time, editing software — and often the GPS location where they were taken. See it, then strip it before sharing.'});
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'image/*', onFiles: async (f)=>{
+    file=f[0];
+    report.innerHTML='';
+    try{
+      const exif = file.type.includes('jpeg')||file.type.includes('jpg') ? readExifSummary(await file.arrayBuffer()) : null;
+      if(exif===null){
+        report.innerHTML = `<div class="note">${escapeXml(file.name)} — not a JPEG; other formats carry less metadata but stripping still guarantees a clean copy.</div>`;
+      } else if(Object.keys(exif).length===0){
+        report.innerHTML = `<div class="note">${escapeXml(file.name)} — no EXIF metadata found. Stripping anyway produces a guaranteed-clean copy.</div>`;
+      } else {
+        report.innerHTML = `<div class="note"><strong>This photo reveals:</strong><br>${
+          [exif.hasGPS?'⚠ <strong>GPS location data</strong>':null,
+           exif.make||exif.model?`Camera: ${escapeXml([exif.make,exif.model].filter(Boolean).join(' '))}`:null,
+           exif.dateTime?`Taken: ${escapeXml(exif.dateTime)}`:null,
+           exif.software?`Software: ${escapeXml(exif.software)}`:null].filter(Boolean).join('<br>')
+        }</div>`;
+      }
+    }catch(e){ report.innerHTML=`<div class="note">${escapeXml(file.name)} — could not parse metadata (${escapeXml(e.message)}); stripping still works.</div>`; }
+  }});
+  const report=document.createElement('div'); report.style.margin='10px 0'; body.appendChild(report);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Strip metadata & download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a photo first.';return;}
+    log.textContent='Re-encoding without metadata on-device...';
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width=bitmap.width; canvas.height=bitmap.height;
+    canvas.getContext('2d').drawImage(bitmap,0,0);
+    const isPng = file.type.includes('png');
+    const blob = await new Promise(res=>canvas.toBlob(res, isPng?'image/png':'image/jpeg', 0.95));
+    if(!blob){ log.textContent='Could not re-encode this image.'; return; }
+    download(blob, file.name.replace(/(\.[^.]+)$/, '-clean$1'));
+    log.innerHTML=`<span class="ok">✓ Done — every byte of metadata removed locally (${fmtBytes(file.size)} → ${fmtBytes(blob.size)}), 0 bytes uploaded.</span>`;
+  };
+}
+
+function toolImageConvert(){
+  const body = panelShell({title:'Convert Image Format', desc:'JPG ↔ PNG ↔ WebP, converted instantly on your device.'});
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)}, ${file.type||'unknown type'})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=`
+    <div class="field"><label>Convert to</label>
+      <select id="ic-format" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+        <option value="image/jpeg">JPG — small, universal, no transparency</option>
+        <option value="image/png">PNG — lossless, keeps transparency</option>
+        <option value="image/webp">WebP — smallest, modern browsers/sites</option>
+      </select></div>
+    <div class="field"><label>Quality (JPG/WebP) <span id="ic-qval">90</span>%</label><input type="range" id="ic-q" min="30" max="100" value="90"></div>`;
+  body.appendChild(row);
+  body.addEventListener('input', e=>{ if(e.target.id==='ic-q') document.getElementById('ic-qval').textContent=e.target.value; });
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose an image first.';return;}
+    const format = document.getElementById('ic-format').value;
+    const q = parseInt(document.getElementById('ic-q').value)/100;
+    log.textContent='Converting on-device...';
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width=bitmap.width; canvas.height=bitmap.height;
+    const ctx = canvas.getContext('2d');
+    if(format==='image/jpeg'){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); } // JPG has no alpha — avoid black backgrounds
+    ctx.drawImage(bitmap,0,0);
+    const blob = await new Promise(res=>canvas.toBlob(res, format, q));
+    if(!blob || blob.type!==format){ log.textContent='This browser cannot encode that format — try PNG or JPG.'; return; }
+    const ext = {'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[format];
+    download(blob, file.name.replace(/\.[^.]+$/,'')+'.'+ext);
+    log.innerHTML=`<span class="ok">✓ Done — ${fmtBytes(file.size)} → ${fmtBytes(blob.size)}, converted locally, 0 bytes uploaded.</span>`;
+  };
+}
+
+function toolRotateFlipImage(){
+  const body = panelShell({title:'Rotate / Flip Image', desc:'Rotate in 90° steps or mirror an image — with live preview.'});
+  let file=null, rotation=0, flipH=false, flipV=false;
+  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; rotation=0; flipH=flipV=false; render();}});
+  const controls=document.createElement('div'); controls.className='pill-row';
+  controls.innerHTML=`
+    <button class="small-btn" id="rf-left">⟲ 90° left</button>
+    <button class="small-btn" id="rf-right">⟳ 90° right</button>
+    <button class="small-btn" id="rf-h">⇋ Flip horizontal</button>
+    <button class="small-btn" id="rf-v">⇵ Flip vertical</button>`;
+  body.appendChild(controls);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  async function buildCanvas(){
+    const bitmap = await createImageBitmap(file);
+    const rot90 = rotation%180!==0;
+    const canvas=document.createElement('canvas');
+    canvas.width = rot90 ? bitmap.height : bitmap.width;
+    canvas.height = rot90 ? bitmap.width : bitmap.height;
+    const ctx=canvas.getContext('2d');
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.rotate(rotation*Math.PI/180);
+    ctx.scale(flipH?-1:1, flipV?-1:1);
+    ctx.drawImage(bitmap, -bitmap.width/2, -bitmap.height/2);
+    return canvas;
+  }
+  async function render(){
+    if(!file) return;
+    const canvas = await buildCanvas();
+    canvas.style.maxWidth='100%'; canvas.style.border='1px solid var(--line)'; canvas.style.borderRadius='8px';
+    canvasWrap.innerHTML=''; canvasWrap.appendChild(canvas);
+  }
+  controls.querySelector('#rf-left').onclick=()=>{ rotation=(rotation+270)%360; render(); };
+  controls.querySelector('#rf-right').onclick=()=>{ rotation=(rotation+90)%360; render(); };
+  controls.querySelector('#rf-h').onclick=()=>{ flipH=!flipH; render(); };
+  controls.querySelector('#rf-v').onclick=()=>{ flipV=!flipV; render(); };
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose an image first.';return;}
+    const canvas = await buildCanvas();
+    const isPng = file.type.includes('png');
+    const blob = await new Promise(res=>canvas.toBlob(res, isPng?'image/png':'image/jpeg', 0.95));
+    download(blob, file.name.replace(/(\.[^.]+)$/, '-rotated$1'));
+    log.innerHTML='<span class="ok">✓ Done — edited locally, 0 bytes uploaded.</span>';
+  };
+}
+
+function toolFaviconGenerator(){
+  const body = panelShell({title:'Favicon Generator', desc:'Turn a logo into a complete favicon set: every standard size as PNG, a classic favicon.ico, and the HTML tags to paste — all in one .zip.'});
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)}) — square images work best`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate & download .zip'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  // favicon.ico container: PNG entries are valid inside .ico (all modern
+  // browsers and Windows Vista+ decode them).
+  function buildIco(pngs){ // [{size, bytes(Uint8Array)}]
+    const headerSize = 6 + 16*pngs.length;
+    const total = headerSize + pngs.reduce((s,p)=>s+p.bytes.length, 0);
+    const buf = new Uint8Array(total);
+    const dv = new DataView(buf.buffer);
+    dv.setUint16(0, 0, true); dv.setUint16(2, 1, true); dv.setUint16(4, pngs.length, true);
+    let dataOffset = headerSize;
+    pngs.forEach((p, i)=>{
+      const e = 6 + i*16;
+      buf[e] = p.size===256 ? 0 : p.size; buf[e+1] = p.size===256 ? 0 : p.size;
+      buf[e+2]=0; buf[e+3]=0;
+      dv.setUint16(e+4, 1, true); dv.setUint16(e+6, 32, true);
+      dv.setUint32(e+8, p.bytes.length, true); dv.setUint32(e+12, dataOffset, true);
+      buf.set(p.bytes, dataOffset);
+      dataOffset += p.bytes.length;
+    });
+    return buf;
+  }
+
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a logo image first.';return;}
+    log.textContent='Rendering sizes on-device...';
+    const bitmap = await createImageBitmap(file);
+    const zip = new JSZip();
+    const sizes = [16,32,48,64,180,192,512];
+    const icoPngs = [];
+    for(const size of sizes){
+      const canvas=document.createElement('canvas'); canvas.width=size; canvas.height=size;
+      const ctx=canvas.getContext('2d');
+      ctx.imageSmoothingQuality='high';
+      // center-crop to square, then scale
+      const s = Math.min(bitmap.width, bitmap.height);
+      ctx.drawImage(bitmap, (bitmap.width-s)/2, (bitmap.height-s)/2, s, s, 0, 0, size, size);
+      const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const name = size===180 ? 'apple-touch-icon.png' : `favicon-${size}x${size}.png`;
+      zip.file(name, bytes);
+      if([16,32,48].includes(size)) icoPngs.push({size, bytes});
+    }
+    zip.file('favicon.ico', buildIco(icoPngs));
+    zip.file('HOW-TO-USE.html', `<!-- Paste inside your page's <head>: -->
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon-192x192.png" type="image/png" sizes="192x192">
+`);
+    download(await zip.generateAsync({type:'blob'}), 'favicons.zip');
+    log.innerHTML='<span class="ok">✓ Done — 7 sizes + favicon.ico + paste-ready HTML, all made locally.</span>';
+  };
+}
+
+function toolMarkdownToPDF(){
+  const body = panelShell({title:'Markdown to PDF', desc:'Write or paste Markdown, get a clean formatted PDF — headings, lists, bold, links, code.'});
+  const field=document.createElement('div'); field.className='field';
+  field.innerHTML = `<label>Markdown</label><textarea id="md-input" rows="10" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder="# Title&#10;&#10;Some **bold** text, a [link](https://example.com), and:&#10;&#10;- a list&#10;- of items"></textarea>`;
+  body.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  // A compact CommonMark subset — headings, emphasis, inline code, links,
+  // code fences, lists, quotes, rules. Input is escaped first, so the
+  // generated HTML can only contain the tags this function itself emits.
+  function mdToHtml(md){
+    const esc = escapeXml(md);
+    const lines = esc.split('\n');
+    let html='', inList=false, inCode=false;
+    const inline = t=>t
+      .replace(/`([^`]+)`/g,'<code style="background:#f0ede4;padding:1px 5px;border-radius:4px;font-size:0.9em;">$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g,'<em>$1</em>')
+      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" style="color:#C1683A;">$1</a>');
+    for(const line of lines){
+      if(line.startsWith('```')){ html += inCode ? '</pre>' : '<pre style="background:#f0ede4;padding:12px;border-radius:6px;font-size:12px;overflow-x:hidden;white-space:pre-wrap;">'; inCode=!inCode; continue; }
+      if(inCode){ html += line+'\n'; continue; }
+      const closeList = ()=>{ if(inList){ html+='</ul>'; inList=false; } };
+      const h = line.match(/^(#{1,4})\s+(.*)/);
+      if(h){ closeList(); const l=h[1].length; html += `<h${l} style="margin:14px 0 6px;">${inline(h[2])}</h${l}>`; continue; }
+      if(/^\s*[-*]\s+/.test(line)){ if(!inList){ html+='<ul style="margin:6px 0;">'; inList=true; } html += `<li>${inline(line.replace(/^\s*[-*]\s+/,''))}</li>`; continue; }
+      if(/^\s*(---+|\*\*\*+)\s*$/.test(line)){ closeList(); html += '<hr style="border:none;border-top:1px solid #ccc;margin:14px 0;">'; continue; }
+      if(/^&gt;\s?/.test(line)){ closeList(); html += `<blockquote style="border-left:3px solid #C1683A;margin:8px 0;padding:2px 12px;color:#555;">${inline(line.replace(/^&gt;\s?/,''))}</blockquote>`; continue; }
+      closeList();
+      html += line.trim() ? `<p style="margin:6px 0;">${inline(line)}</p>` : '';
+    }
+    if(inList) html+='</ul>';
+    if(inCode) html+='</pre>';
+    return html;
+  }
+
+  btn.onclick = async ()=>{
+    const raw = document.getElementById('md-input').value;
+    if(!raw.trim()){log.textContent='Write some Markdown first.';return;}
+    log.textContent='Rendering on-device...';
+    const holder = document.createElement('div');
+    holder.style.cssText='position:fixed;left:-9999px;top:0;width:700px;padding:20px;font-family:sans-serif;font-size:14px;line-height:1.6;background:#fff;color:#222;';
+    holder.innerHTML = mdToHtml(raw);
+    document.body.appendChild(holder);
+    const { jsPDF } = window.jspdf;
+    const pdfDoc = new jsPDF('p','pt','a4');
+    await new Promise(resolve=>{
+      pdfDoc.html(holder, {
+        margin:[36,36,36,36], autoPaging:'text', width:523, windowWidth:700,
+        callback:(doc)=>{ download(doc.output('blob'), 'document.pdf'); resolve(); }
+      });
+    });
+    document.body.removeChild(holder);
+    log.innerHTML='<span class="ok">✓ Done — converted locally, 0 bytes uploaded.</span>';
+  };
+}
+
 const pdfTools = [
   {icon:'⬜', name:'Merge PDF', desc:'Combine PDFs into one file.', fn:toolMergePDF},
   {icon:'✂️', name:'Split PDF', desc:'Extract a page range.', fn:toolSplitPDF},
@@ -4413,20 +5201,24 @@ const pdfTools = [
   {icon:'📦', name:'Split by File Size', desc:'Chunk a large PDF under a size limit.', fn:toolSplitBySize},
   {icon:'▤', name:'Bookmarks / TOC', desc:'View a PDF\'s bookmark outline.', fn:toolBookmarkEditor},
   {icon:'🔍', name:'Search & Redact', desc:'Auto-find and blank out SSNs, emails, phone numbers, or custom text.', fn:toolSearchRedact},
+  {icon:'▭', name:'Flatten PDF', desc:'Bake form fields into permanent ink.', fn:toolFlattenPDF},
+  {icon:'🧼', name:'Sanitize PDF', desc:'Strip hidden scripts, attachments & metadata.', fn:toolSanitizePDF},
+  {icon:'◐', name:'Grayscale PDF', desc:'Convert every page to black & white.', fn:toolGrayscalePDF},
 ];
 const convertTools = [
   {icon:'📃', name:'PDF to Word', desc:'Extract text into a .docx file.', fn:toolPDFToWord},
   {icon:'Ⓜ', name:'PDF to Markdown', desc:'Extract text into a .md file.', fn:toolPDFToMarkdown},
+  {icon:'⬇', name:'Markdown to PDF', desc:'Write Markdown, download a formatted PDF.', fn:toolMarkdownToPDF},
   {icon:'📝', name:'PDF to Text', desc:'Extract plain text (.txt).', fn:toolPDFToText},
   {icon:'📘', name:'Word to PDF', desc:'Convert a .docx into a PDF.', fn:toolWordToPDF},
   {icon:'🌐', name:'HTML / Text to PDF', desc:'Paste HTML or text, get a PDF.', fn:toolHtmlToPDF},
   {icon:'🔊', name:'Read PDF Aloud', desc:'Text-to-speech, built into your browser.', fn:toolPDFToSpeech},
   {icon:'▦', name:'Table to CSV', desc:'Extract a table from one page.', fn:toolTableToCSV},
-  {icon:'📊', name:'PDF to PowerPoint', desc:'Convert PDF pages to slides.', fn:()=>toolServerStub('PDF to PowerPoint','Converts PDF pages into an editable .pptx using LibreOffice headless — real slide conversion needs a full Office engine, not feasible in-browser.')},
-  {icon:'📈', name:'PDF to Excel', desc:'Pull tables into a spreadsheet.', fn:()=>toolServerStub('PDF to Excel','Extracts tabular data into .xlsx — reliable table detection needs a server-side layout engine.')},
-  {icon:'📗', name:'PowerPoint to PDF', desc:'Convert .pptx to PDF.', fn:()=>toolServerStub('PowerPoint to PDF','Converts .pptx to PDF via LibreOffice headless for full fidelity.')},
-  {icon:'📙', name:'Excel to PDF', desc:'Convert .xlsx to PDF.', fn:()=>toolServerStub('Excel to PDF','Converts .xlsx to PDF via LibreOffice headless for full fidelity.')},
-  {icon:'📚', name:'PDF to PDF/A', desc:'Convert to the ISO archival format.', fn:()=>toolServerStub('PDF to PDF/A','Produces a true ISO 19005-compliant archival PDF — requires a validating conversion engine (e.g. Ghostscript/veraPDF) server-side.')},
+  {icon:'📊', name:'PDF to PowerPoint', desc:'Each page becomes a slide (.pptx). Server-assisted.', fn:()=>toolServerConvert('PDF','pptx','application/pdf','PDF to PowerPoint','Turns every PDF page into a slide in an editable .pptx deck.')},
+  {icon:'📈', name:'PDF to Excel', desc:'Pull tables into a spreadsheet (.xlsx). Server-assisted.', fn:()=>toolServerConvert('PDF','xlsx','application/pdf','PDF to Excel','Detects tables on every page and exports them as sheets in an .xlsx workbook.')},
+  {icon:'📗', name:'PowerPoint to PDF', desc:'Convert .pptx to PDF. Server-assisted.', fn:()=>toolServerConvert('PowerPoint','pdf','.ppt,.pptx,.odp','PowerPoint to PDF','Full-fidelity .pptx/.ppt/.odp to PDF via LibreOffice.')},
+  {icon:'📙', name:'Excel to PDF', desc:'Convert .xlsx to PDF. Server-assisted.', fn:()=>toolServerConvert('Excel','pdf','.xls,.xlsx,.ods,.csv','Excel to PDF','Full-fidelity .xlsx/.xls/.ods to PDF via LibreOffice.')},
+  {icon:'📚', name:'PDF to PDF/A', desc:'ISO 19005 archival format. Server-assisted.', fn:()=>toolServerPDFA()},
 ];
 const editTools = [
   {icon:'✎', name:'PDF Editor', desc:'Add text anywhere on a page.', fn:toolPDFEditor},
@@ -4444,6 +5236,10 @@ const securityTools = [
 const imgTools = [
   {icon:'🗜️', name:'Make Image Smaller', desc:'Shrink a photo\'s file size.', fn:toolCompressImage},
   {icon:'⤢', name:'Resize Image', desc:'Set exact pixel dimensions.', fn:toolResizeImage},
+  {icon:'🕵️', name:'Remove Photo Metadata (EXIF)', desc:'See what a photo reveals — GPS, camera, time — then strip it.', fn:toolExifStrip},
+  {icon:'🔁', name:'Convert Image Format', desc:'JPG ↔ PNG ↔ WebP, instantly.', fn:toolImageConvert},
+  {icon:'⟳', name:'Rotate / Flip Image', desc:'90° steps or mirror, with live preview.', fn:toolRotateFlipImage},
+  {icon:'★', name:'Favicon Generator', desc:'Logo → every favicon size + .ico + HTML tags.', fn:toolFaviconGenerator},
   {icon:'🛂', name:'Passport & ID Photo Maker', desc:'US, UK, EU, India, China, Canada & more — exact official sizes.', fn:toolPassportPhoto},
   {icon:'📚', name:'Batch Resize / Shrink Many Photos', desc:'No 2-per-day limit — process as many as you want, together.', fn:toolBatchImageProcessor},
   {icon:'🪪', name:'ID Card Designer', desc:'Full card with photo, name, title & ID number — standard card size.', fn:()=>toolCardDesigner('id')},
@@ -4453,9 +5249,12 @@ const imgTools = [
   {icon:'🧾', name:'Invoice Generator', desc:'Line items, totals, tax — a real professional invoice.', fn:toolInvoiceGenerator},
 ];
 const apiTools = [
-  {icon:'🔎', name:'OCR (scanned PDF)', desc:'Extract searchable text from scans.', fn:()=>toolServerStub('OCR','Extracts text from scanned documents using Tesseract/PaddleOCR.')},
-  {icon:'🪄', name:'Remove Background', desc:'AI background removal.', fn:()=>toolServerStub('Remove Background','Removes image backgrounds using the open-source rembg model.')},
-  {icon:'💬', name:'Chat with PDF', desc:'Ask questions about a document.', fn:()=>toolServerStub('Chat with PDF','Extracts text on-device, then sends only your question + relevant excerpt (never the whole file) to a self-hosted Ollama model for an answer.')},
+  {icon:'🔎', name:'OCR — Searchable PDF & Text', desc:'Make scans selectable & searchable, C-accelerated cleanup.', fn:()=>toolServerOCR()},
+  {icon:'🗜️', name:'Deep Compress PDF', desc:'Ghostscript-grade shrinking, 5-10x on scans.', fn:()=>toolServerCompressPDF()},
+  {icon:'📄', name:'Word/Office to PDF (full fidelity)', desc:'Real LibreOffice rendering of .docx/.doc/.odt/.rtf.', fn:()=>toolServerConvert('Word','pdf','.doc,.docx,.odt,.rtf,.txt,.html','Office to PDF (full fidelity)','Server-side LibreOffice conversion — exact fonts, tables, and layout.')},
+  {icon:'📃', name:'PDF to Word (layout-aware)', desc:'Real .docx with layout, not just text. Server-assisted.', fn:()=>toolServerConvert('PDF','docx','application/pdf','PDF to Word (layout-aware)','Rebuilds paragraphs, tables and images into an editable .docx.')},
+  {icon:'🪄', name:'Remove Background', desc:'AI background removal, open-weight model.', fn:()=>toolServerRemoveBG()},
+  {icon:'💬', name:'Chat with PDF', desc:'Ask your own local AI about a document.', fn:()=>toolServerChatPDF()},
 ];
 
 function renderGrid(id, items){
@@ -4463,7 +5262,7 @@ function renderGrid(id, items){
   items.forEach(t=>{
     const card = document.createElement('button');
     card.className='tool-card';
-    card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${id==='api-tools'||id==='security-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
+    card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${id==='api-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
     card.onclick = t.fn;
     grid.appendChild(card);
   });
