@@ -1,0 +1,81 @@
+name: Validate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  frontend-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Extract and syntax-check inline script
+        run: |
+          node -e "
+          const fs = require('fs');
+          const html = fs.readFileSync('frontend/index.html','utf8');
+          const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+          fs.writeFileSync('/tmp/extracted.js', script);
+          "
+          node --check /tmp/extracted.js
+      - name: Verify every tool card resolves to a real function
+        run: |
+          node -e "
+          const fs = require('fs');
+          const script = fs.readFileSync('/tmp/extracted.js','utf8');
+          const fnDefs = new Set([...script.matchAll(/function (tool\w+)\s*\(/g)].map(m=>m[1]));
+          const fnRefs = [...script.matchAll(/fn:(tool\w+)[,}]/g)].map(m=>m[1]);
+          const wrappedRefs = [...script.matchAll(/fn:\(\)=>(tool\w+)\(/g)].map(m=>m[1]);
+          let missing = 0;
+          [...fnRefs, ...wrappedRefs].forEach(f => { if(!fnDefs.has(f)){ console.error('MISSING:', f); missing++; } });
+          if(missing > 0) process.exit(1);
+          console.log('All', fnRefs.length + wrappedRefs.length, 'tool references resolve.');
+          "
+      - name: Check for duplicate tool names
+        run: |
+          node -e "
+          const fs = require('fs');
+          const html = fs.readFileSync('frontend/index.html','utf8');
+          const names = [...html.matchAll(/name:'([^']*)'/g)].map(m=>m[1]);
+          const seen = {};
+          names.forEach(n => seen[n] = (seen[n]||0) + 1);
+          const dups = Object.entries(seen).filter(([n,c]) => c > 1);
+          if(dups.length > 0){ console.error('Duplicates found:', dups); process.exit(1); }
+          console.log(names.length, 'tool names, no duplicates.');
+          "
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install minimal deps for import check
+        run: pip install fastapi slowapi uvicorn python-multipart
+      - name: Python syntax check
+        run: python3 -m py_compile backend/main.py
+      - name: Import check (catches missing imports/decorator errors)
+        run: |
+          cd backend
+          python3 -c "import main; print('Backend app imports cleanly:', main.app.title)"
+
+  compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose.yml
+        run: |
+          pip install pyyaml
+          python3 -c "
+          import yaml
+          with open('docker-compose.yml') as f:
+              data = yaml.safe_load(f)
+          assert 'services' in data
+          print('Services:', list(data['services'].keys()))
+          "

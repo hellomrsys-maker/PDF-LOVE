@@ -1,0 +1,57 @@
+version: "3.8"
+
+# Production profile: frontend (nginx) + backend (gunicorn/uvicorn workers)
+# + local LLM (Ollama). All same-origin via nginx's /api/ proxy, so no
+# CORS configuration is needed in production.
+#
+# Run:  docker compose up -d
+# Then: docker exec -it $(docker compose ps -q ollama) ollama pull llama3.2
+#
+# Scale the backend horizontally if one box isn't enough:
+#   docker compose up -d --scale backend=3
+# Put a load balancer (nginx/traefik) in front across multiple hosts;
+# on a single Docker host, Docker's internal DNS already round-robins
+# requests across replicas of the same service name.
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      - ALLOWED_ORIGINS=http://localhost
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+volumes:
+  ollama_data:
