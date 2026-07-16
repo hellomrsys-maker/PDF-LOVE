@@ -58,10 +58,15 @@ jobs:
           for f in pdf-lib.min.js pdf.min.js pdf.worker.min.js jszip.min.js \
                    mammoth.browser.min.js jspdf.umd.min.js html2canvas.min.js \
                    qrcode.min.js jsqr.js jsbarcode.all.min.js qpdf.js qpdf.wasm \
-                   qpdf.wasm.b64.js gifenc.min.js; do
+                   qpdf.wasm.b64.js gifenc.min.js xlsx.full.min.js \
+                   tesseract/tesseract.min.js tesseract/worker.min.js \
+                   tesseract/tesseract-core-simd-lstm.wasm.js \
+                   tesseract/tesseract-core-relaxedsimd-lstm.wasm.js \
+                   tesseract/tesseract-core-lstm.wasm.js \
+                   tesseract/lang/eng.traineddata.gz; do
             test -s "frontend/vendor/$f" || { echo "MISSING: vendor/$f"; exit 1; }
           done
-          echo "All 14 vendor assets present."
+          echo "All 21 vendor assets present."
       - name: Base64 WASM copy matches the real qpdf.wasm
         run: |
           node -e "

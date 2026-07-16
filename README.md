@@ -1,8 +1,10 @@
 # Dockbench
 
-A 100-tool PDF, image & video workbench that processes files **on your device by
-default**, with an optional self-hosted backend for the handful of jobs
-that genuinely need server compute. Every dependency in this project is
+A 105-tool PDF, image & video workbench where **everything — OCR, AI
+background removal, compression, conversion — runs on the user's own
+device**. The only server you need is any static file host to deliver the
+app; a self-hosted backend remains available as a purely optional extra
+(it only appears in the UI when one is actually running). Every dependency in this project is
 free and open-source — there is no paid API anywhere in the stack, and
 after the first page load the core app runs **fully offline**.
 
@@ -10,13 +12,14 @@ after the first page load the core app runs **fully offline**.
 
 | | Dockbench | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
 |---|---|---|---|
-| Files stay on-device | ✅ for ~90 of 100 tools | ❌ every tool uploads | ❌ every tool goes to the server |
+| Files stay on-device | ✅ ~100 of 105 tools (incl. OCR & AI cut-out) | ❌ every tool uploads | ❌ every tool goes to the server |
 | Works by double-clicking the HTML file | ✅ no server needed at all | ❌ | ❌ |
 | Video tools (GIF, trim, slideshow, screen rec.) | ✅ on-device | partial, cloud | ❌ |
 | Works offline (PWA) | ✅ core app + encryption | ❌ | ❌ needs the server |
 | Daily limits / subscription | none | 1-2 free tasks/day, then $4-10/mo | none |
 | Real AES-256 encrypt/decrypt in the browser | ✅ (qpdf → WebAssembly) | server-side | server-side |
-| OCR → searchable PDF | ✅ (self-hosted, C-accelerated cleanup) | ✅ (their cloud) | ✅ |
+| OCR → searchable PDF | ✅ **in the browser** (Tesseract→WASM, offline) | ✅ (their cloud) | ✅ (server) |
+| AI background removal | ✅ **in the browser** (RMBG, cached model) | ☁ their cloud | ✅ (server) |
 | Office ↔ PDF (full fidelity) | ✅ (self-hosted LibreOffice) | ✅ (their cloud) | ✅ |
 | AI summarize/translate/chat | ✅ on-device (Transformers.js) or your own Ollama | ☁ their cloud AI | partial |
 | External services required | none (one optional: live FX rates) | their cloud | none |
@@ -89,7 +92,21 @@ generator, QR/barcode, plus text, utility, finance, and fully on-device AI
 tools (summarize, translate, voice-to-text, image captioning via
 Transformers.js — model downloads once, then offline).
 
-**Video tools** (new, all on-device): images → slideshow video with
+**On-device OCR**: the real Tesseract engine compiled to WebAssembly ships
+with the app (`vendor/tesseract`, ~19 MB, precached) — scanned PDFs become
+searchable PDFs or plain text without any server, offline after the first
+visit. More languages: drop `{lang}.traineddata.gz` into
+`vendor/tesseract/lang/` and add the dropdown option in `toolLocalOCR`.
+
+**On-device AI background removal**: the open RMBG model via Transformers.js
+(one ~44 MB download, then cached/offline; GPU-accelerated where available).
+
+**Big-file safety**: heavy tools estimate their memory need against the
+device before starting and suggest a workaround instead of crashing the
+tab; giant results stream directly to disk (File System Access API) and
+page renders are capped at 8192px to block pixel-bomb files.
+
+**Video tools** (all on-device): images → slideshow video with
 crossfades, video → GIF (gifenc, pure JS), trim video (keeps audio),
 screen recorder, and extract-audio-to-WAV. Recording uses the browser's
 MediaRecorder — MP4 where the browser supports it, WebM otherwise, and

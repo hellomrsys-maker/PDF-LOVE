@@ -14,12 +14,12 @@
 <!-- Core libraries are self-hosted in ./vendor (no CDN dependency, works
      fully offline). If a copy of this file is served without the vendor
      directory, each tag falls back to the same pinned version on a CDN. -->
-<script defer src="vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
 <style>
   :root{
     --paper:#F6F3EC;
@@ -537,6 +537,14 @@ function apiErrorHelp(e){
     `or point this app at it via <code>localStorage.setItem('dockbench.apiBase', 'https://your-server')</code>.`;
 }
 
+/* Single, hardened entry point for pdf.js parsing. isEvalSupported:false
+ * closes CVE-2024-4367 (malicious font matrices in a crafted PDF could
+ * otherwise execute JavaScript in this page's context) — essential for an
+ * app whose whole job is opening untrusted files. */
+function getPdfDoc(data){
+  return pdfjsLib.getDocument({data, isEvalSupported:false}).promise;
+}
+
 /* ---------- PDF loading that copes with real-world files ---------- */
 // pdf-lib refuses encrypted PDFs by default and throws a cryptic error.
 // Try normally, then retry ignoring encryption (fine for reading pages of
@@ -569,11 +577,58 @@ function fmtBytes(b){
   return (b/1024/1024).toFixed(2)+' MB';
 }
 function download(blob, filename){
+  // Very large results: stream straight to the user's disk (File System
+  // Access API) instead of materializing a giant blob: URL in RAM. Falls
+  // back to the classic anchor download everywhere else.
+  if(blob.size > 200*1024*1024 && window.showSaveFilePicker){
+    (async ()=>{
+      try{
+        const handle = await showSaveFilePicker({suggestedName: filename});
+        const writable = await handle.createWritable();
+        await blob.stream().pipeTo(writable);
+        return;
+      }catch(e){
+        if(e.name==='AbortError') return; // user cancelled the save dialog
+        _anchorDownload(blob, filename);  // permission/API hiccup — old path
+      }
+    })();
+    return;
+  }
+  _anchorDownload(blob, filename);
+}
+function _anchorDownload(blob, filename){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+/* ---------- memory guard ----------
+   A browser tab gets a finite slice of RAM (as little as ~300 MB on
+   phones). Before a heavy tool starts, estimate what it will need
+   (file size x a per-tool multiplier) against a device-based budget and
+   warn with a concrete workaround instead of crashing the tab mid-job.
+   Returns true to proceed. */
+function memoryGuard(files, multiplier, log){
+  const totalBytes = (Array.isArray(files)?files:[files]).reduce((s,f)=>s+(f?.size||0), 0);
+  const deviceGB = navigator.deviceMemory || 4;          // Chrome/Edge hint; assume mid-range elsewhere
+  const budget = Math.min(deviceGB, 4) * 1024*1024*1024 * 0.25; // ~25% of RAM, capped at 1 GB
+  const needed = totalBytes * multiplier;
+  if(needed <= budget) return true;
+  log.innerHTML = `This is a big job (~${fmtBytes(needed)} of working memory; this device can safely give a browser tab about ${fmtBytes(budget)}). `+
+    `Split the file first (Split PDF / Split by File Size) or run fewer files at once — or <button class="small-btn" id="mg-force">try anyway</button>.`;
+  const forceBtn = log.querySelector('#mg-force');
+  return new Promise(res=>{ forceBtn.onclick = ()=>{ log.textContent=''; res(true); }; });
+}
+
+/* Clamp any canvas dimension: guards pixel-bomb PDFs/images (a crafted
+   tiny file can otherwise demand a multi-gigabyte canvas) and mobile
+   canvas limits. */
+const MAX_CANVAS_DIM = 8192;
+function clampScale(w, h, scale){
+  const m = Math.max(w, h) * scale;
+  return m > MAX_CANVAS_DIM ? scale * MAX_CANVAS_DIM / m : scale;
 }
 
 /* ---------- generic file picker component ---------- */
@@ -601,7 +656,7 @@ function fileRowList(container, files, onRemove){
   files.forEach((f,i)=>{
     const row=document.createElement('div');
     row.className='filerow';
-    row.innerHTML=`<span>${f.name} <span style="color:var(--sage)">(${fmtBytes(f.size)})</span></span>`;
+    row.innerHTML=`<span>${escapeXml(f.name)} <span style="color:var(--sage)">(${fmtBytes(f.size)})</span></span>`;
     const btn=document.createElement('button'); btn.textContent='remove';
     btn.onclick=()=>onRemove(i);
     row.appendChild(btn);
@@ -633,6 +688,7 @@ function toolMergePDF(){
   function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<2; }
   renderList();
   btn.onclick = async ()=>{
+    if(!(await memoryGuard(files, 4, log))) return;
     log.textContent='Merging on-device...';
     const merged = await PDFDocument.create();
     for(const f of files){
@@ -796,13 +852,15 @@ function toolPDFToJPG(){
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
+    if(!(await memoryGuard(file, 6, log))) return;
     log.textContent='Rendering pages on-device...';
     const bytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    const pdf = await getPdfDoc(bytes);
     const zip = new JSZip();
     for(let i=1;i<=pdf.numPages;i++){
       const page = await pdf.getPage(i);
-      const viewport = page.getViewport({scale:2});
+      const _b = page.getViewport({scale:1});
+      const viewport = page.getViewport({scale: clampScale(_b.width, _b.height, 2)});
       const canvas = document.createElement('canvas');
       canvas.width = viewport.width; canvas.height = viewport.height;
       const ctx = canvas.getContext('2d');
@@ -884,7 +942,7 @@ function toolCompressImage(){
   });
 
   function loadPreview(){
-    preview.innerHTML = `<div style="font-size:0.85rem;color:var(--ink-soft)">${file.name} — currently ${fmtBytes(file.size)}</div>`;
+    preview.innerHTML = `<div style="font-size:0.85rem;color:var(--ink-soft)">${escapeXml(file.name)} — currently ${fmtBytes(file.size)}</div>`;
   }
 
   btn.onclick = async ()=>{
@@ -1046,6 +1104,23 @@ async function loadQpdf(){
   return _qpdfModulePromise;
 }
 
+/* Structural PDF optimization with qpdf (C++ via WebAssembly): rebuilds
+ * object streams and recompresses every stream. Lossless — pairs with the
+ * lossy page-recompression in Make PDF Smaller for near server-grade
+ * results, entirely on-device. Returns the smaller of in/out. */
+async function qpdfOptimize(bytes){
+  try{
+    const qpdf = await loadQpdf();
+    qpdf.FS.writeFile('/opt-in.pdf', bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+    qpdf.callMain(['/opt-in.pdf','--object-streams=generate','--compress-streams=y','--recompress-flate','--compression-level=9','/opt-out.pdf']);
+    const out = qpdf.FS.readFile('/opt-out.pdf');
+    qpdf.FS.unlink('/opt-in.pdf'); qpdf.FS.unlink('/opt-out.pdf');
+    return out.length < bytes.length ? out : bytes;
+  }catch(e){
+    return bytes; // engine unavailable — the lossy pass alone still helps
+  }
+}
+
 function toolProtectPDF(){
   const body = panelShell({title:'Protect PDF', desc:'Add a real, standards-compliant password (AES-256) to a PDF — encryption runs in your browser via a WebAssembly build of qpdf.'});
   const note=document.createElement('div'); note.className='note';
@@ -1121,7 +1196,7 @@ function toolRemoveDuplicateBlank(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     await scan();
   }});
   const grid=document.createElement('div'); grid.className='thumb-grid'; body.appendChild(grid);
@@ -1183,7 +1258,7 @@ function toolExtractImages(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Scanning pages on-device...';
     const bytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    const pdf = await getPdfDoc(bytes);
     const zip = new JSZip();
     let count=0;
     for(let i=1;i<=pdf.numPages;i++){
@@ -1590,7 +1665,7 @@ function toolSplitByBookmark(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Reading outline on-device...';
     const bytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    const pdf = await getPdfDoc(bytes);
     const outline = await pdf.getOutline();
     if(!outline || outline.length===0){ log.textContent='No bookmarks found in this PDF.'; return; }
     const marks=[];
@@ -1675,7 +1750,7 @@ function toolTableToCSV(){
     const pageNum = parseInt(document.getElementById('tcsv-page').value)||1;
     log.textContent='Analyzing text positions on-device...';
     const bytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    const pdf = await getPdfDoc(bytes);
     const page = await pdf.getPage(Math.min(pageNum, pdf.numPages));
     const content = await page.getTextContent();
     const items = content.items.map(it=>({ text: it.str, x: it.transform[4], y: Math.round(it.transform[5]) }));
@@ -1699,7 +1774,7 @@ function toolBookmarkEditor(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     doc = await loadPdf(bytes);
     await renderOutline();
   }});
@@ -1795,7 +1870,7 @@ function toolSearchRedact(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     info.textContent = `${file.name} — ${pdfjsDoc.numPages} page(s)`;
   }});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
@@ -1854,7 +1929,8 @@ function toolSearchRedact(){
     const outDoc = await PDFDocument.create();
     for(let i=1;i<=pdfjsDoc.numPages;i++){
       const page = await pdfjsDoc.getPage(i);
-      const viewport = page.getViewport({scale:2});
+      const _b = page.getViewport({scale:1});
+      const viewport = page.getViewport({scale: clampScale(_b.width, _b.height, 2)});
       const canvas = document.createElement('canvas');
       canvas.width=viewport.width; canvas.height=viewport.height;
       const ctx = canvas.getContext('2d');
@@ -1923,7 +1999,7 @@ function toolDigitalStamp(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     pageNum=1; placed=null;
     renderPage();
   }});
@@ -3211,7 +3287,7 @@ function toolHighlightPDF(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     pageNum=1; highlights=[];
     renderPage();
   }});
@@ -4086,7 +4162,7 @@ async function buildDocxBlob(pagesText){
 
 async function extractPdfPagesText(file){
   const bytes = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+  const pdf = await getPdfDoc(bytes);
   const pages = [];
   for(let i=1;i<=pdf.numPages;i++){
     const page = await pdf.getPage(i);
@@ -4179,7 +4255,8 @@ function toolWordToPDF(){
 
 async function renderPdfPageToCanvas(pdf, pageNum, scale){
   const page = await pdf.getPage(pageNum);
-  const viewport = page.getViewport({scale});
+  const base = page.getViewport({scale:1});
+  const viewport = page.getViewport({scale: clampScale(base.width, base.height, scale)});
   const canvas = document.createElement('canvas');
   canvas.width = viewport.width; canvas.height = viewport.height;
   await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
@@ -4199,7 +4276,7 @@ function toolPDFEditor(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     pageNum = 1; annotations = []; undoStack = [];
     buildControls();
     renderPage();
@@ -4348,7 +4425,7 @@ function toolRedact(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     box=null;
     renderPreview();
   }});
@@ -4413,7 +4490,7 @@ function toolOrganizePDF(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     order = Array.from({length:pdfjsDoc.numPages},(_,i)=>i+1);
     await renderThumbs();
   }});
@@ -4508,7 +4585,7 @@ function toolSignPDF(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await pdfjsLib.getDocument({data:bytes}).promise;
+    pdfjsDoc = await getPdfDoc(bytes);
     pageNum=1; placed=null;
     renderPage();
   }});
@@ -4671,9 +4748,10 @@ function toolCompressPDF(){
 
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
+    if(!(await memoryGuard(file, 5, log))) return;
     const mode = tabRow.querySelector('.tab-btn.active').dataset.mode;
     const bytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    const pdf = await getPdfDoc(bytes);
     let outBlob;
 
     if(mode==='target'){
@@ -4702,9 +4780,20 @@ function toolCompressPDF(){
       outBlob = await buildAtQuality(pdf, q, scale, (i,n)=>log.textContent=`Page ${i} of ${n}...`);
     }
 
+    // Lossless structural pass on top (qpdf/WASM): object streams +
+    // stream recompression — the same class of optimization Ghostscript
+    // does server-side, here entirely on-device.
+    log.textContent='Optimizing the file structure...';
+    const optimized = await qpdfOptimize(new Uint8Array(await outBlob.arrayBuffer()));
+    outBlob = new Blob([optimized], {type:'application/pdf'});
+    if(outBlob.size >= file.size){
+      log.textContent = `This PDF is already about as small as this method can make it (${fmtBytes(file.size)}). Try lower sharpness, or it may simply be well-optimized already.`;
+      return;
+    }
+
     const outName = file.name.replace(/\.pdf$/i,'')+'-compressed.pdf';
     download(outBlob, outName);
-    log.innerHTML = `<span class="ok">✓ Done! ${fmtBytes(file.size)} → ${fmtBytes(outBlob.size)}. Nothing was uploaded — this happened on your device.</span>`;
+    log.innerHTML = `<span class="ok">✓ Done! ${fmtBytes(file.size)} → ${fmtBytes(outBlob.size)} (${Math.round((1-outBlob.size/file.size)*100)}% smaller). Nothing was uploaded — this happened on your device.</span>`;
     offerChain(outBlob, outName, log);
   };
 }
@@ -5053,8 +5142,8 @@ function toolComparePDF(){
   const zoneA=document.createElement('div'); const zoneB=document.createElement('div');
   row.appendChild(zoneA); row.appendChild(zoneB);
   body.appendChild(row);
-  buildDropzone(zoneA, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileA=f[0]; pdfA = await pdfjsLib.getDocument({data:await fileA.arrayBuffer()}).promise; }});
-  buildDropzone(zoneB, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileB=f[0]; pdfB = await pdfjsLib.getDocument({data:await fileB.arrayBuffer()}).promise; }});
+  buildDropzone(zoneA, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileA=f[0]; pdfA = await getPdfDoc(await fileA.arrayBuffer()); }});
+  buildDropzone(zoneB, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileB=f[0]; pdfB = await getPdfDoc(await fileB.arrayBuffer()); }});
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Page to compare</label><input type="number" id="cmp-page" value="1" min="1">`;
   body.appendChild(field);
@@ -5083,6 +5172,318 @@ function toolComparePDF(){
     dctx.putImageData(out,0,0);
     canvasWrap.innerHTML=''; canvasWrap.appendChild(diff);
     log.innerHTML='<span class="ok">✓ Compared locally — red areas differ, 0 bytes uploaded.</span>';
+  };
+}
+
+/* ================= ON-DEVICE OFFICE CONVERSIONS (approximate, honest) ================= */
+
+function toolExcelToPDFLocal(){
+  const body = panelShell({title:'Excel to PDF', desc:'Convert a spreadsheet (.xlsx/.xls/.csv) to PDF — entirely on this device.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent='Reads the cell values and lays them out as clean tables, one section per sheet. Great for data sheets and reports; heavy custom formatting (charts, merged-cell art) is simplified.';
+  body.appendChild(note);
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'.xlsx,.xls,.csv,.ods', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a spreadsheet first.';return;}
+    btn.disabled=true;
+    try{
+      log.textContent='Reading the spreadsheet on-device...';
+      await loadScript('vendor/xlsx.full.min.js', {fallbackOnError:false});
+      const wb = window.XLSX.read(await file.arrayBuffer(), {type:'array'});
+      let html = '';
+      wb.SheetNames.forEach(name=>{
+        const sheetHtml = window.XLSX.utils.sheet_to_html(wb.Sheets[name], {header:'', footer:''});
+        html += `<h2 style="font-size:16px;margin:14px 0 8px;">${escapeXml(name)}</h2>` +
+                sheetHtml.replace('<table', '<table style="border-collapse:collapse;font-size:11px;width:100%;" border="1" cellpadding="4"');
+      });
+      if(!html.trim()){ log.textContent='No sheets found in that file.'; btn.disabled=false; return; }
+      log.textContent='Building the PDF on-device...';
+      const holder = document.createElement('div');
+      holder.style.cssText='position:fixed;left:-9999px;top:0;width:760px;padding:16px;font-family:sans-serif;background:#fff;color:#222;';
+      holder.innerHTML = html;
+      document.body.appendChild(holder);
+      const { jsPDF } = window.jspdf;
+      const pdfDoc = new jsPDF('l','pt','a4');
+      await new Promise(resolve=>{
+        pdfDoc.html(holder, { margin:[28,28,28,28], autoPaging:'text', width:786, windowWidth:760,
+          callback:(doc)=>{ download(doc.output('blob'), file.name.replace(/\.[^.]+$/,'')+'.pdf'); resolve(); } });
+      });
+      document.body.removeChild(holder);
+      log.innerHTML='<span class="ok">✓ Done — converted entirely on this device, 0 bytes uploaded.</span>';
+    }catch(e){ log.textContent='Could not convert: '+e.message; }
+    finally{ btn.disabled=false; }
+  };
+}
+
+function toolPptxToPDFLocal(){
+  const body = panelShell({title:'PowerPoint to PDF', desc:'Convert slides (.pptx) to PDF — entirely on this device.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent='Extracts each slide\'s text and images and lays them out one page per slide. Faithful for typical decks; intricate animations/SmartArt are simplified. For pixel-perfect output use PowerPoint\'s own "Save as PDF".';
+  body.appendChild(note);
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'.pptx', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a .pptx first.';return;}
+    btn.disabled=true;
+    try{
+      log.textContent='Unpacking slides on-device...';
+      const zip = await JSZip.loadAsync(await file.arrayBuffer());
+      const slideNames = Object.keys(zip.files)
+        .filter(n=>/^ppt\/slides\/slide\d+\.xml$/.test(n))
+        .sort((a,b)=>parseInt(a.match(/(\d+)/)[1]) - parseInt(b.match(/(\d+)/)[1]));
+      if(slideNames.length===0){ log.textContent='No slides found — is this a valid .pptx?'; btn.disabled=false; return; }
+
+      const doc = await PDFDocument.create();
+      const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+      const parser = new DOMParser();
+      const W=720, H=405; // 16:9 slide at 10in x 5.6in in points
+
+      for(let i=0;i<slideNames.length;i++){
+        log.textContent = `Slide ${i+1} of ${slideNames.length}...`;
+        const xml = parser.parseFromString(await zip.file(slideNames[i]).async('string'), 'application/xml');
+        const page = doc.addPage([W,H]);
+        page.drawRectangle({x:0,y:0,width:W,height:H,color:PDFLib.rgb(1,1,1)});
+
+        // paragraphs: every a:p, text from its a:t runs
+        const paras = [...xml.getElementsByTagName('a:p')].map(pEl=>
+          [...pEl.getElementsByTagName('a:t')].map(t=>t.textContent).join('')
+        ).filter(t=>t.trim());
+
+        // slide images via relationships
+        const relName = slideNames[i].replace('slides/','slides/_rels/')+'.rels';
+        let imgY = H-40;
+        if(zip.file(relName)){
+          const rels = parser.parseFromString(await zip.file(relName).async('string'), 'application/xml');
+          const imgTargets = [...rels.getElementsByTagName('Relationship')]
+            .filter(r=>/image/.test(r.getAttribute('Type')||''))
+            .map(r=>('ppt/'+(r.getAttribute('Target')||'').replace(/^\.\.\//,'')));
+          for(const target of imgTargets.slice(0,2)){ // at most 2 images per slide page
+            const f = zip.file(target);
+            if(!f) continue;
+            try{
+              const bytes = await f.async('uint8array');
+              const img = /\.png$/i.test(target) ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+              const scale = Math.min((W*0.45)/img.width, (H*0.6)/img.height, 1);
+              page.drawImage(img, {x:W-img.width*scale-24, y:H-img.height*scale-40, width:img.width*scale, height:img.height*scale});
+            }catch(e){ /* unsupported format inside pptx — skip image */ }
+          }
+        }
+
+        // text: first para as title, rest as bullets, wrapped to the left column
+        let y = H-52;
+        const maxW = W*0.52;
+        const wrap = (text, size, f)=>{
+          const words = text.split(/\s+/); const lines=[]; let line='';
+          words.forEach(w=>{
+            const t = line ? line+' '+w : w;
+            if(f.widthOfTextAtSize(t, size) > maxW && line){ lines.push(line); line=w; } else line=t;
+          });
+          if(line) lines.push(line);
+          return lines;
+        };
+        paras.forEach((para, pi)=>{
+          const isTitle = pi===0;
+          const size = isTitle ? 20 : 12;
+          const f = isTitle ? bold : font;
+          for(const line of wrap(para.replace(/[^\x20-\x7E]/g,'?'), size, f)){
+            if(y < 30) return;
+            try{ page.drawText((isTitle?'':'•  ')+line, {x:28, y, size, font:f, color:PDFLib.rgb(0.12,0.13,0.12)}); }catch(e){}
+            y -= size*1.45;
+          }
+          y -= isTitle ? 10 : 3;
+        });
+        page.drawText(`${i+1}`, {x:W-30, y:14, size:9, font, color:PDFLib.rgb(0.6,0.6,0.6)});
+      }
+      const out = await doc.save();
+      download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pptx$/i,'')+'.pdf');
+      log.innerHTML=`<span class="ok">✓ Done — ${slideNames.length} slide(s) converted entirely on this device, 0 bytes uploaded.</span>`;
+    }catch(e){ log.textContent='Could not convert: '+e.message; }
+    finally{ btn.disabled=false; }
+  };
+}
+
+/* ================= ON-DEVICE OCR — Tesseract compiled to WebAssembly =================
+   The same Tesseract engine the big services run on servers, running in
+   the user's own browser: engine + English model are self-hosted in
+   vendor/tesseract (~19 MB, precached by the service worker), so after
+   the first visit OCR works fully offline. Nothing is ever uploaded. */
+
+let _tessWorkerPromise = null;
+let _tessOnProgress = null;
+async function getTesseractWorker(){
+  if(IS_FILE) throw new Error('OCR needs the app to be served or installed (browsers block background workers for double-clicked files). Run it from any static host, or install it as an app — processing still happens 100% on this device.');
+  await loadScript('vendor/tesseract/tesseract.min.js', {fallbackOnError:false});
+  if(!_tessWorkerPromise){
+    _tessWorkerPromise = window.Tesseract.createWorker('eng', 1, {
+      workerPath: 'vendor/tesseract/worker.min.js',
+      corePath: 'vendor/tesseract',
+      langPath: 'vendor/tesseract/lang',
+      logger: (m)=>{ if(_tessOnProgress) _tessOnProgress(m); },
+    });
+    _tessWorkerPromise.catch(()=>{ _tessWorkerPromise = null; });
+  }
+  return _tessWorkerPromise;
+}
+
+function toolLocalOCR(){
+  const body = panelShell({title:'OCR — Make Scans Searchable', desc:'Reads the text in scanned PDFs and photos — entirely on this device. Output a searchable PDF (looks identical, text selectable underneath) or plain text.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent = 'Runs Tesseract (the industry-standard OCR engine) compiled to WebAssembly, right here in your browser. The engine ships with the app — nothing is uploaded, and it works offline once the page has loaded.';
+  body.appendChild(note);
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML = `
+    <div class="field"><label>Output</label>
+      <select id="locr-output" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+        <option value="pdf">Searchable PDF (recommended)</option>
+        <option value="text">Plain text (.txt)</option>
+      </select></div>
+    <div class="field"><label>Language</label>
+      <select id="locr-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+        <option value="eng">English</option>
+      </select></div>`;
+  body.appendChild(row);
+  const helper=document.createElement('div'); helper.className='helper-line';
+  helper.textContent='More languages: drop the matching {lang}.traineddata.gz into vendor/tesseract/lang/ and add an option here — see the README.';
+  body.appendChild(helper);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Recognize text (on this device)'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const resultBox=document.createElement('textarea'); resultBox.rows=10; resultBox.style.cssText='display:none;width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);margin-top:10px;'; body.appendChild(resultBox);
+
+  async function pagesAsCanvases(){
+    // Yields {canvas, widthPt, heightPt} per page at ~200 DPI equivalent.
+    const out=[];
+    if((file.type||'').includes('pdf') || /\.pdf$/i.test(file.name)){
+      const pdf = await getPdfDoc(await file.arrayBuffer());
+      for(let i=1;i<=pdf.numPages;i++){
+        const page = await pdf.getPage(i);
+        const base = page.getViewport({scale:1});
+        const scale = Math.min(2.8, 8192/Math.max(base.width, base.height));
+        const viewport = page.getViewport({scale});
+        const canvas=document.createElement('canvas');
+        canvas.width=viewport.width; canvas.height=viewport.height;
+        await page.render({canvasContext:canvas.getContext('2d'), viewport}).promise;
+        out.push({canvas, widthPt:base.width, heightPt:base.height, scale});
+      }
+    } else {
+      const bitmap = await createImageBitmap(file);
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.min(bitmap.width, 8192); canvas.height=Math.min(bitmap.height, 8192);
+      canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+      // Treat image pixels as points at 150 DPI for a sane page size.
+      out.push({canvas, widthPt:canvas.width*72/150, heightPt:canvas.height*72/150, scale:canvas.width/(canvas.width*72/150)});
+    }
+    return out;
+  }
+
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a scanned PDF or an image first.';return;}
+    if(!(await memoryGuard(file, 8, log))) return;
+    btn.disabled=true; resultBox.style.display='none';
+    try{
+      log.textContent='Loading the OCR engine (bundled with the app)...';
+      const worker = await getTesseractWorker();
+      const output = document.getElementById('locr-output').value;
+      const pages = await pagesAsCanvases();
+      const outDoc = output==='pdf' ? await PDFDocument.create() : null;
+      const font = outDoc ? await outDoc.embedFont(PDFLib.StandardFonts.Helvetica) : null;
+      const texts=[];
+      for(let i=0;i<pages.length;i++){
+        _tessOnProgress = (m)=>{
+          if(m.status==='recognizing text') log.textContent = `Page ${i+1} of ${pages.length} — recognizing ${(m.progress*100).toFixed(0)}%`;
+        };
+        const {canvas, widthPt, heightPt, scale} = pages[i];
+        // v7 API: words live nested under blocks -> paragraphs -> lines.
+        const {data} = await worker.recognize(canvas, {}, {blocks:true, text:true});
+        texts.push(data.text);
+        const allWords = (data.blocks||[]).flatMap(b=>(b.paragraphs||[]).flatMap(pa=>(pa.lines||[]).flatMap(l=>l.words||[])));
+        if(outDoc){
+          const jpg = await new Promise(res=>canvas.toBlob(res,'image/jpeg',0.85));
+          const img = await outDoc.embedJpg(await jpg.arrayBuffer());
+          const page = outDoc.addPage([widthPt, heightPt]);
+          page.drawImage(img, {x:0,y:0,width:widthPt,height:heightPt});
+          // Invisible text layer at the recognized word positions: the page
+          // looks identical, but the text underneath is selectable and
+          // searchable — same trick Adobe's "Recognize Text" uses.
+          const words = allWords.filter(w=>w.text && w.text.trim() && w.confidence>35);
+          for(const w of words){
+            const x = w.bbox.x0/scale;
+            const yTop = w.bbox.y0/scale, yBot = w.bbox.y1/scale;
+            const size = Math.max(4, (yBot-yTop)*0.92);
+            try{
+              page.drawText(w.text, {x, y: heightPt - yBot + (yBot-yTop)*0.12, size, font, opacity:0});
+            }catch(e){ /* glyphs outside WinAnsi — skip the word, keep going */ }
+          }
+        }
+        pages[i].canvas = null; // release page bitmap memory as we go
+        log.textContent = `Page ${i+1} of ${pages.length} — done`;
+      }
+      if(outDoc){
+        const bytes = await outDoc.save();
+        download(new Blob([bytes],{type:'application/pdf'}), file.name.replace(/\.(pdf|png|jpe?g|webp|tiff?)$/i,'')+'-searchable.pdf');
+      } else {
+        const txt = texts.join('\n\n--- page break ---\n\n');
+        resultBox.value = txt; resultBox.style.display='block';
+        download(new Blob([txt],{type:'text/plain'}), file.name.replace(/\.[^.]+$/,'')+'.txt');
+      }
+      log.innerHTML = `<span class="ok">✓ Done — ${pages.length} page(s) recognized entirely on this device, 0 bytes uploaded.</span>`;
+    }catch(e){
+      log.textContent = e.message;
+    }finally{ btn.disabled=false; _tessOnProgress=null; }
+  };
+}
+
+function toolLocalRemoveBG(){
+  const body = panelShell({title:'Remove Background', desc:'AI background removal running entirely on this device — returns a transparent PNG.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent='Uses the open RMBG model through Transformers.js, right in your browser (GPU-accelerated where available). First use downloads the model (~44 MB) once; after that it is cached and works offline. Your photo never leaves this device.';
+  body.appendChild(note);
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const previewWrap=document.createElement('div'); previewWrap.style.cssText='text-align:center;margin:10px 0;'; body.appendChild(previewWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Remove background (on this device)'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a photo first.';return;}
+    btn.disabled=true;
+    try{
+      log.textContent='Loading the AI model (downloads once, then cached)...';
+      const segmenter = await getPipeline('background-removal', 'briaai/RMBG-1.4', {
+        progress_callback: (m)=>{ if(m.status==='progress' && m.total) log.textContent = `Downloading model... ${Math.round(m.loaded/m.total*100)}%`; },
+      });
+      log.textContent='Removing background on this device...';
+      const url = URL.createObjectURL(file);
+      const [out] = await segmenter(url);
+      URL.revokeObjectURL(url);
+      // `out` is a RawImage with alpha applied (background-removal task).
+      const canvas = out.toCanvas ? out.toCanvas() : (()=>{
+        const c=document.createElement('canvas'); c.width=out.width; c.height=out.height;
+        c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(out.data), out.width, out.height), 0, 0);
+        return c;
+      })();
+      const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+      const view=document.createElement('canvas'); view.width=canvas.width; view.height=canvas.height;
+      view.getContext('2d').drawImage(canvas,0,0);
+      view.style.cssText='max-width:100%;max-height:280px;border-radius:8px;background:repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 50%/16px 16px;';
+      previewWrap.innerHTML=''; previewWrap.appendChild(view);
+      download(blob, file.name.replace(/\.[^.]+$/,'')+'-nobg.png');
+      log.innerHTML='<span class="ok">✓ Done — processed entirely on this device, 0 bytes uploaded.</span>';
+    }catch(e){
+      log.textContent = navigator.onLine === false
+        ? 'The AI model is not downloaded yet — connect to the internet once, then this works offline forever.'
+        : 'Could not run the model: '+e.message;
+    }finally{ btn.disabled=false; }
   };
 }
 
@@ -5502,13 +5903,15 @@ function toolGrayscalePDF(){
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
+    if(!(await memoryGuard(file, 6, log))) return;
     log.textContent='Rendering pages on-device...';
     const bytes = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data:bytes}).promise;
+    const pdf = await getPdfDoc(bytes);
     const outDoc = await PDFDocument.create();
     for(let i=1;i<=pdf.numPages;i++){
       const page = await pdf.getPage(i);
-      const viewport = page.getViewport({scale:2});
+      const _b = page.getViewport({scale:1});
+      const viewport = page.getViewport({scale: clampScale(_b.width, _b.height, 2)});
       const canvas = document.createElement('canvas');
       canvas.width=viewport.width; canvas.height=viewport.height;
       const ctx = canvas.getContext('2d');
@@ -5817,6 +6220,7 @@ const pdfTools = [
   {icon:'⧉', name:'Crop PDF', desc:'Trim page margins.', fn:toolCropPDF},
   {icon:'🗜️', name:'Make PDF Smaller', desc:'Shrink it to fit an email or upload limit.', fn:toolCompressPDF},
   {icon:'🔧', name:'Repair PDF', desc:'Fix a malformed/broken PDF.', fn:toolRepairPDF},
+  {icon:'🔎', name:'OCR — Make Scans Searchable', desc:'Scan → selectable text or searchable PDF, on-device.', fn:toolLocalOCR},
   {icon:'📷', name:'Scan Document', desc:'Photo → flattened, cropped scan, like Microsoft Lens.', fn:toolScanToPDF},
   {icon:'⇄', name:'Compare PDF', desc:'Highlight differences between two PDFs.', fn:toolComparePDF},
   {icon:'♻️', name:'Remove Duplicate/Blank Pages', desc:'Auto-flag and strip junk pages.', fn:toolRemoveDuplicateBlank},
@@ -5845,8 +6249,8 @@ const convertTools = [
   {icon:'▦', name:'Table to CSV', desc:'Extract a table from one page.', fn:toolTableToCSV},
   {icon:'📊', name:'PDF to PowerPoint', desc:'Each page becomes a slide (.pptx). Server-assisted.', fn:()=>toolServerConvert('PDF','pptx','application/pdf','PDF to PowerPoint','Turns every PDF page into a slide in an editable .pptx deck.')},
   {icon:'📈', name:'PDF to Excel', desc:'Pull tables into a spreadsheet (.xlsx). Server-assisted.', fn:()=>toolServerConvert('PDF','xlsx','application/pdf','PDF to Excel','Detects tables on every page and exports them as sheets in an .xlsx workbook.')},
-  {icon:'📗', name:'PowerPoint to PDF', desc:'Convert .pptx to PDF. Server-assisted.', fn:()=>toolServerConvert('PowerPoint','pdf','.ppt,.pptx,.odp','PowerPoint to PDF','Full-fidelity .pptx/.ppt/.odp to PDF via LibreOffice.')},
-  {icon:'📙', name:'Excel to PDF', desc:'Convert .xlsx to PDF. Server-assisted.', fn:()=>toolServerConvert('Excel','pdf','.xls,.xlsx,.ods,.csv','Excel to PDF','Full-fidelity .xlsx/.xls/.ods to PDF via LibreOffice.')},
+  {icon:'📗', name:'PowerPoint to PDF', desc:'Slides → PDF, on this device.', fn:toolPptxToPDFLocal},
+  {icon:'📙', name:'Excel to PDF', desc:'Spreadsheet → PDF, on this device.', fn:toolExcelToPDFLocal},
   {icon:'📚', name:'PDF to PDF/A', desc:'ISO 19005 archival format. Server-assisted.', fn:()=>toolServerPDFA()},
 ];
 const editTools = [
@@ -5865,6 +6269,7 @@ const securityTools = [
 const imgTools = [
   {icon:'🗜️', name:'Make Image Smaller', desc:'Shrink a photo\'s file size.', fn:toolCompressImage},
   {icon:'⤢', name:'Resize Image', desc:'Set exact pixel dimensions.', fn:toolResizeImage},
+  {icon:'🪄', name:'Remove Background', desc:'AI cut-out on this device — transparent PNG.', fn:toolLocalRemoveBG},
   {icon:'🕵️', name:'Remove Photo Metadata (EXIF)', desc:'See what a photo reveals — GPS, camera, time — then strip it.', fn:toolExifStrip},
   {icon:'🔁', name:'Convert Image Format', desc:'JPG ↔ PNG ↔ WebP, instantly.', fn:toolImageConvert},
   {icon:'⟳', name:'Rotate / Flip Image', desc:'90° steps or mirror, with live preview.', fn:toolRotateFlipImage},
@@ -5885,11 +6290,12 @@ const videoTools = [
   {icon:'🎵', name:'Extract Audio from Video', desc:'Soundtrack → .wav file.', fn:toolExtractAudio},
 ];
 const apiTools = [
-  {icon:'🔎', name:'OCR — Searchable PDF & Text', desc:'Make scans selectable & searchable, C-accelerated cleanup.', fn:()=>toolServerOCR()},
-  {icon:'🗜️', name:'Deep Compress PDF', desc:'Ghostscript-grade shrinking, 5-10x on scans.', fn:()=>toolServerCompressPDF()},
+  {icon:'🔎', name:'OCR (server)', desc:'Tesseract + C-kernel cleanup on your own backend.', fn:()=>toolServerOCR()},
   {icon:'📄', name:'Word/Office to PDF (full fidelity)', desc:'Real LibreOffice rendering of .docx/.doc/.odt/.rtf.', fn:()=>toolServerConvert('Word','pdf','.doc,.docx,.odt,.rtf,.txt,.html','Office to PDF (full fidelity)','Server-side LibreOffice conversion — exact fonts, tables, and layout.')},
+  {icon:'📗', name:'PowerPoint to PDF (full fidelity)', desc:'Exact LibreOffice rendering, on your backend.', fn:()=>toolServerConvert('PowerPoint','pdf','.ppt,.pptx,.odp','PowerPoint to PDF (full fidelity)','Full-fidelity .pptx/.ppt/.odp to PDF via LibreOffice.')},
+  {icon:'📙', name:'Excel to PDF (full fidelity)', desc:'Exact LibreOffice rendering, on your backend.', fn:()=>toolServerConvert('Excel','pdf','.xls,.xlsx,.ods,.csv','Excel to PDF (full fidelity)','Full-fidelity .xlsx/.xls/.ods to PDF via LibreOffice.')},
   {icon:'📃', name:'PDF to Word (layout-aware)', desc:'Real .docx with layout, not just text. Server-assisted.', fn:()=>toolServerConvert('PDF','docx','application/pdf','PDF to Word (layout-aware)','Rebuilds paragraphs, tables and images into an editable .docx.')},
-  {icon:'🪄', name:'Remove Background', desc:'AI background removal, open-weight model.', fn:()=>toolServerRemoveBG()},
+  {icon:'🪄', name:'Remove Background (server)', desc:'rembg on your own backend — for batch/big jobs.', fn:()=>toolServerRemoveBG()},
   {icon:'💬', name:'Chat with PDF', desc:'Ask your own local AI about a document.', fn:()=>toolServerChatPDF()},
 ];
 
@@ -5999,6 +6405,7 @@ const SECTION_IDS = CATEGORIES.slice(1).map(c=>c[0]);
 const POPULAR = ['Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
                  'Protect PDF','Make Image Smaller','Resize Image','PDF to Word','Video to GIF','Invoice Generator'];
 let activeCategory = 'all';
+let serverAvailable = false; // Server tab/tools appear only when a backend answers
 
 const searchInput = document.getElementById('tool-search');
 const noResultsMsg = document.getElementById('search-no-results');
@@ -6010,6 +6417,7 @@ CATEGORIES.forEach(([id,label])=>{
   b.className='cat-tab'+(id==='all'?' active':'');
   b.dataset.cat=id;
   b.textContent=label;
+  if(id==='api-tools') b.style.display='none'; // zero-server by default
   b.onclick=()=>{ searchInput.value=''; setCategory(id); };
   catTabs.appendChild(b);
 });
@@ -6045,6 +6453,11 @@ function applyView(){
     SECTION_IDS.forEach(id=>{
       const grid=document.getElementById(id);
       let sectionAny=false;
+      if(id==='api-tools' && !serverAvailable){
+        grid.classList.add('search-hidden');
+        document.getElementById('label-'+id).classList.add('search-hidden');
+        return;
+      }
       grid.querySelectorAll('.tool-card').forEach(card=>{
         const match = card.textContent.toLowerCase().includes(q);
         card.classList.toggle('search-hidden', !match);
@@ -6060,7 +6473,8 @@ function applyView(){
   // no search: category view
   homeRows.style.display = activeCategory==='all' ? '' : 'none';
   SECTION_IDS.forEach(id=>{
-    const show = activeCategory==='all' || activeCategory===id;
+    let show = activeCategory==='all' || activeCategory===id;
+    if(id==='api-tools' && !serverAvailable) show = false;
     const grid=document.getElementById(id);
     grid.classList.toggle('search-hidden', !show);
     document.getElementById('label-'+id).classList.toggle('search-hidden', !show);
@@ -6081,7 +6495,13 @@ if(!IS_FILE){
   const ctrl = new AbortController();
   setTimeout(()=>ctrl.abort(), 3000);
   fetch(API_BASE+'/capabilities', {signal:ctrl.signal})
-    .then(r=>{ if(r.ok) document.getElementById('backend-dot').classList.add('up'); })
+    .then(r=>{
+      if(!r.ok) return;
+      document.getElementById('backend-dot').classList.add('up');
+      serverAvailable = true;
+      catTabs.querySelector('[data-cat=api-tools]').style.display='';
+      applyView();
+    })
     .catch(()=>{});
 }
 

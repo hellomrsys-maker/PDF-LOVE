@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dockbench-v3';
+const CACHE_NAME = 'dockbench-v4';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Self-hosted libraries: precached so every tool (including the WASM
@@ -17,6 +17,14 @@ const APP_SHELL = [
   './vendor/qpdf.wasm',
   './vendor/qpdf.wasm.b64.js',
   './vendor/gifenc.min.js',
+  './vendor/xlsx.full.min.js',
+  // On-device OCR engine + English model — offline after first visit.
+  './vendor/tesseract/tesseract.min.js',
+  './vendor/tesseract/worker.min.js',
+  './vendor/tesseract/tesseract-core-lstm.wasm.js',
+  './vendor/tesseract/tesseract-core-simd-lstm.wasm.js',
+  './vendor/tesseract/tesseract-core-relaxedsimd-lstm.wasm.js',
+  './vendor/tesseract/lang/eng.traineddata.gz',
   './vendor/fonts/fonts.css',
   './vendor/fonts/fraunces-latin-400-normal.woff2',
   './vendor/fonts/fraunces-latin-600-normal.woff2',
