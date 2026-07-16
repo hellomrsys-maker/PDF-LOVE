@@ -57,10 +57,20 @@ jobs:
         run: |
           for f in pdf-lib.min.js pdf.min.js pdf.worker.min.js jszip.min.js \
                    mammoth.browser.min.js jspdf.umd.min.js html2canvas.min.js \
-                   qrcode.min.js jsqr.js jsbarcode.all.min.js qpdf.js qpdf.wasm; do
+                   qrcode.min.js jsqr.js jsbarcode.all.min.js qpdf.js qpdf.wasm \
+                   qpdf.wasm.b64.js gifenc.min.js; do
             test -s "frontend/vendor/$f" || { echo "MISSING: vendor/$f"; exit 1; }
           done
-          echo "All 12 vendor assets present."
+          echo "All 14 vendor assets present."
+      - name: Base64 WASM copy matches the real qpdf.wasm
+        run: |
+          node -e "
+          const fs = require('fs');
+          const b64 = fs.readFileSync('frontend/vendor/qpdf.wasm.b64.js','utf8').match(/QPDF_WASM_B64 = '([^']+)'/)[1];
+          const real = fs.readFileSync('frontend/vendor/qpdf.wasm');
+          if(!real.equals(Buffer.from(b64,'base64'))){ console.error('qpdf.wasm.b64.js is stale — regenerate it'); process.exit(1); }
+          console.log('qpdf.wasm.b64.js matches qpdf.wasm.');
+          "
       - name: Service worker precache list matches vendor directory
         run: |
           node -e "

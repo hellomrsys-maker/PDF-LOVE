@@ -260,15 +260,61 @@
   .tool-card.search-hidden{display:none;}
   .section-label.search-hidden{display:none;}
   .tools.search-hidden{display:none;}
+
+  /* ================= redesign: nav, tabs, rows, dark mode ================= */
+  header{padding:12px 0 0;}
+  .header-row{display:flex;align-items:center;gap:16px;padding-bottom:12px;}
+  .header-search{flex:1;max-width:520px;margin-left:auto;}
+  .header-search #tool-search{width:100%;padding:10px 14px;font-size:0.92rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);font-family:inherit;color:var(--ink);}
+  .header-search #tool-search:focus{outline:none;border-color:var(--copper);}
+  .cat-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;}
+  .cat-tabs::-webkit-scrollbar{display:none;}
+  .cat-tab{flex-shrink:0;padding:7px 15px;border:1px solid var(--line);border-radius:100px;background:var(--paper-raised);font-size:0.82rem;cursor:pointer;color:var(--ink-soft);font-family:inherit;white-space:nowrap;transition:all .12s;}
+  .cat-tab:hover{border-color:var(--copper);color:var(--copper-deep);}
+  .cat-tab.active{background:var(--copper);border-color:var(--copper);color:#fff;font-weight:600;}
+  .hero{padding:44px 0 28px;}
+  .tool-card{position:relative;display:flex;flex-direction:column;min-height:128px;box-shadow:0 1px 2px rgba(31,36,32,0.05);}
+  .tool-card:hover{box-shadow:0 12px 26px -16px rgba(31,36,32,0.4);}
+  .tool-card .desc{flex:1;}
+  .fav-star{position:absolute;top:8px;right:8px;background:none;border:none;font-size:1rem;cursor:pointer;color:var(--line);padding:4px;line-height:1;transition:transform .12s;}
+  .fav-star:hover{transform:scale(1.25);color:#D9A441;}
+  .fav-star.faved{color:#D9A441;}
+  #home-rows .section-label{margin-top:34px;}
+  #status-pill .backend-dot{width:7px;height:7px;border-radius:50%;background:var(--line);display:inline-block;}
+  #status-pill .backend-dot.up{background:var(--ok);box-shadow:0 0 0 3px rgba(74,120,86,0.2);}
+  @media (max-width:700px){
+    .header-row{flex-wrap:wrap;gap:10px;}
+    .header-search{order:3;flex-basis:100%;max-width:none;}
+    .status-pill{display:none;}
+    .overlay{padding:0;}
+    .panel{border-radius:0;max-width:none;min-height:100dvh;}
+    .hero{padding:28px 0 18px;}
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#181A17; --paper-raised:#22251F; --ink:#ECE8DC; --ink-soft:#A8AD9F;
+      --copper:#D07E4C; --copper-deep:#E0925F; --sage:#8B977F; --line:#3A3E35; --ok:#7FB78F;
+    }
+    header{background:rgba(24,26,23,0.92);}
+    .search-bar-wrap{background:var(--paper);}
+    .tab-btn.active{background:#37281D;}
+    .trace{background:#0E100D;box-shadow:0 18px 40px -20px rgba(0,0,0,0.8);}
+    .sig-pad{background:#ECE8DC;}
+    .canvas-wrap{background:#111;}
+    .tool-card{box-shadow:none;}
+    ::selection{background:var(--copper);color:#181A17;}
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="wrap">
+  <div class="wrap header-row">
     <div class="brand"><span class="dot"></span>Dockbench</div>
-    <div class="status-pill">● offline-capable — nothing uploaded</div>
+    <div class="header-search"><input type="text" id="tool-search" placeholder="Search 100 tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
+    <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
   </div>
+  <nav class="wrap cat-tabs" id="cat-tabs" aria-label="Tool categories"></nav>
 </header>
 
 <div class="wrap">
@@ -290,27 +336,20 @@
       <div class="promise-item"><span class="promise-check">✓</span> No watermark stamped on your file</div>
       <div class="promise-item"><span class="promise-check">✓</span> No file-size ceiling</div>
       <div class="promise-item"><span class="promise-check">✓</span> Works with your Wi-Fi off*</div>
-      <div class="promise-item"><span class="promise-check">✓</span> 70+ tools, all in one place</div>
+      <div class="promise-item"><span class="promise-check">✓</span> 100 tools, all in one place</div>
     </div>
     <div class="helper-line" style="max-width:56ch;">*Everything above the "AI / Server" and "Currency" sections works fully offline once this page has loaded once.</div>
   </section>
 
-  <div class="search-bar-wrap">
-    <input type="text" id="tool-search" placeholder="Search all 60+ tools... (e.g. merge, password, GST, resize)" autocomplete="off">
-    <div class="jump-chips">
-      <button class="jump-chip" data-target="all">All Tools</button>
-      <button class="jump-chip" data-target="pdf-tools">PDF</button>
-      <button class="jump-chip" data-target="convert-tools">Convert</button>
-      <button class="jump-chip" data-target="edit-tools">Edit &amp; Sign</button>
-      <button class="jump-chip" data-target="security-tools">Security</button>
-      <button class="jump-chip" data-target="img-tools">Image</button>
-      <button class="jump-chip" data-target="api-tools">AI / Server</button>
-      <button class="jump-chip" data-target="text-tools">Text</button>
-      <button class="jump-chip" data-target="utility-tools">Utilities</button>
-      <button class="jump-chip" data-target="finance-tools">Finance</button>
-      <button class="jump-chip" data-target="ai-tools">AI (On Your Device)</button>
-    </div>
-    <div id="search-no-results" style="display:none;padding:20px;text-align:center;color:var(--ink-soft);">No tools match that search.</div>
+  <div id="search-no-results" style="display:none;padding:20px;text-align:center;color:var(--ink-soft);">No tools match that search.</div>
+
+  <div id="home-rows">
+    <div class="section-label" id="label-fav-tools">// your pinned tools ★</div>
+    <div class="tools" id="fav-tools"></div>
+    <div class="section-label" id="label-recent-tools">// recently used</div>
+    <div class="tools" id="recent-tools"></div>
+    <div class="section-label" id="label-popular-tools">// most popular</div>
+    <div class="tools" id="popular-tools"></div>
   </div>
 
   <div class="section-label" id="label-pdf-tools">// pdf tools — run entirely on your device</div>
@@ -327,6 +366,9 @@
 
   <div class="section-label" id="label-img-tools">// image &amp; id photo tools — run entirely on your device</div>
   <div class="tools" id="img-tools"></div>
+
+  <div class="section-label" id="label-video-tools">// video tools — run entirely on your device</div>
+  <div class="tools" id="video-tools"></div>
 
   <div class="section-label" id="label-api-tools">// server-assisted tools — optional, files sent only when you use these</div>
   <div class="tools" id="api-tools"></div>
@@ -370,29 +412,52 @@ const VENDOR_FALLBACKS = {
   'vendor/qpdf.js':           'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js',
   'vendor/qpdf.wasm':         'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm',
 };
+const IS_FILE = location.protocol === 'file:';
 async function vendorAsset(path){
   // Returns the local path if it's actually there, else the CDN fallback.
+  // On file:// (double-clicked index.html) fetch() is blocked by CORS for
+  // local files, but plain <script src> tags work fine — so never probe
+  // there, just trust the local path.
+  if(IS_FILE) return path;
   try{ const r = await fetch(path, {method:'HEAD'}); if(r.ok) return path; }catch(e){}
   return VENDOR_FALLBACKS[path] || path;
 }
 const _loadedScripts = {};
-function loadScript(path){
+function loadScript(path, {fallbackOnError=true}={}){
   if(!_loadedScripts[path]){
     _loadedScripts[path] = (async ()=>{
       const src = await vendorAsset(path);
-      await new Promise((res, rej)=>{
+      const tryLoad = (url)=>new Promise((res, rej)=>{
         const s = document.createElement('script');
-        s.src = src;
+        s.src = url;
         s.onload = res;
-        s.onerror = ()=>rej(new Error('Failed to load '+src));
+        s.onerror = ()=>rej(new Error('Failed to load '+url));
         document.head.appendChild(s);
       });
+      try{
+        await tryLoad(src);
+      }catch(e){
+        // e.g. a copy of this file without vendor/ opened via file://
+        const cdn = VENDOR_FALLBACKS[path];
+        if(fallbackOnError && cdn && src!==cdn) await tryLoad(cdn);
+        else throw e;
+      }
     })();
+    _loadedScripts[path].catch(()=>{ delete _loadedScripts[path]; }); // allow retry
   }
   return _loadedScripts[path];
 }
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
-vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+if(IS_FILE){
+  // On file:// a real Worker can't be created from a local URL, and pdf.js's
+  // fake-worker fallback would try (and fail) to fetch the script. Loading
+  // the worker bundle as a classic script defines globalThis.pdfjsWorker,
+  // which pdf.js picks up directly — everything then runs on the main
+  // thread, slower but fully functional offline.
+  loadScript('vendor/pdf.worker.min.js').catch(()=>{});
+} else {
+  vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+}
 
 /* ---------- optional self-hosted backend ---------- */
 // The server-assisted tools (OCR, background removal, Office conversion,
@@ -916,7 +981,15 @@ async function loadQpdf(){
       // qpdf.js is an Emscripten factory that defines a global `Module`
       // when loaded via a plain script tag. Self-hosted in ./vendor, so
       // Protect/Unlock work fully offline; CDN fallback is version-pinned.
-      const wasmPath = await vendorAsset('vendor/qpdf.wasm');
+      let wasmPath;
+      if(IS_FILE){
+        // Browsers block fetching local .wasm files from a file:// page, so
+        // load a base64 copy via a script tag and hand Emscripten a data: URI.
+        await loadScript('vendor/qpdf.wasm.b64.js', {fallbackOnError:false});
+        wasmPath = 'data:application/wasm;base64,' + window.QPDF_WASM_B64;
+      } else {
+        wasmPath = await vendorAsset('vendor/qpdf.wasm');
+      }
       await loadScript('vendor/qpdf.js');
       const createModule = window.Module;
       if(typeof createModule !== 'function') throw new Error('qpdf engine did not initialize');
@@ -3193,24 +3266,39 @@ function toolCardDesigner(kind){
   const isID = kind==='id';
   const body = panelShell({
     title: isID ? 'ID Card Designer' : 'Business Card Designer',
-    desc: isID ? 'Design a full ID/membership card — photo, name, title, ID number — at the standard card size.' : 'Design a business card with your name, title, company, and contact details — plus a QR code people can scan to save your contact straight to their phone.'
+    desc: isID ? 'Pick a template, add photo, name and details — a print-ready ID card at the standard credit-card size.' : 'Pick a template, add your details and logo — plus a QR code people can scan to save your contact straight to their phone.'
   });
   const dims = {w:85.6, h:53.98}; // standard CR80 card size in mm, same as a credit card
   const dpi = 300;
   const outW = Math.round(dims.w/25.4*dpi), outH = Math.round(dims.h/25.4*dpi);
 
-  let photoImg = null;
-  let qrCanvas = null;
+  let photoImg = null, logoImg = null, qrCanvas = null;
+  let template = 'band';
+
+  /* -- step 1: template -- */
+  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a template'; body.appendChild(tplLabel);
+  const tplRow=document.createElement('div'); tplRow.className='tab-row';
+  tplRow.innerHTML = `
+    <button type="button" class="tab-btn active" data-tpl="band"><span class="tab-title">Classic</span><span class="tab-sub">color bands top &amp; bottom</span></button>
+    <button type="button" class="tab-btn" data-tpl="siderail"><span class="tab-title">Modern</span><span class="tab-sub">bold side rail</span></button>
+    <button type="button" class="tab-btn" data-tpl="minimal"><span class="tab-title">Minimal</span><span class="tab-sub">clean &amp; airy</span></button>
+  `;
+  body.appendChild(tplRow);
+  tplRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick=()=>{ tplRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); template=b.dataset.tpl; renderPreview(); };
+  });
+
+  /* -- step 2: details -- */
+  const dtLabel=document.createElement('div'); dtLabel.className='helper-line'; dtLabel.style.cssText='font-weight:600;margin-top:14px;'; dtLabel.textContent='2 · Your details'; body.appendChild(dtLabel);
   const fields = isID
     ? [['name','Full Name','Jordan Rivera'],['title','Title / Role','Member'],['org','Organization','Acme Co.'],['idnum','ID Number','ID-00482']]
     : [['name','Full Name','Jordan Rivera'],['title','Job Title','Product Designer'],['org','Company','Acme Co.']];
-
-  fields.forEach(([id,label,ph])=>{
-    const field=document.createElement('div'); field.className='field';
-    field.innerHTML = `<label>${label}</label><input type="text" id="card-${id}" placeholder="${ph}">`;
-    body.appendChild(field);
-  });
-
+  for(let i=0;i<fields.length;i+=2){
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML = fields.slice(i,i+2).map(([id,label,ph])=>
+      `<div class="field"><label>${label}</label><input type="text" id="card-${id}" placeholder="${ph}"></div>`).join('');
+    body.appendChild(row);
+  }
   if(!isID){
     const row=document.createElement('div'); row.className='row';
     row.innerHTML = `
@@ -3218,26 +3306,54 @@ function toolCardDesigner(kind){
       <div class="field"><label>Email</label><input type="text" id="card-email" placeholder="jordan@acme.com"></div>
     `;
     body.appendChild(row);
+    const row2=document.createElement('div'); row2.className='row';
+    row2.innerHTML = `<div class="field"><label>Website (optional)</label><input type="text" id="card-web" placeholder="acme.com"></div>`;
+    body.appendChild(row2);
     const qrToggle=document.createElement('label'); qrToggle.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
     qrToggle.innerHTML = `<input type="checkbox" id="card-qr-on" checked> Add a QR code people can scan to save your contact`;
     body.appendChild(qrToggle);
   }
 
-  const colorField=document.createElement('div'); colorField.className='field';
-  colorField.innerHTML = `<label>Accent color</label><input type="color" id="card-color" value="#C1683A" style="width:100%;height:44px;border:1px solid var(--line);border-radius:8px;">`;
-  body.appendChild(colorField);
+  /* -- step 3: style -- */
+  const styleLabel=document.createElement('div'); styleLabel.className='helper-line'; styleLabel.style.cssText='font-weight:600;margin-top:14px;'; styleLabel.textContent='3 · Style'; body.appendChild(styleLabel);
+  const PRESETS = ['#C1683A','#2E5A38','#1E4B6E','#6E2E5A','#8A6D1F','#1F2420'];
+  const colorRow=document.createElement('div'); colorRow.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;';
+  PRESETS.forEach((c,i)=>{
+    const sw=document.createElement('button'); sw.type='button'; sw.dataset.swatch=c;
+    sw.style.cssText=`width:34px;height:34px;border-radius:50%;background:${c};border:3px solid ${i===0?'var(--ink)':'transparent'};cursor:pointer;`;
+    sw.onclick=()=>{ document.getElementById('card-color').value=c; colorRow.querySelectorAll('button').forEach(b=>b.style.borderColor='transparent'); sw.style.borderColor='var(--ink)'; renderPreview(); };
+    colorRow.appendChild(sw);
+  });
+  const customColor=document.createElement('input'); customColor.type='color'; customColor.id='card-color'; customColor.value=PRESETS[0];
+  customColor.style.cssText='width:44px;height:34px;border:1px solid var(--line);border-radius:8px;cursor:pointer;';
+  customColor.title='Custom color';
+  colorRow.appendChild(customColor);
+  body.appendChild(colorRow);
 
-  if(isID){
-    const photoField=document.createElement('div'); photoField.className='field';
-    photoField.innerHTML = `<label>Photo (optional)</label>`;
-    body.appendChild(photoField);
-    buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{
-      const img = new Image(); img.onload=()=>{ photoImg=img; renderPreview(); }; img.src = URL.createObjectURL(f[0]);
-    }});
+  const imgRow=document.createElement('div'); imgRow.className='row'; body.appendChild(imgRow);
+  function imagePicker(label, onImg){
+    const wrap=document.createElement('div'); wrap.className='field';
+    wrap.innerHTML=`<label>${label}</label>`;
+    const pick=document.createElement('button'); pick.type='button'; pick.className='small-btn'; pick.textContent='Choose image…';
+    const input=document.createElement('input'); input.type='file'; input.accept='image/*'; input.style.display='none';
+    pick.onclick=()=>input.click();
+    input.onchange=()=>{
+      if(!input.files[0]) return;
+      const img=new Image();
+      img.onload=()=>{ onImg(img); pick.textContent='✓ '+input.files[0].name.slice(0,18); renderPreview(); };
+      img.src=URL.createObjectURL(input.files[0]);
+    };
+    wrap.appendChild(pick); wrap.appendChild(input);
+    imgRow.appendChild(wrap);
   }
+  if(isID) imagePicker('Photo (optional)', img=>photoImg=img);
+  imagePicker('Logo (optional)', img=>logoImg=img);
 
   const previewWrap=document.createElement('div'); previewWrap.style.cssText='margin:16px 0;text-align:center;'; body.appendChild(previewWrap);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Card & Download'; body.appendChild(btn);
+  const btnRow=document.createElement('div'); btnRow.style.cssText='display:flex;gap:10px;flex-wrap:wrap;';
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Download PNG (300 DPI)'; btn.style.flex='1';
+  const btnPdf=document.createElement('button'); btnPdf.className='primary-btn'; btnPdf.textContent='Download print-ready PDF'; btnPdf.style.cssText='flex:1;background:var(--ink);';
+  btnRow.appendChild(btn); btnRow.appendChild(btnPdf); body.appendChild(btnRow);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
   async function buildVCardQR(){
@@ -3246,79 +3362,120 @@ function toolCardDesigner(kind){
     const org = document.getElementById('card-org').value || fields[2][2];
     const phone = document.getElementById('card-phone')?.value || '';
     const email = document.getElementById('card-email')?.value || '';
-    const vcard = `BEGIN:VCARD\nVERSION:3.0\nN:${name}\nFN:${name}\nTITLE:${title}\nORG:${org}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`;
+    const web = document.getElementById('card-web')?.value || '';
+    const vcard = `BEGIN:VCARD\nVERSION:3.0\nN:${name}\nFN:${name}\nTITLE:${title}\nORG:${org}\nTEL:${phone}\nEMAIL:${email}\nURL:${web}\nEND:VCARD`;
     try{
       await loadScript('vendor/qrcode.min.js');
-      const mod = window.QRCodeLib || window.QRCode; // local bundle exports QRCodeLib; CDN build exports QRCode
+      const mod = window.QRCodeLib || window.QRCode;
       const canvas = document.createElement('canvas');
-      await mod.toCanvas(canvas, vcard, {width:200, margin:1});
+      await mod.toCanvas(canvas, vcard, {width:240, margin:1});
       return canvas;
     }catch(e){ return null; }
   }
 
+  function val(id, fallback){ const el=document.getElementById('card-'+id); return (el && el.value) || fallback; }
+
   function buildCanvas(scale){
-    const canvas = document.createElement('canvas'); canvas.width=outW*scale; canvas.height=outH*scale;
+    const W=outW*scale, H=outH*scale;
+    const canvas = document.createElement('canvas'); canvas.width=W; canvas.height=H;
     const ctx = canvas.getContext('2d');
     const color = document.getElementById('card-color').value;
-    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = color; ctx.fillRect(0,0,canvas.width,10*scale);
-    ctx.fillRect(0,canvas.height-6*scale,canvas.width,6*scale);
+    const u = W/430; // design unit so all templates share coordinates
 
-    const name = document.getElementById('card-name').value || fields[0][2];
-    const title = document.getElementById('card-title').value || fields[1][2];
-    const org = document.getElementById('card-org').value || fields[2][2];
-    const last = isID ? (document.getElementById('card-idnum').value || fields[3][2]) : (document.getElementById('card-phone')?.value || fields[2][2]);
+    const name = val('name', fields[0][2]);
+    const title = val('title', fields[1][2]);
+    const org = val('org', fields[2][2]);
+    const extra = isID ? val('idnum', fields[3][2])
+      : [val('phone',''), val('email',''), val('web','')].filter(Boolean).join('  ·  ') || 'jordan@acme.com';
 
-    const padX = 26*scale;
-    let textX = padX;
-    const showQR = !isID && document.getElementById('card-qr-on')?.checked && qrCanvas;
-    let maxTextW = showQR ? canvas.width - 130*scale : canvas.width;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
+    let textX = 26*u, textMax = W-52*u, nameY = 96*u;
+
+    if(template==='band'){
+      ctx.fillStyle=color; ctx.fillRect(0,0,W,12*u); ctx.fillRect(0,H-7*u,W,7*u);
+    } else if(template==='siderail'){
+      ctx.fillStyle=color; ctx.fillRect(0,0,96*u,H);
+      textX = 118*u;
+      if(logoImg){ // logo sits inside the rail, knocked to white circle
+        const s=64*u; ctx.save();
+        ctx.beginPath(); ctx.arc(48*u, 52*u, s/2+6*u, 0, Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        ctx.beginPath(); ctx.arc(48*u, 52*u, s/2, 0, Math.PI*2); ctx.clip();
+        ctx.drawImage(logoImg, 48*u-s/2, 52*u-s/2, s, s); ctx.restore();
+      }
+    } else { // minimal
+      ctx.fillStyle=color; ctx.fillRect(26*u, 118*u, 46*u, 3.5*u);
+      nameY = 104*u;
+    }
+
+    // photo (ID cards)
     if(isID && photoImg){
-      const photoSize = 90*scale;
-      ctx.save();
-      ctx.beginPath(); ctx.arc(padX+photoSize/2, 60*scale+photoSize/2, photoSize/2, 0, Math.PI*2); ctx.clip();
-      ctx.drawImage(photoImg, padX, 60*scale, photoSize, photoSize);
+      const s=96*u, px = template==='siderail' ? W-s-26*u : 26*u, py = (H-s)/2;
+      ctx.save(); ctx.beginPath(); ctx.arc(px+s/2, py+s/2, s/2, 0, Math.PI*2); ctx.clip();
+      const r = Math.max(s/photoImg.width, s/photoImg.height);
+      ctx.drawImage(photoImg, px+(s-photoImg.width*r)/2, py+(s-photoImg.height*r)/2, photoImg.width*r, photoImg.height*r);
       ctx.restore();
-      textX = padX+photoSize+20*scale;
+      if(template!=='siderail') textX = 26*u+s+20*u;
+    }
+    // logo (band/minimal, top-right)
+    if(logoImg && template!=='siderail'){
+      const s=52*u, r=Math.min(s/logoImg.width, s/logoImg.height);
+      ctx.drawImage(logoImg, W-logoImg.width*r-24*u, 22*u, logoImg.width*r, logoImg.height*r);
     }
 
-    ctx.fillStyle = '#1F2420';
-    ctx.font = `700 ${22*scale}px sans-serif`;
-    ctx.fillText(name, textX, 90*scale);
-    ctx.font = `500 ${14*scale}px sans-serif`;
-    ctx.fillStyle = color;
-    ctx.fillText(title, textX, 112*scale);
-    ctx.fillStyle = '#4A5049';
-    ctx.font = `${13*scale}px sans-serif`;
-    ctx.fillText(org, textX, 132*scale);
-    ctx.font = `${12*scale}px monospace`;
-    ctx.fillText(last, textX, 152*scale);
-
+    const showQR = !isID && document.getElementById('card-qr-on')?.checked && qrCanvas;
     if(showQR){
-      const qrSize = 100*scale;
-      ctx.drawImage(qrCanvas, canvas.width-qrSize-20*scale, canvas.height/2-qrSize/2, qrSize, qrSize);
+      const s=104*u;
+      ctx.drawImage(qrCanvas, W-s-22*u, H-s-22*u, s, s);
+      textMax = W-s-70*u;
     }
+
+    const ellipsize = (t, font, max)=>{ ctx.font=font; while(ctx.measureText(t).width>max && t.length>3) t=t.slice(0,-2)+'…'; return t; };
+    ctx.textBaseline='alphabetic';
+    ctx.fillStyle = '#1F2420';
+    let f=`700 ${24*u}px sans-serif`; ctx.font=f;
+    ctx.fillText(ellipsize(name, f, textMax-(textX-26*u)), textX, nameY);
+    f=`500 ${15*u}px sans-serif`; ctx.fillStyle=color; ctx.font=f;
+    ctx.fillText(ellipsize(title, f, textMax-(textX-26*u)), textX, nameY+24*u);
+    f=`${13.5*u}px sans-serif`; ctx.fillStyle='#4A5049'; ctx.font=f;
+    ctx.fillText(ellipsize(org, f, textMax-(textX-26*u)), textX, nameY+44*u);
+    f=`${11.5*u}px monospace`; ctx.font=f;
+    ctx.fillText(ellipsize(extra, f, textMax-(textX-26*u)), textX, nameY+64*u);
     return canvas;
   }
 
+  let _renderQueued=false;
   async function renderPreview(){
-    if(!isID && document.getElementById('card-qr-on')?.checked){
-      qrCanvas = await buildVCardQR();
-    }
-    const canvas = buildCanvas(2.2);
-    canvas.style.cssText = 'max-width:100%;border-radius:8px;border:1px solid var(--line);box-shadow:0 8px 20px -10px rgba(0,0,0,0.3);';
-    previewWrap.innerHTML=''; previewWrap.appendChild(canvas);
+    if(_renderQueued) return; _renderQueued=true;
+    requestAnimationFrame(async ()=>{
+      _renderQueued=false;
+      if(!isID && document.getElementById('card-qr-on')?.checked){ qrCanvas = await buildVCardQR(); }
+      const canvas = buildCanvas(1.4);
+      canvas.style.cssText = 'max-width:100%;border-radius:10px;border:1px solid var(--line);box-shadow:0 10px 24px -12px rgba(0,0,0,0.35);';
+      previewWrap.innerHTML=''; previewWrap.appendChild(canvas);
+    });
   }
   body.addEventListener('input', renderPreview);
   renderPreview();
 
+  async function finalCanvas(){
+    if(!isID && document.getElementById('card-qr-on')?.checked){ qrCanvas = await buildVCardQR(); }
+    return buildCanvas(outW/430);
+  }
   btn.onclick = async ()=>{
     log.textContent = 'Creating your card...';
-    if(!isID && document.getElementById('card-qr-on')?.checked){ qrCanvas = await buildVCardQR(); }
-    const canvas = buildCanvas(1);
+    const canvas = await finalCanvas();
     const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
     download(blob, (isID?'id-card':'business-card')+'.png');
-    log.innerHTML = `<span class="ok">✓ Done! ${outW}×${outH}px (300 DPI, standard card size) — made on your device, nothing uploaded.</span>`;
+    log.innerHTML = `<span class="ok">✓ Done! ${canvas.width}×${canvas.height}px (300 DPI, standard card size) — made on your device, nothing uploaded.</span>`;
+  };
+  btnPdf.onclick = async ()=>{
+    log.textContent = 'Creating print-ready PDF...';
+    const canvas = await finalCanvas();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'mm', format:[dims.w, dims.h]});
+    doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, dims.w, dims.h);
+    download(doc.output('blob'), (isID?'id-card':'business-card')+'.pdf');
+    log.innerHTML = `<span class="ok">✓ Done! Exact ${dims.w}×${dims.h}mm PDF — hand it straight to a print shop.</span>`;
   };
 }
 
@@ -3379,8 +3536,23 @@ function toolBatchIDCards(){
 }
 
 function toolCertificateGenerator(){
-  const body = panelShell({title:'Certificate / Award Maker', desc:'Create a certificate of completion or an award — for a course, event, or recognition.'});
-  const fields = [['recipient','Recipient\'s name','Jordan Rivera'],['reason','For completing / achieving','the Advanced Web Development Course'],['org','Issued by','Acme Learning Academy'],['date','Date','']];
+  const body = panelShell({title:'Certificate / Award Maker', desc:'Pick a style, fill in the details — a print-ready certificate for a course, event, or recognition.'});
+  let certStyle = 'classic', logoImg = null;
+
+  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a style'; body.appendChild(tplLabel);
+  const tplRow=document.createElement('div'); tplRow.className='tab-row';
+  tplRow.innerHTML = `
+    <button type="button" class="tab-btn active" data-tpl="classic"><span class="tab-title">Classic</span><span class="tab-sub">double border</span></button>
+    <button type="button" class="tab-btn" data-tpl="modern"><span class="tab-title">Modern</span><span class="tab-sub">bold side band</span></button>
+    <button type="button" class="tab-btn" data-tpl="elegant"><span class="tab-title">Elegant</span><span class="tab-sub">corner flourishes</span></button>
+  `;
+  body.appendChild(tplRow);
+  tplRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick=()=>{ tplRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); certStyle=b.dataset.tpl; renderPreview(); };
+  });
+
+  const dtLabel=document.createElement('div'); dtLabel.className='helper-line'; dtLabel.style.cssText='font-weight:600;margin-top:14px;'; dtLabel.textContent='2 · Details'; body.appendChild(dtLabel);
+  const fields = [['recipient','Recipient\'s name','Jordan Rivera'],['reason','For completing / achieving','the Advanced Web Development Course'],['org','Issued by','Acme Learning Academy'],['signer','Signature line (name & title, optional)','Dr. A. Director — Program Lead'],['date','Date','']];
   fields.forEach(([id,label,ph])=>{
     const field=document.createElement('div'); field.className='field';
     field.innerHTML = id==='date'
@@ -3388,40 +3560,96 @@ function toolCertificateGenerator(){
       : `<label>${label}</label><input type="text" id="cert-${id}" placeholder="${ph}">`;
     body.appendChild(field);
   });
-  const colorField=document.createElement('div'); colorField.className='field';
-  colorField.innerHTML = `<label>Accent color</label><input type="color" id="cert-color" value="#C1683A" style="width:100%;height:44px;border:1px solid var(--line);border-radius:8px;">`;
-  body.appendChild(colorField);
+
+  const styleLabel=document.createElement('div'); styleLabel.className='helper-line'; styleLabel.style.cssText='font-weight:600;margin-top:14px;'; styleLabel.textContent='3 · Style'; body.appendChild(styleLabel);
+  const PRESETS = ['#C1683A','#2E5A38','#1E4B6E','#6E2E5A','#8A6D1F','#1F2420'];
+  const colorRow=document.createElement('div'); colorRow.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;';
+  PRESETS.forEach((c,i)=>{
+    const sw=document.createElement('button'); sw.type='button';
+    sw.style.cssText=`width:34px;height:34px;border-radius:50%;background:${c};border:3px solid ${i===0?'var(--ink)':'transparent'};cursor:pointer;`;
+    sw.onclick=()=>{ document.getElementById('cert-color').value=c; colorRow.querySelectorAll('button').forEach(b=>b.style.borderColor='transparent'); sw.style.borderColor='var(--ink)'; renderPreview(); };
+    colorRow.appendChild(sw);
+  });
+  const customColor=document.createElement('input'); customColor.type='color'; customColor.id='cert-color'; customColor.value=PRESETS[0];
+  customColor.style.cssText='width:44px;height:34px;border:1px solid var(--line);border-radius:8px;cursor:pointer;';
+  colorRow.appendChild(customColor);
+  body.appendChild(colorRow);
+
+  const logoWrap=document.createElement('div'); logoWrap.className='field';
+  const logoBtn=document.createElement('button'); logoBtn.type='button'; logoBtn.className='small-btn'; logoBtn.textContent='Add a logo / seal image (optional)…';
+  const logoInput=document.createElement('input'); logoInput.type='file'; logoInput.accept='image/*'; logoInput.style.display='none';
+  logoBtn.onclick=()=>logoInput.click();
+  logoInput.onchange=()=>{
+    if(!logoInput.files[0]) return;
+    const img=new Image();
+    img.onload=()=>{ logoImg=img; logoBtn.textContent='✓ '+logoInput.files[0].name.slice(0,22); renderPreview(); };
+    img.src=URL.createObjectURL(logoInput.files[0]);
+  };
+  logoWrap.appendChild(logoBtn); logoWrap.appendChild(logoInput); body.appendChild(logoWrap);
+
   const previewWrap=document.createElement('div'); previewWrap.style.cssText='margin:16px 0;text-align:center;'; body.appendChild(previewWrap);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Certificate & Download PDF'; body.appendChild(btn);
+  const btnRow=document.createElement('div'); btnRow.style.cssText='display:flex;gap:10px;flex-wrap:wrap;';
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Download PDF'; btn.style.flex='1';
+  const btnPng=document.createElement('button'); btnPng.className='primary-btn'; btnPng.textContent='Download PNG'; btnPng.style.cssText='flex:1;background:var(--ink);';
+  btnRow.appendChild(btn); btnRow.appendChild(btnPng); body.appendChild(btnRow);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
   function buildCanvas(scale){
-    const w=1600*scale, h=1131*scale; // A4 landscape-ish at a nice print resolution
+    const w=1600*scale, h=1131*scale;
     const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
     const ctx = canvas.getContext('2d');
     const color = document.getElementById('cert-color').value;
     ctx.fillStyle = '#FBF9F4'; ctx.fillRect(0,0,w,h);
-    ctx.strokeStyle = color; ctx.lineWidth = 6*scale; ctx.strokeRect(30*scale,30*scale,w-60*scale,h-60*scale);
-    ctx.strokeStyle = color; ctx.lineWidth = 1.5*scale; ctx.strokeRect(50*scale,50*scale,w-100*scale,h-100*scale);
+
+    let cx = w/2; // text center; the modern band shifts it right
+    if(certStyle==='classic'){
+      ctx.strokeStyle = color; ctx.lineWidth = 6*scale; ctx.strokeRect(30*scale,30*scale,w-60*scale,h-60*scale);
+      ctx.lineWidth = 1.5*scale; ctx.strokeRect(50*scale,50*scale,w-100*scale,h-100*scale);
+    } else if(certStyle==='modern'){
+      ctx.fillStyle = color; ctx.fillRect(0,0,220*scale,h);
+      ctx.fillStyle = '#FBF9F4';
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth=1.5*scale;
+      for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo((40+i*32)*scale, 0); ctx.lineTo((40+i*32)*scale, h); ctx.stroke(); }
+      cx = 220*scale + (w-220*scale)/2;
+    } else { // elegant: corner flourishes
+      ctx.strokeStyle = color; ctx.lineWidth = 3*scale;
+      const L=140*scale, o=44*scale;
+      [[o,o,1,1],[w-o,o,-1,1],[o,h-o,1,-1],[w-o,h-o,-1,-1]].forEach(([x,y,dx,dy])=>{
+        ctx.beginPath(); ctx.moveTo(x+dx*L, y); ctx.lineTo(x, y); ctx.lineTo(x, y+dy*L); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+dx*L*0.6, y+dy*12*scale); ctx.lineTo(x+dx*12*scale, y+dy*12*scale); ctx.lineTo(x+dx*12*scale, y+dy*L*0.6); ctx.stroke();
+      });
+    }
 
     const recipient = document.getElementById('cert-recipient').value || fields[0][2];
     const reason = document.getElementById('cert-reason').value || fields[1][2];
     const org = document.getElementById('cert-org').value || fields[2][2];
+    const signer = document.getElementById('cert-signer').value;
     const dateVal = document.getElementById('cert-date').value;
     const dateStr = dateVal ? new Date(dateVal).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}) : new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
 
+    if(logoImg){
+      const s=110*scale, r=Math.min(s/logoImg.width, s/logoImg.height);
+      ctx.drawImage(logoImg, cx-logoImg.width*r/2, 70*scale, logoImg.width*r, logoImg.height*r);
+    }
     ctx.textAlign = 'center';
     ctx.fillStyle = color; ctx.font = `600 ${20*scale}px sans-serif`;
-    ctx.fillText('CERTIFICATE OF ACHIEVEMENT', w/2, 190*scale);
+    ctx.fillText('CERTIFICATE OF ACHIEVEMENT', cx, (logoImg?230:190)*scale);
     ctx.fillStyle = '#1F2420'; ctx.font = `700 ${52*scale}px serif`;
-    ctx.fillText(recipient, w/2, 320*scale);
+    ctx.fillText(recipient, cx, (logoImg?350:320)*scale);
     ctx.fillStyle = '#4A5049'; ctx.font = `${22*scale}px sans-serif`;
-    ctx.fillText('for successfully completing', w/2, 400*scale);
+    ctx.fillText('for successfully completing', cx, (logoImg?425:400)*scale);
     ctx.fillStyle = '#1F2420'; ctx.font = `600 ${28*scale}px sans-serif`;
-    wrapCenteredText(ctx, reason, w/2, 460*scale, w-300*scale, 40*scale);
+    wrapCenteredText(ctx, reason, cx, (logoImg?482:460)*scale, w-((certStyle==='modern'?520:300)*scale), 40*scale);
+
+    if(signer){
+      ctx.strokeStyle = '#4A5049'; ctx.lineWidth=1*scale;
+      ctx.beginPath(); ctx.moveTo(cx-180*scale, h-215*scale); ctx.lineTo(cx+180*scale, h-215*scale); ctx.stroke();
+      ctx.fillStyle = '#1F2420'; ctx.font = `${17*scale}px sans-serif`;
+      ctx.fillText(signer, cx, h-188*scale);
+    }
     ctx.fillStyle = '#4A5049'; ctx.font = `${18*scale}px sans-serif`;
-    ctx.fillText(dateStr, w/2, h-160*scale);
-    ctx.fillText(org, w/2, h-120*scale);
+    ctx.fillText(dateStr, cx, h-140*scale);
+    ctx.fillText(org, cx, h-104*scale);
     ctx.textAlign = 'left';
     return canvas;
   }
@@ -3458,6 +3686,13 @@ function toolCertificateGenerator(){
     download(new Blob([out],{type:'application/pdf'}), 'certificate.pdf');
     log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.</span>';
   };
+  btnPng.onclick = async ()=>{
+    log.textContent = 'Creating your certificate...';
+    const canvas = buildCanvas(1);
+    const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+    download(blob, 'certificate.png');
+    log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.</span>';
+  };
 }
 
 function toolInvoiceGenerator(){
@@ -3474,10 +3709,37 @@ function toolInvoiceGenerator(){
     <div class="field"><label>Date</label><input type="date" id="inv-date"></div>
   `;
   body.appendChild(row2);
-  const note=document.createElement('div'); note.className='helper-line'; note.textContent='Line items — one per line, as: description, quantity, unit price'; body.appendChild(note);
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<textarea id="inv-items" rows="6" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder="Website design, 1, 1500&#10;Hosting (monthly), 3, 25"></textarea>`;
-  body.appendChild(field);
+  const note=document.createElement('div'); note.className='helper-line'; note.style.fontWeight='600'; note.textContent='Line items'; body.appendChild(note);
+  const itemsWrap=document.createElement('div'); itemsWrap.id='inv-items-wrap'; body.appendChild(itemsWrap);
+  const addBtn=document.createElement('button'); addBtn.type='button'; addBtn.className='small-btn'; addBtn.textContent='+ Add another item'; body.appendChild(addBtn);
+  const totalsLine=document.createElement('div'); totalsLine.className='helper-line'; totalsLine.style.cssText='text-align:right;font-weight:600;margin-top:8px;'; body.appendChild(totalsLine);
+  function addItemRow(desc='', qty='1', price=''){
+    const row=document.createElement('div'); row.className='row'; row.dataset.invItem='1'; row.style.cssText='margin-bottom:6px;align-items:flex-end;';
+    row.innerHTML = `
+      <div class="field" style="flex:2.4;"><label>Description</label><input type="text" class="inv-desc" placeholder="e.g. Website design" value="${escapeXml(desc)}"></div>
+      <div class="field" style="flex:0.7;"><label>Qty</label><input type="number" class="inv-qty" min="0" step="any" value="${escapeXml(qty)}"></div>
+      <div class="field" style="flex:1;"><label>Unit price</label><input type="number" class="inv-price" min="0" step="any" placeholder="0.00" value="${escapeXml(price)}"></div>
+      <button type="button" class="small-btn" style="margin-bottom:4px;" title="Remove this item">✕</button>`;
+    row.querySelector('button').onclick=()=>{ row.remove(); updateTotals(); };
+    itemsWrap.appendChild(row);
+  }
+  function readItems(){
+    return [...itemsWrap.querySelectorAll('[data-inv-item]')].map(row=>({
+      desc: row.querySelector('.inv-desc').value.trim(),
+      qty: parseFloat(row.querySelector('.inv-qty').value)||0,
+      price: parseFloat(row.querySelector('.inv-price').value)||0,
+    })).filter(it=>it.desc || it.price>0);
+  }
+  function updateTotals(){
+    const items=readItems();
+    const cur=document.getElementById('inv-currency')?.value||'$';
+    const taxRate=parseFloat(document.getElementById('inv-tax')?.value)||0;
+    const sub=items.reduce((s,it)=>s+it.qty*it.price,0);
+    totalsLine.textContent = items.length ? `Subtotal ${cur}${sub.toFixed(2)}${taxRate?` · Tax ${cur}${(sub*taxRate/100).toFixed(2)}`:''} · Total ${cur}${(sub*(1+taxRate/100)).toFixed(2)}` : '';
+  }
+  addBtn.onclick=()=>addItemRow();
+  addItemRow();
+  body.addEventListener('input', updateTotals);
   const row3=document.createElement('div'); row3.className='row';
   row3.innerHTML = `
     <div class="field"><label>Tax rate (%, optional)</label><input type="number" id="inv-tax" value="0"></div>
@@ -3496,11 +3758,8 @@ function toolInvoiceGenerator(){
     const dateStr = dateVal ? new Date(dateVal).toLocaleDateString() : new Date().toLocaleDateString();
     const taxRate = parseFloat(document.getElementById('inv-tax').value)||0;
     const currency = document.getElementById('inv-currency').value || '$';
-    const items = document.getElementById('inv-items').value.trim().split('\n').filter(l=>l.trim()).map(line=>{
-      const [desc,qty,price] = line.split(',').map(s=>s.trim());
-      return { desc: desc||'Item', qty: parseFloat(qty)||1, price: parseFloat(price)||0 };
-    });
-    if(items.length===0){ log.textContent = 'Add at least one line item.'; return; }
+    const items = readItems();
+    if(items.length===0){ log.textContent = 'Fill in at least one line item above (description and price).'; return; }
 
     const doc = await PDFDocument.create();
     const page = doc.addPage([612,792]); // US Letter
@@ -4784,6 +5043,333 @@ function toolComparePDF(){
   };
 }
 
+/* ================= VIDEO TOOLS — all on-device (MediaRecorder / canvas / gifenc) ================= */
+
+// Best video container this browser can record. MP4 where supported
+// (Safari, newer Chrome), WebM everywhere else — labeled honestly in the UI.
+function bestVideoMime(){
+  const candidates = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  for(const c of candidates){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c; }
+  return '';
+}
+function mimeExt(mime){ return mime.startsWith('video/mp4') ? 'mp4' : 'webm'; }
+
+function loadVideoFile(file){
+  return new Promise((res, rej)=>{
+    const v = document.createElement('video');
+    v.preload = 'auto'; v.muted = true; v.playsInline = true;
+    v.onloadedmetadata = ()=>res(v);
+    v.onerror = ()=>rej(new Error('This browser cannot decode that video format.'));
+    v.src = URL.createObjectURL(file);
+  });
+}
+function seekVideo(v, t){
+  return new Promise(res=>{ v.onseeked = ()=>res(); v.currentTime = Math.min(t, Math.max(0, v.duration - 0.001)); });
+}
+
+function toolSlideshowVideo(){
+  const body = panelShell({title:'Images to Slideshow Video', desc:'Turn photos into a video slideshow — pick how long each picture shows, add a smooth crossfade, download a real video file.'});
+  const mime = bestVideoMime();
+  if(!mime){ body.innerHTML += '<div class="note">This browser cannot record video (MediaRecorder unsupported). Try Chrome, Edge, or Firefox.</div>'; return; }
+  let files=[];
+  buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
+  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML = `
+    <div class="field"><label>Seconds per picture</label><input type="number" id="ss-secs" value="3" min="1" max="30" step="0.5"></div>
+    <div class="field"><label>Size</label>
+      <select id="ss-res" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+        <option value="1280x720" selected>720p (1280×720)</option>
+        <option value="1920x1080">1080p (1920×1080)</option>
+        <option value="640x360">Small (640×360)</option>
+      </select></div>`;
+  body.appendChild(row);
+  const fadeOpt=document.createElement('label'); fadeOpt.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
+  fadeOpt.innerHTML=`<input type="checkbox" id="ss-fade" checked> Crossfade between pictures`;
+  body.appendChild(fadeOpt);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create video ('+mimeExt(mime).toUpperCase()+')'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
+  renderList();
+
+  btn.onclick = async ()=>{
+    if(files.length===0){log.textContent='Add some pictures first.';return;}
+    btn.disabled = true;
+    try{
+      log.textContent='Preparing pictures...';
+      const bitmaps = [];
+      for(const f of files) bitmaps.push(await createImageBitmap(f));
+      const [W,H] = document.getElementById('ss-res').value.split('x').map(Number);
+      const secs = Math.max(0.5, parseFloat(document.getElementById('ss-secs').value)||3);
+      const fade = document.getElementById('ss-fade').checked ? Math.min(0.8, secs/4) : 0;
+
+      const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
+      const ctx=canvas.getContext('2d');
+      const stream = canvas.captureStream(30);
+      const rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond: 6_000_000});
+      const chunks=[]; rec.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+      const done = new Promise(res=>{ rec.onstop = res; });
+      rec.start(200);
+
+      const drawFitted = (bmp, alpha)=>{
+        ctx.globalAlpha = alpha;
+        const r = Math.min(W/bmp.width, H/bmp.height);
+        const w=bmp.width*r, h=bmp.height*r;
+        ctx.drawImage(bmp, (W-w)/2, (H-h)/2, w, h);
+        ctx.globalAlpha = 1;
+      };
+      const total = files.length*secs;
+      const t0 = performance.now();
+      await new Promise(resolve=>{
+        function frame(now){
+          const t = (now-t0)/1000;
+          if(t >= total){ resolve(); return; }
+          const i = Math.min(files.length-1, Math.floor(t/secs));
+          const tin = t - i*secs;
+          ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+          drawFitted(bitmaps[i], 1);
+          if(fade && tin > secs-fade && i+1 < bitmaps.length){
+            drawFitted(bitmaps[i+1], (tin-(secs-fade))/fade);
+          }
+          log.textContent = `Recording... ${Math.min(100, Math.round(t/total*100))}%`;
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      });
+      rec.stop();
+      await done;
+      const blob = new Blob(chunks, {type:mime});
+      download(blob, 'slideshow.'+mimeExt(mime));
+      log.innerHTML = `<span class="ok">✓ Done — ${files.length} picture(s), ${Math.round(total)}s, ${fmtBytes(blob.size)}. Made entirely on your device.</span>`;
+    }catch(e){
+      log.textContent = 'Could not create the video: '+e.message;
+    }finally{ btn.disabled=false; }
+  };
+}
+
+function toolVideoToGIF(){
+  const body = panelShell({title:'Video to GIF', desc:'Turn a clip from any video into a shareable GIF — pick the moment, size, and smoothness.'});
+  let file=null, video=null;
+  buildDropzone(body, {multiple:false, accept:'video/*', onFiles: async (f)=>{
+    file=f[0];
+    try{
+      video = await loadVideoFile(file);
+      info.textContent = `${file.name} — ${video.duration.toFixed(1)}s, ${video.videoWidth}×${video.videoHeight}`;
+      document.getElementById('vg-end').value = Math.min(3, video.duration).toFixed(1);
+      document.getElementById('vg-end').max = video.duration;
+      document.getElementById('vg-start').max = video.duration;
+    }catch(e){ file=null; log.textContent=e.message; }
+  }});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML = `
+    <div class="field"><label>Start at (seconds)</label><input type="number" id="vg-start" value="0" min="0" step="0.1"></div>
+    <div class="field"><label>End at (seconds)</label><input type="number" id="vg-end" value="3" min="0.1" step="0.1"></div>`;
+  body.appendChild(row);
+  const row2=document.createElement('div'); row2.className='row';
+  row2.innerHTML = `
+    <div class="field"><label>Width (px)</label><input type="number" id="vg-width" value="480" min="64" max="1280"></div>
+    <div class="field"><label>Frames per second</label>
+      <select id="vg-fps" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+        <option value="10" selected>10 (small file)</option><option value="15">15 (smoother)</option><option value="20">20 (smoothest)</option>
+      </select></div>`;
+  body.appendChild(row2);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create GIF'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  btn.onclick = async ()=>{
+    if(!video){log.textContent='Choose a video first.';return;}
+    btn.disabled=true;
+    try{
+      await loadScript('vendor/gifenc.min.js', {fallbackOnError:false});
+      const { GIFEncoder, quantize, applyPalette } = window.GIFEnc;
+      const start = Math.max(0, parseFloat(document.getElementById('vg-start').value)||0);
+      const end = Math.min(video.duration, parseFloat(document.getElementById('vg-end').value)||start+3);
+      if(end<=start){ log.textContent='"End" must be after "start".'; btn.disabled=false; return; }
+      if(end-start > 30){ log.textContent='Keep GIFs under 30 seconds — they get huge fast.'; btn.disabled=false; return; }
+      const fps = parseInt(document.getElementById('vg-fps').value)||10;
+      const W = Math.min(1280, Math.max(64, parseInt(document.getElementById('vg-width').value)||480));
+      const H = Math.round(W * video.videoHeight/video.videoWidth) & ~1;
+
+      const canvas=document.createElement('canvas'); canvas.width=W; canvas.height=H;
+      const ctx=canvas.getContext('2d', {willReadFrequently:true});
+      const gif = GIFEncoder();
+      const frames = Math.floor((end-start)*fps);
+      for(let i=0;i<frames;i++){
+        await seekVideo(video, start + i/fps);
+        ctx.drawImage(video, 0, 0, W, H);
+        const {data} = ctx.getImageData(0,0,W,H);
+        const palette = quantize(data, 256);
+        const index = applyPalette(data, palette);
+        gif.writeFrame(index, W, H, {palette, delay: Math.round(1000/fps)});
+        log.textContent = `Encoding frame ${i+1} of ${frames}...`;
+      }
+      gif.finish();
+      const blob = new Blob([gif.bytes()], {type:'image/gif'});
+      download(blob, file.name.replace(/\.[^.]+$/,'')+'.gif');
+      log.innerHTML = `<span class="ok">✓ Done — ${frames} frames, ${fmtBytes(blob.size)}. Made entirely on your device.</span>`;
+    }catch(e){
+      log.textContent = 'Could not create the GIF: '+e.message;
+    }finally{ btn.disabled=false; }
+  };
+}
+
+function toolTrimVideo(){
+  const body = panelShell({title:'Trim Video', desc:'Cut a clip out of a longer video — keeps the sound, nothing uploaded.'});
+  const mime = bestVideoMime();
+  if(!mime){ body.innerHTML += '<div class="note">This browser cannot re-encode video (MediaRecorder unsupported). Try Chrome, Edge, or Firefox.</div>'; return; }
+  const note=document.createElement('div'); note.className='note';
+  note.textContent='The clip is re-recorded in real time on your device, so trimming a 20-second clip takes about 20 seconds. Output is '+mimeExt(mime).toUpperCase()+'.';
+  body.appendChild(note);
+  let file=null, video=null;
+  buildDropzone(body, {multiple:false, accept:'video/*', onFiles: async (f)=>{
+    file=f[0];
+    try{
+      video = await loadVideoFile(file);
+      video.controls = true; video.muted = false;
+      video.style.cssText='max-width:100%;border-radius:8px;margin:8px 0;';
+      previewWrap.innerHTML=''; previewWrap.appendChild(video);
+      document.getElementById('tv-end').value = video.duration.toFixed(1);
+      info.textContent = `${file.name} — ${video.duration.toFixed(1)}s`;
+    }catch(e){ file=null; log.textContent=e.message; }
+  }});
+  const info=document.createElement('div'); info.style.margin='8px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const previewWrap=document.createElement('div'); body.appendChild(previewWrap);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML = `
+    <div class="field"><label>Keep from (seconds)</label><input type="number" id="tv-start" value="0" min="0" step="0.1"></div>
+    <div class="field"><label>Keep until (seconds)</label><input type="number" id="tv-end" value="10" min="0.1" step="0.1"></div>`;
+  body.appendChild(row);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Trim & download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  btn.onclick = async ()=>{
+    if(!video){log.textContent='Choose a video first.';return;}
+    const start = Math.max(0, parseFloat(document.getElementById('tv-start').value)||0);
+    const end = Math.min(video.duration, parseFloat(document.getElementById('tv-end').value)||video.duration);
+    if(end<=start){ log.textContent='"Until" must be after "from".'; return; }
+    btn.disabled=true;
+    try{
+      await seekVideo(video, start);
+      video.muted = false; video.volume = 0; // decode audio without playing it out loud
+      const stream = video.captureStream ? video.captureStream() : video.mozCaptureStream();
+      const rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond: 8_000_000});
+      const chunks=[]; rec.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+      const done = new Promise(res=>{ rec.onstop = res; });
+      rec.start(200);
+      await video.play();
+      await new Promise(resolve=>{
+        const tick = ()=>{
+          if(video.currentTime >= end || video.ended){ resolve(); return; }
+          log.textContent = `Recording... ${Math.round((video.currentTime-start)/(end-start)*100)}%`;
+          requestAnimationFrame(tick);
+        };
+        tick();
+      });
+      video.pause();
+      rec.stop();
+      await done;
+      video.volume = 1;
+      const blob = new Blob(chunks, {type:mime});
+      download(blob, file.name.replace(/\.[^.]+$/,'')+'-trimmed.'+mimeExt(mime));
+      log.innerHTML = `<span class="ok">✓ Done — ${(end-start).toFixed(1)}s clip, ${fmtBytes(blob.size)}. Made entirely on your device.</span>`;
+    }catch(e){
+      log.textContent = 'Could not trim: '+e.message;
+    }finally{ btn.disabled=false; }
+  };
+}
+
+function toolScreenRecorder(){
+  const body = panelShell({title:'Screen Recorder', desc:'Record your screen (a tab, a window, or everything) straight from the browser — no install, no upload, no time limit.'});
+  const mime = bestVideoMime();
+  if(!mime || !navigator.mediaDevices?.getDisplayMedia){ body.innerHTML += '<div class="note">This browser cannot record the screen. Try Chrome, Edge, or Firefox on a computer.</div>'; return; }
+  const micOpt=document.createElement('label'); micOpt.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
+  micOpt.innerHTML=`<input type="checkbox" id="sr-mic"> Also record my microphone (narration)`;
+  body.appendChild(micOpt);
+  const btnStart=document.createElement('button'); btnStart.className='primary-btn'; btnStart.textContent='● Start recording'; body.appendChild(btnStart);
+  const btnStop=document.createElement('button'); btnStop.className='primary-btn'; btnStop.textContent='■ Stop & download'; btnStop.style.cssText='display:none;background:#A6342A;'; body.appendChild(btnStop);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  let rec=null, chunks=[], streams=[], timer=null, t0=0;
+
+  btnStart.onclick = async ()=>{
+    try{
+      const display = await navigator.mediaDevices.getDisplayMedia({video:true, audio:true});
+      streams=[display];
+      let tracks = [...display.getTracks()];
+      if(document.getElementById('sr-mic').checked){
+        try{
+          const mic = await navigator.mediaDevices.getUserMedia({audio:true});
+          streams.push(mic);
+          tracks = tracks.concat(mic.getAudioTracks());
+        }catch(e){ log.textContent='Microphone not available — recording without it.'; }
+      }
+      const combined = new MediaStream(tracks);
+      chunks=[];
+      rec = new MediaRecorder(combined, {mimeType:mime});
+      rec.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
+      rec.onstop = ()=>{
+        const blob = new Blob(chunks, {type:mime});
+        download(blob, 'screen-recording.'+mimeExt(mime));
+        log.innerHTML = `<span class="ok">✓ Saved — ${fmtBytes(blob.size)}. The recording never left your device.</span>`;
+        streams.forEach(s=>s.getTracks().forEach(t=>t.stop()));
+        btnStart.style.display='inline-block'; btnStop.style.display='none';
+        clearInterval(timer);
+      };
+      display.getVideoTracks()[0].onended = ()=>{ if(rec && rec.state!=='inactive') rec.stop(); };
+      rec.start(500);
+      t0=Date.now();
+      timer=setInterval(()=>{ log.textContent = `Recording... ${Math.round((Date.now()-t0)/1000)}s (click Stop, or end sharing from the browser bar)`; }, 500);
+      btnStart.style.display='none'; btnStop.style.display='inline-block';
+    }catch(e){
+      log.textContent = 'Recording did not start: '+(e.name==='NotAllowedError' ? 'permission was declined.' : e.message);
+    }
+  };
+  btnStop.onclick = ()=>{ if(rec && rec.state!=='inactive') rec.stop(); };
+}
+
+function toolExtractAudio(){
+  const body = panelShell({title:'Extract Audio from Video', desc:'Pull the soundtrack out of a video as a standard WAV audio file.'});
+  let file=null;
+  buildDropzone(body, {multiple:false, accept:'video/*,audio/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .wav'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  function encodeWav(audioBuffer){
+    const ch = Math.min(2, audioBuffer.numberOfChannels), rate = audioBuffer.sampleRate, len = audioBuffer.length;
+    const data = new DataView(new ArrayBuffer(44 + len*ch*2));
+    const writeStr = (o,str)=>{ for(let i=0;i<str.length;i++) data.setUint8(o+i, str.charCodeAt(i)); };
+    writeStr(0,'RIFF'); data.setUint32(4, 36+len*ch*2, true); writeStr(8,'WAVE');
+    writeStr(12,'fmt '); data.setUint32(16,16,true); data.setUint16(20,1,true); data.setUint16(22,ch,true);
+    data.setUint32(24,rate,true); data.setUint32(28,rate*ch*2,true); data.setUint16(32,ch*2,true); data.setUint16(34,16,true);
+    writeStr(36,'data'); data.setUint32(40,len*ch*2,true);
+    let o=44;
+    const chans = Array.from({length:ch},(_,c)=>audioBuffer.getChannelData(c));
+    for(let i=0;i<len;i++) for(let c=0;c<ch;c++){
+      const v = Math.max(-1, Math.min(1, chans[c][i]));
+      data.setInt16(o, v<0 ? v*0x8000 : v*0x7FFF, true); o+=2;
+    }
+    return new Blob([data.buffer], {type:'audio/wav'});
+  }
+
+  btn.onclick = async ()=>{
+    if(!file){log.textContent='Choose a video first.';return;}
+    btn.disabled=true;
+    log.textContent='Decoding audio on-device (long videos take a moment)...';
+    try{
+      const arrayBuf = await file.arrayBuffer();
+      const ac = new (window.AudioContext||window.webkitAudioContext)();
+      const audioBuffer = await ac.decodeAudioData(arrayBuf);
+      ac.close();
+      const blob = encodeWav(audioBuffer);
+      download(blob, file.name.replace(/\.[^.]+$/,'')+'.wav');
+      log.innerHTML = `<span class="ok">✓ Done — ${audioBuffer.duration.toFixed(1)}s of audio, ${fmtBytes(blob.size)}. Made entirely on your device.</span>`;
+    }catch(e){
+      log.textContent = 'Could not decode audio from this file: '+e.message;
+    }finally{ btn.disabled=false; }
+  };
+}
+
 /* ================= NEW: flatten, sanitize, privacy & image utilities ================= */
 
 function toolFlattenPDF(){
@@ -5248,6 +5834,13 @@ const imgTools = [
   {icon:'🏅', name:'Certificate / Award Maker', desc:'For course completions, events, or recognition.', fn:toolCertificateGenerator},
   {icon:'🧾', name:'Invoice Generator', desc:'Line items, totals, tax — a real professional invoice.', fn:toolInvoiceGenerator},
 ];
+const videoTools = [
+  {icon:'🎞️', name:'Images to Slideshow Video', desc:'Photos → a real video, with crossfades.', fn:toolSlideshowVideo},
+  {icon:'🎬', name:'Video to GIF', desc:'Any clip → a shareable GIF.', fn:toolVideoToGIF},
+  {icon:'✂️', name:'Trim Video', desc:'Cut a clip, keep the sound.', fn:toolTrimVideo},
+  {icon:'🔴', name:'Screen Recorder', desc:'Record a tab, window, or screen — no install.', fn:toolScreenRecorder},
+  {icon:'🎵', name:'Extract Audio from Video', desc:'Soundtrack → .wav file.', fn:toolExtractAudio},
+];
 const apiTools = [
   {icon:'🔎', name:'OCR — Searchable PDF & Text', desc:'Make scans selectable & searchable, C-accelerated cleanup.', fn:()=>toolServerOCR()},
   {icon:'🗜️', name:'Deep Compress PDF', desc:'Ghostscript-grade shrinking, 5-10x on scans.', fn:()=>toolServerCompressPDF()},
@@ -5257,14 +5850,46 @@ const apiTools = [
   {icon:'💬', name:'Chat with PDF', desc:'Ask your own local AI about a document.', fn:()=>toolServerChatPDF()},
 ];
 
+/* ---------- card factory, favorites & recents ---------- */
+const toolIndex = {}; // name -> {tool, sectionId}
+let favs = new Set(JSON.parse(localStorage.getItem('dockbench.favs')||'[]'));
+let recents = JSON.parse(localStorage.getItem('dockbench.recents')||'[]');
+
+function openTool(t){
+  recents = [t.name, ...recents.filter(n=>n!==t.name)].slice(0,8);
+  try{ localStorage.setItem('dockbench.recents', JSON.stringify(recents)); }catch(e){}
+  renderHomeRows();
+  t.fn();
+}
+function makeCard(t, sectionId){
+  const card = document.createElement('button');
+  card.className='tool-card';
+  card.dataset.tool = t.name;
+  card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${sectionId==='api-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
+  const star=document.createElement('span');
+  star.className='fav-star'+(favs.has(t.name)?' faved':'');
+  star.textContent = favs.has(t.name) ? '★' : '☆';
+  star.title = 'Pin this tool to the top';
+  star.setAttribute('role','button');
+  star.onclick = (e)=>{
+    e.stopPropagation();
+    if(favs.has(t.name)) favs.delete(t.name); else favs.add(t.name);
+    try{ localStorage.setItem('dockbench.favs', JSON.stringify([...favs])); }catch(e2){}
+    document.querySelectorAll(`.tool-card[data-tool="${CSS.escape(t.name)}"] .fav-star`).forEach(st=>{
+      st.classList.toggle('faved', favs.has(t.name));
+      st.textContent = favs.has(t.name) ? '★' : '☆';
+    });
+    renderHomeRows();
+  };
+  card.appendChild(star);
+  card.onclick = ()=>openTool(t);
+  return card;
+}
 function renderGrid(id, items){
   const grid = document.getElementById(id);
   items.forEach(t=>{
-    const card = document.createElement('button');
-    card.className='tool-card';
-    card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${id==='api-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
-    card.onclick = t.fn;
-    grid.appendChild(card);
+    toolIndex[t.name] = {tool:t, sectionId:id};
+    grid.appendChild(makeCard(t, id));
   });
 }
 renderGrid('pdf-tools', pdfTools);
@@ -5272,6 +5897,7 @@ renderGrid('convert-tools', convertTools);
 renderGrid('edit-tools', editTools);
 renderGrid('security-tools', securityTools);
 renderGrid('img-tools', imgTools);
+renderGrid('video-tools', videoTools);
 renderGrid('api-tools', apiTools);
 
 const textTools = [
@@ -5319,60 +5945,102 @@ const aiTools = [
 ];
 renderGrid('ai-tools', aiTools);
 
-// --- Search: filters every tool card live by name/description across all sections ---
+/* ---------- navigation: category tabs, home rows, search ---------- */
+const CATEGORIES = [
+  ['all','All'], ['pdf-tools','PDF'], ['convert-tools','Convert'], ['edit-tools','Edit & Sign'],
+  ['security-tools','Security'], ['img-tools','Images'], ['video-tools','Video'],
+  ['text-tools','Text'], ['utility-tools','Utilities'], ['finance-tools','Finance'],
+  ['ai-tools','AI on-device'], ['api-tools','Server'],
+];
+const SECTION_IDS = CATEGORIES.slice(1).map(c=>c[0]);
+const POPULAR = ['Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
+                 'Protect PDF','Make Image Smaller','Resize Image','PDF to Word','Video to GIF','Invoice Generator'];
+let activeCategory = 'all';
+
 const searchInput = document.getElementById('tool-search');
-const allCards = [...document.querySelectorAll('.tool-card')];
-const allSectionLabels = [...document.querySelectorAll('.section-label')];
 const noResultsMsg = document.getElementById('search-no-results');
-searchInput.addEventListener('input', ()=>{
-  const q = searchInput.value.trim().toLowerCase();
-  let anyVisible = false;
-  const sectionHasMatch = {};
-  allCards.forEach(card=>{
-    const text = card.textContent.toLowerCase();
-    const match = !q || text.includes(q);
-    card.classList.toggle('search-hidden', !match);
-    if(match){ anyVisible = true; sectionHasMatch[card.parentElement.id] = true; }
-  });
-  allSectionLabels.forEach(label=>{
-    const gridId = label.id.replace('label-','');
-    const hasMatch = !q || sectionHasMatch[gridId];
-    label.classList.toggle('search-hidden', !hasMatch);
-  });
-  noResultsMsg.style.display = (q && !anyVisible) ? 'block' : 'none';
+const homeRows = document.getElementById('home-rows');
+const catTabs = document.getElementById('cat-tabs');
+
+CATEGORIES.forEach(([id,label])=>{
+  const b=document.createElement('button');
+  b.className='cat-tab'+(id==='all'?' active':'');
+  b.dataset.cat=id;
+  b.textContent=label;
+  b.onclick=()=>{ searchInput.value=''; setCategory(id); };
+  catTabs.appendChild(b);
 });
 
-// --- Jump chips: filter down to ONE category at a time (feels like its own page) ---
-const allGrids = [...document.querySelectorAll('.tools')];
-let activeCategory = 'all';
-function applyChipFilter(){
-  if(activeCategory==='all'){
-    allGrids.forEach(g=>g.classList.remove('search-hidden'));
-    allSectionLabels.forEach(l=>l.classList.remove('search-hidden'));
-  } else {
-    allGrids.forEach(g=>g.classList.toggle('search-hidden', g.id!==activeCategory));
-    allSectionLabels.forEach(l=>l.classList.toggle('search-hidden', l.id!=='label-'+activeCategory));
-  }
+function fillRow(gridId, labelId, names){
+  const grid=document.getElementById(gridId), label=document.getElementById(labelId);
+  grid.innerHTML='';
+  const items = names.map(n=>toolIndex[n]).filter(Boolean);
+  items.forEach(({tool, sectionId})=>grid.appendChild(makeCard(tool, sectionId)));
+  const show = items.length>0;
+  grid.style.display = show?'':'none';
+  label.style.display = show?'':'none';
 }
-document.querySelectorAll('.jump-chip').forEach(chip=>{
-  chip.addEventListener('click', ()=>{
-    activeCategory = (activeCategory===chip.dataset.target) ? 'all' : chip.dataset.target;
-    document.querySelectorAll('.jump-chip').forEach(c=>c.classList.remove('chip-active'));
-    if(activeCategory!=='all') chip.classList.add('chip-active');
-    searchInput.value = ''; // clear any search so the filter is purely by category
-    allCards.forEach(card=>card.classList.remove('search-hidden')); // clear any stale per-card hide state from a prior search
-    applyChipFilter();
-    document.querySelector('.search-bar-wrap').scrollIntoView({behavior:'smooth', block:'start'});
-  });
-});
-// Typing a search always shows all categories again, since search already narrows things down
-searchInput.addEventListener('focus', ()=>{
-  if(activeCategory!=='all'){
-    activeCategory='all';
-    document.querySelectorAll('.jump-chip').forEach(c=>c.classList.remove('chip-active'));
-    applyChipFilter();
+function renderHomeRows(){
+  fillRow('fav-tools','label-fav-tools',[...favs]);
+  fillRow('recent-tools','label-recent-tools',recents);
+  fillRow('popular-tools','label-popular-tools',POPULAR.filter(n=>!favs.has(n)));
+}
+renderHomeRows();
+
+function setCategory(cat){
+  activeCategory = cat;
+  catTabs.querySelectorAll('.cat-tab').forEach(b=>b.classList.toggle('active', b.dataset.cat===cat));
+  applyView();
+}
+function applyView(){
+  const q = searchInput.value.trim().toLowerCase();
+  noResultsMsg.style.display='none';
+  if(q){
+    homeRows.style.display='none';
+    let anyVisible=false;
+    const sectionHasMatch={};
+    SECTION_IDS.forEach(id=>{
+      const grid=document.getElementById(id);
+      let sectionAny=false;
+      grid.querySelectorAll('.tool-card').forEach(card=>{
+        const match = card.textContent.toLowerCase().includes(q);
+        card.classList.toggle('search-hidden', !match);
+        if(match){ sectionAny=true; anyVisible=true; }
+      });
+      sectionHasMatch[id]=sectionAny;
+      grid.classList.toggle('search-hidden', !sectionAny);
+      document.getElementById('label-'+id).classList.toggle('search-hidden', !sectionAny);
+    });
+    noResultsMsg.style.display = anyVisible?'none':'block';
+    return;
   }
+  // no search: category view
+  homeRows.style.display = activeCategory==='all' ? '' : 'none';
+  SECTION_IDS.forEach(id=>{
+    const show = activeCategory==='all' || activeCategory===id;
+    const grid=document.getElementById(id);
+    grid.classList.toggle('search-hidden', !show);
+    document.getElementById('label-'+id).classList.toggle('search-hidden', !show);
+    grid.querySelectorAll('.tool-card').forEach(card=>card.classList.remove('search-hidden'));
+  });
+}
+searchInput.addEventListener('input', applyView);
+applyView();
+
+// keyboard: Ctrl/Cmd+K focuses search, Escape closes the tool panel
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); searchInput.focus(); searchInput.select(); }
+  if(e.key==='Escape' && overlay.classList.contains('open')) closePanel();
 });
+
+// backend status dot (served mode only — on file:// there is no /api origin)
+if(!IS_FILE){
+  const ctrl = new AbortController();
+  setTimeout(()=>ctrl.abort(), 3000);
+  fetch(API_BASE+'/capabilities', {signal:ctrl.signal})
+    .then(r=>{ if(r.ok) document.getElementById('backend-dot').classList.add('up'); })
+    .catch(()=>{});
+}
 
 // Register service worker for offline/PWA support. Guarded because this
 // only works when served over http(s), not opened directly as a file://.

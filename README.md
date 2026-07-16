@@ -1,6 +1,6 @@
 # Dockbench
 
-A 95-tool PDF & image workbench that processes files **on your device by
+A 100-tool PDF, image & video workbench that processes files **on your device by
 default**, with an optional self-hosted backend for the handful of jobs
 that genuinely need server compute. Every dependency in this project is
 free and open-source — there is no paid API anywhere in the stack, and
@@ -10,7 +10,9 @@ after the first page load the core app runs **fully offline**.
 
 | | Dockbench | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
 |---|---|---|---|
-| Files stay on-device | ✅ for ~85 of 95 tools | ❌ every tool uploads | ❌ every tool goes to the server |
+| Files stay on-device | ✅ for ~90 of 100 tools | ❌ every tool uploads | ❌ every tool goes to the server |
+| Works by double-clicking the HTML file | ✅ no server needed at all | ❌ | ❌ |
+| Video tools (GIF, trim, slideshow, screen rec.) | ✅ on-device | partial, cloud | ❌ |
 | Works offline (PWA) | ✅ core app + encryption | ❌ | ❌ needs the server |
 | Daily limits / subscription | none | 1-2 free tasks/day, then $4-10/mo | none |
 | Real AES-256 encrypt/decrypt in the browser | ✅ (qpdf → WebAssembly) | server-side | server-side |
@@ -29,7 +31,7 @@ open-source.
 
 ```
 ├── frontend/
-│   ├── index.html        ← the entire client-side app (~95 tools)
+│   ├── index.html        ← the entire client-side app (100 tools)
 │   ├── vendor/           ← all JS/WASM libraries, self-hosted (no CDN needed)
 │   ├── manifest.json, sw.js  ← installable PWA, offline-capable
 │   ├── nginx.conf        ← production static hosting + /api/ reverse proxy
@@ -44,6 +46,14 @@ open-source.
 ```
 
 ## 1. Frontend — no setup, no build step, no CDN
+
+**The simplest way to run Dockbench: download the `frontend/` folder and
+double-click `index.html`.** Everything works straight from the file —
+PDF rendering runs on the main thread via the bundled worker script, and
+even AES-256 encryption works offline (the WASM engine ships as an
+embedded base64 copy in `vendor/qpdf.wasm.b64.js`, because browsers block
+fetching local `.wasm` files). Only the server-assisted section needs
+more than that.
 
 `frontend/index.html` plus `frontend/vendor/` is the complete client-side
 app. Every library it uses (pdf-lib, pdf.js, JSZip, mammoth, jsPDF,
@@ -62,6 +72,10 @@ the HTML is served without the vendor directory.
 - **Install it as an app** — the service worker precaches everything, so
   after one visit the whole toolbox (including AES-256 encryption) works
   in airplane mode.
+- **Navigate fast** — category tabs act like separate pages, Ctrl/Cmd+K
+  jumps to search, ★ pins favorites to the top, and a "recently used"
+  row remembers your workflow (both stored only in your browser). The
+  whole UI follows your system's light/dark preference.
 
 On-device highlights (~85 tools): merge, split (range or per-page),
 organize, crop, rotate, N-up, compress, repair, compare, scan-to-PDF,
@@ -74,6 +88,12 @@ images↔PDF (JPG/PNG/WebP/GIF/BMP), image compress/resize/convert/rotate,
 generator, QR/barcode, plus text, utility, finance, and fully on-device AI
 tools (summarize, translate, voice-to-text, image captioning via
 Transformers.js — model downloads once, then offline).
+
+**Video tools** (new, all on-device): images → slideshow video with
+crossfades, video → GIF (gifenc, pure JS), trim video (keeps audio),
+screen recorder, and extract-audio-to-WAV. Recording uses the browser's
+MediaRecorder — MP4 where the browser supports it, WebM otherwise, and
+the button label tells you which before you click.
 
 Every on-device tool reads the file with the File API, processes it in
 memory, and triggers a browser download — the bytes never touch a network
@@ -172,8 +192,9 @@ directory deleted the moment the response is built. Rate limits
 
 `.github/workflows/validate.yml` runs on every push: JS syntax of the
 whole inline app, every tool card resolving to a real function, no
-duplicate tool names, all 12 vendor assets present and precached by the
-service worker, Python syntax, a real import of the backend app, a
+duplicate tool names, all 14 vendor assets present and precached by the
+service worker (including a freshness check that the base64 WASM copy
+matches the real binary), Python syntax, a real import of the backend app, a
 `-Wall -Wextra -Werror` compile of the C kernel, and an end-to-end
 binarization test of both the C path and the Pillow fallback (including
 inverted-scan correction).

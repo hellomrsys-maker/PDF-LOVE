@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dockbench-v2';
+const CACHE_NAME = 'dockbench-v3';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Self-hosted libraries: precached so every tool (including the WASM
@@ -15,6 +15,8 @@ const APP_SHELL = [
   './vendor/jsbarcode.all.min.js',
   './vendor/qpdf.js',
   './vendor/qpdf.wasm',
+  './vendor/qpdf.wasm.b64.js',
+  './vendor/gifenc.min.js',
   './vendor/fonts/fonts.css',
   './vendor/fonts/fraunces-latin-400-normal.woff2',
   './vendor/fonts/fraunces-latin-600-normal.woff2',
