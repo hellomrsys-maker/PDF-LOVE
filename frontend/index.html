@@ -483,9 +483,52 @@ async function apiUpload(endpoint, formFields, {expect='blob'}={}){
     let msg = 'HTTP '+r.status;
     try{ const j = await r.json(); if(j.detail) msg = j.detail; }catch(e){}
     if(r.status===429) msg = 'Rate limit reached — wait a minute and try again.';
-    throw new Error(msg);
+    const err = new Error(msg);
+    err.httpStatus = r.status;
+    throw err;
   }
   return expect==='json' ? r.json() : r.blob();
+}
+
+/* Production path for heavy jobs: submit to the backend's queue and poll,
+ * so slow OCR/conversions never hold an HTTP connection (or a server
+ * worker) hostage. Falls back to the synchronous endpoint automatically
+ * when the deployment has no queue — behavior is identical either way. */
+const JOB_ENDPOINTS = { '/ocr':'ocr', '/convert':'convert', '/compress-pdf':'compress-pdf', '/pdfa':'pdfa', '/remove-bg':'remove-bg' };
+async function apiProcess(endpoint, formFields, {expect='blob', onStatus}={}){
+  const kind = JOB_ENDPOINTS[endpoint];
+  if(kind){
+    try{
+      const {job_id} = await apiUpload('/jobs/'+kind, formFields, {expect:'json'});
+      if(onStatus) onStatus('Queued on your server...');
+      const t0 = Date.now();
+      for(;;){
+        await new Promise(res=>setTimeout(res, 1500));
+        const st = await apiUpload_get(`/jobs/${job_id}`);
+        if(st.status==='failed') throw new Error(st.error || 'The job failed on the server.');
+        if(st.status==='complete') break;
+        if(Date.now()-t0 > 10*60*1000) throw new Error('Timed out waiting for the job.');
+        if(onStatus) onStatus(st.status==='running' ? 'Processing on your server...' : 'Waiting in the queue...');
+      }
+      const r = await fetch(`${API_BASE}/jobs/${job_id}/result`);
+      if(!r.ok) throw new Error('Could not fetch the finished result (HTTP '+r.status+').');
+      return expect==='json' ? r.json() : r.blob();
+    }catch(e){
+      // No queue on this deployment (404/501) -> plain synchronous call.
+      if(e.httpStatus!==404 && e.httpStatus!==501) throw e;
+      if(onStatus) onStatus('Processing on your server...');
+    }
+  }
+  return apiUpload(endpoint, formFields, {expect});
+}
+async function apiUpload_get(path){
+  const r = await fetch(API_BASE + path);
+  if(!r.ok){
+    let msg = 'HTTP '+r.status;
+    try{ const j = await r.json(); if(j.detail) msg = j.detail; }catch(e){}
+    const err = new Error(msg); err.httpStatus = r.status; throw err;
+  }
+  return r.json();
 }
 function apiErrorHelp(e){
   return `Could not reach the backend (${escapeXml(e.message)}). `+
@@ -3836,7 +3879,7 @@ function toolServerFile({title, desc, engine, accept, endpoint, fields={}, outNa
     log.textContent = 'Uploading to your backend and processing...';
     try{
       const extra = getExtra ? getExtra() : {};
-      const blob = await apiUpload(endpoint, {file, ...fields, ...extra});
+      const blob = await apiProcess(endpoint, {file, ...fields, ...extra}, {onStatus:(m)=>log.textContent=m});
       const name = typeof outName==='function' ? outName(file) : outName;
       download(new Blob([blob], {type: outType}), name);
       log.innerHTML = '<span class="ok">✓ Done — processed by your own server, nothing retained.</span>';
@@ -3883,10 +3926,10 @@ function toolServerOCR(){
       const output = document.getElementById('ocr-output').value;
       const language = document.getElementById('ocr-lang').value;
       if(output==='pdf'){
-        const blob = await apiUpload('/ocr', {file, language, output:'pdf'});
+        const blob = await apiProcess('/ocr', {file, language, output:'pdf'}, {onStatus:(m)=>log.textContent=m});
         download(new Blob([blob],{type:'application/pdf'}), file.name.replace(/\.(pdf|png|jpe?g|tiff?)$/i,'')+'-searchable.pdf');
       } else {
-        const j = await apiUpload('/ocr', {file, language, output:'text'}, {expect:'json'});
+        const j = await apiProcess('/ocr', {file, language, output:'text'}, {expect:'json', onStatus:(m)=>log.textContent=m});
         resultBox.value = j.text || '';
         resultBox.style.display='block';
         download(new Blob([j.text||''],{type:'text/plain'}), file.name.replace(/\.[^.]+$/,'')+'.txt');

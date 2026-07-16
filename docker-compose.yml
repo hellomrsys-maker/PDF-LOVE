@@ -1,38 +1,86 @@
-version: "3.8"
+# Dockbench production stack.
+#
+#   Local / evaluation:   docker compose up -d
+#                         -> http://localhost:8080 (frontend+API+queue)
+#   Production (TLS):     cp .env.example .env   # set DOMAIN + ACME_EMAIL
+#                         docker compose --profile prod up -d
+#                         -> https://$DOMAIN with automatic Let's Encrypt
+#   Local AI tools:       add --profile ai  (Ollama, ~4 GB of models)
+#
+# Images are published by CI to ghcr.io (see .github/workflows/release.yml);
+# `docker compose build` still works when you'd rather build on the box.
+#
+# Scale the heavy lifting independently of the API:
+#   docker compose up -d --scale worker=3
+#
+# Full deployment guide: deploy/PRODUCTION.md
 
-# Production profile: frontend (nginx) + backend (gunicorn/uvicorn workers)
-# + local LLM (Ollama). All same-origin via nginx's /api/ proxy, so no
-# CORS configuration is needed in production.
-#
-# Run:  docker compose up -d
-# Then: docker exec -it $(docker compose ps -q ollama) ollama pull llama3.2
-#
-# Scale the backend horizontally if one box isn't enough:
-#   docker compose up -d --scale backend=3
-# Put a load balancer (nginx/traefik) in front across multiple hosts;
-# on a single Docker host, Docker's internal DNS already round-robins
-# requests across replicas of the same service name.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
-  frontend:
-    build: ./frontend
+  caddy:
+    image: caddy:2.9-alpine
+    profiles: ["prod"]
     ports:
       - "80:80"
+      - "443:443"
+    environment:
+      # With DOMAIN unset, Caddy serves https://localhost with a local
+      # self-signed cert — handy for trying the prod profile on a laptop.
+      # Compose interpolates the whole file even for inactive profiles,
+      # so these must not use the :?err required-variable form.
+      - DOMAIN=${DOMAIN:-localhost}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    logging: *default-logging
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/hellomrsys-maker/dockbench-frontend:latest}
+    build: ./frontend
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging: *default-logging
 
   backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/hellomrsys-maker/dockbench-backend:latest}
     build: ./backend
     environment:
-      - ALLOWED_ORIGINS=http://localhost
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8080}
       - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3.2
-      - MAX_FILE_MB=50
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2}
+      - MAX_FILE_MB=${MAX_FILE_MB:-50}
+      - REDIS_URL=redis://redis:6379
+      - TRUST_PROXY=1
+      - METRICS_ENABLED=${METRICS_ENABLED:-1}
+      - LOG_JSON=${LOG_JSON:-1}
+      - WEB_WORKERS=${WEB_WORKERS:-3}
+    tmpfs:
+      - /tmp
     depends_on:
-      - ollama
+      redis:
+        condition: service_healthy
     restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
@@ -43,9 +91,57 @@ services:
       resources:
         limits:
           memory: 2G
+    logging: *default-logging
+
+  # The muscle: runs OCR/LibreOffice/Ghostscript jobs from the queue.
+  # Same image as the backend, different entrypoint. Scale with
+  # `--scale worker=N` when the queue backs up.
+  worker:
+    image: ${BACKEND_IMAGE:-ghcr.io/hellomrsys-maker/dockbench-backend:latest}
+    build: ./backend
+    command: ["arq", "worker.WorkerSettings"]
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - JOB_TIMEOUT=${JOB_TIMEOUT:-300}
+      - WORKER_MAX_JOBS=${WORKER_MAX_JOBS:-6}
+    tmpfs:
+      - /tmp
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "arq", "--check", "worker.WorkerSettings"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+    logging: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru", "--save", ""]
+    restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 320M
+    logging: *default-logging
 
   ollama:
     image: ollama/ollama:latest
+    profiles: ["ai"]
     volumes:
       - ollama_data:/root/.ollama
     restart: unless-stopped
@@ -53,6 +149,9 @@ services:
       resources:
         limits:
           memory: 4G
+    logging: *default-logging
 
 volumes:
   ollama_data:
+  caddy_data:
+  caddy_config:

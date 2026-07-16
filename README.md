@@ -132,15 +132,23 @@ falls back to a pure-Pillow implementation, so the API runs anywhere.
 ### Run it
 
 ```bash
-docker compose up -d
+docker compose up -d                 # local: http://localhost:8080
+docker compose --profile prod up -d  # production: automatic HTTPS — see deploy/PRODUCTION.md
+docker compose --profile ai up -d    # adds Ollama for the local-LLM tools
 docker exec -it $(docker compose ps -q ollama) ollama pull llama3.2
 ```
 
 This starts:
-- `frontend` on `http://localhost` (nginx, proxies `/api/*` to the backend
-  so the browser only ever talks to one origin — no CORS setup needed)
-- `backend` on port 8000 inside the compose network (FastAPI, docs at `/docs`)
-- `ollama` for the local LLM tools
+- `frontend` (unprivileged nginx, proxies `/api/*` to the backend so the
+  browser only ever talks to one origin — no CORS setup needed)
+- `backend` (FastAPI, docs at `/docs`) + `redis` + `worker` — heavy jobs
+  (OCR, Office conversion, Ghostscript) run through a queue so the API
+  always answers instantly; scale with `--scale worker=N`
+- with `--profile prod`: Caddy with automatic Let's Encrypt TLS
+- with `--profile ai`: Ollama for the local LLM tools
+
+**Full production guide (VPS quickstart, monitoring, scaling, security
+checklist): [deploy/PRODUCTION.md](deploy/PRODUCTION.md).**
 
 The frontend auto-detects the backend at `/api`. Pointing it somewhere
 else takes one line in the browser console:

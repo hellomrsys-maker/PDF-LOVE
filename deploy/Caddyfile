@@ -1,0 +1,20 @@
+# Caddy fronts the whole stack in production (compose profile "prod"):
+# automatic HTTPS via Let's Encrypt, HTTP->HTTPS redirect, HSTS.
+# DOMAIN and ACME_EMAIL come from .env (see .env.example).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Everything (static app + /api/*) goes to nginx, which already
+	# serves the frontend and proxies /api/ to the backend.
+	reverse_proxy frontend:8080
+}

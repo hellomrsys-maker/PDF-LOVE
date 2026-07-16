@@ -7,42 +7,43 @@ container, a Raspberry Pi with enough RAM) and it costs whatever your
 own hosting costs — never a per-request fee.
 
 The heavy lifting is done by battle-tested C/C++ engines driven from
-Python — "C for the hot path, Python for the orchestration":
+Python — "C for the hot path, Python for the orchestration". The engine
+logic itself lives in engines.py; this module is the HTTP layer.
 
-  Tesseract (C++)        -> OCR
-  MuPDF (C, via PyMuPDF) -> PDF rendering, table detection
-  qpdf (C++, via pikepdf)-> PDF assembly for searchable OCR output
-  Ghostscript (C)        -> PDF/A conversion, deep PDF compression
-  LibreOffice (C++)      -> Office <-> PDF conversion
-  onnxruntime (C++)      -> background-removal inference
-  native/imgproc.c       -> our own scan-cleanup kernel (see native_ops.py)
+Two ways to run a job:
+  Synchronous  POST /ocr, /convert, /compress-pdf, /pdfa, /remove-bg
+               — processed inline; fine for dev and small deployments.
+  Queued       POST /jobs/{kind} -> {job_id}, GET /jobs/{id},
+               GET /jobs/{id}/result — requires Redis (REDIS_URL) and the
+               ARQ worker (see worker.py). This is the production path:
+               the API answers instantly and the grinding happens in
+               worker containers you can scale independently.
 
-Endpoints:
-  POST /ocr           -> text OR searchable PDF from an image/scanned PDF
-  POST /remove-bg     -> remove image background (rembg, open-weight model)
-  POST /summarize     -> summarize text using a local Ollama model
-  POST /chat          -> answer a question against supplied document text
-  POST /convert       -> Office <-> PDF conversions (LibreOffice/pdf2docx/...)
-  POST /compress-pdf  -> deep, Ghostscript-grade PDF compression
-  POST /pdfa          -> convert to ISO 19005 PDF/A-2b (archival)
-  GET  /capabilities  -> which optional engines are installed
-  GET  /health        -> liveness check
+Also here:
+  POST /summarize, /chat  -> local Ollama (self-hosted LLM)
+  GET  /capabilities      -> which engines/queue this deployment has
+  GET  /health            -> liveness;  GET /metrics -> Prometheus (opt-in)
+
+Ops environment variables:
+  REDIS_URL          enable the job queue (e.g. redis://redis:6379)
+  TRUST_PROXY=1      rate-limit real client IPs from X-Forwarded-For
+                     (set this when running behind the bundled nginx/Caddy)
+  METRICS_ENABLED=1  expose GET /metrics
+  LOG_JSON=1         structured JSON request logs
+  MAX_FILE_MB        upload cap (default 50)
 
 Privacy contract:
   - Nothing is ever logged about file contents or filenames.
-  - Pure-Python endpoints process uploads entirely in memory.
+  - Uploads for queued jobs live in Redis only until the worker reads
+    them; results expire after 15 minutes (JOB_RESULT_TTL).
   - The external engines (LibreOffice, Ghostscript) require real files,
-    so those endpoints use a private per-request temporary directory
-    that is deleted the moment the response is built.
-  - No request data is retained after the response is sent.
+    so they use a private per-request temporary directory that is
+    deleted the moment the response is built.
 """
 
-import io
+import json
 import logging
 import os
-import shutil
-import subprocess
-import tempfile
 import time
 import uuid
 
@@ -50,19 +51,69 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
+import engines
 import native_ops
+from engines import EngineError
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s [%(request_id)s] %(message)s",
+# ---------------------------------------------------------------------
+# Logging: human-readable by default, JSON lines with LOG_JSON=1.
+# ---------------------------------------------------------------------
+LOG_JSON = os.environ.get("LOG_JSON") == "1"
+
+
+class _JsonFormatter(logging.Formatter):
+    def format(self, record):
+        entry = {
+            "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        for k in ("request_id", "method", "path", "status", "ms"):
+            if hasattr(record, k):
+                entry[k] = getattr(record, k)
+        return json.dumps(entry)
+
+
+class _TextFormatter(logging.Formatter):
+    def format(self, record):
+        if not hasattr(record, "request_id"):
+            record.request_id = "-"  # records from libs/startup have no request
+        return super().format(record)
+
+
+_handler = logging.StreamHandler()
+_handler.setFormatter(
+    _JsonFormatter() if LOG_JSON
+    else _TextFormatter("%(asctime)s %(levelname)s [%(request_id)s] %(message)s")
 )
+logging.basicConfig(level=logging.INFO, handlers=[_handler])
 logger = logging.getLogger("dockbench")
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
-app = FastAPI(title="Dockbench API", version="0.2.0")
+
+# ---------------------------------------------------------------------
+# Rate limiting that survives a reverse proxy.
+# ---------------------------------------------------------------------
+TRUST_PROXY = os.environ.get("TRUST_PROXY") == "1"
+
+
+def client_ip(request: Request) -> str:
+    """The bundled nginx/Caddy sit in front of this API in production, so
+    request.client is always the proxy. With TRUST_PROXY=1 we take the
+    first hop of X-Forwarded-For (set by our own proxy, so trustworthy);
+    without it we fall back to the socket peer — never trust the header
+    when any client can reach the API directly."""
+    if TRUST_PROXY:
+        fwd = request.headers.get("x-forwarded-for")
+        if fwd:
+            return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+limiter = Limiter(key_func=client_ip, default_limits=["60/minute"])
+app = FastAPI(title="Dockbench API", version="0.3.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -74,6 +125,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+if os.environ.get("METRICS_ENABLED") == "1":
+    from prometheus_fastapi_instrumentator import Instrumentator
+
+    Instrumentator(excluded_handlers=["/metrics", "/health"]).instrument(app).expose(app)
+
 
 @app.middleware("http")
 async def request_id_and_timing(request: Request, call_next):
@@ -83,14 +139,18 @@ async def request_id_and_timing(request: Request, call_next):
     start = time.time()
     response = await call_next(request)
     duration_ms = (time.time() - start) * 1000
-    logging.LoggerAdapter(logger, {"request_id": req_id}).info(
-        f"{request.method} {request.url.path} -> {response.status_code} ({duration_ms:.0f}ms)"
+    logger.info(
+        f"{request.method} {request.url.path} -> {response.status_code} ({duration_ms:.0f}ms)",
+        extra={"request_id": req_id, "method": request.method,
+               "path": request.url.path, "status": response.status_code,
+               "ms": round(duration_ms)},
     )
     response.headers["X-Request-ID"] = req_id
     return response
 
 
 MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", "50"))
+REDIS_URL = os.environ.get("REDIS_URL", "")
 
 
 def _check_size(data: bytes):
@@ -98,23 +158,12 @@ def _check_size(data: bytes):
         raise HTTPException(413, f"File exceeds {MAX_FILE_MB}MB limit.")
 
 
-def _which(binary: str):
-    return shutil.which(binary)
-
-
-def _run(cmd, timeout=180):
-    """Run an external engine. Raises 422 with the engine's stderr tail on
-    failure — enough to debug, never echoing document content."""
+def _engine(fn, *args, **kwargs):
+    """Run an engine function, translating EngineError to HTTP."""
     try:
-        proc = subprocess.run(
-            cmd, capture_output=True, timeout=timeout, check=False
-        )
-    except subprocess.TimeoutExpired:
-        raise HTTPException(504, "Conversion engine timed out.")
-    if proc.returncode != 0:
-        tail = (proc.stderr or b"")[-400:].decode("utf-8", "replace")
-        raise HTTPException(422, f"Engine failed (exit {proc.returncode}): {tail}")
-    return proc
+        return fn(*args, **kwargs)
+    except EngineError as e:
+        raise HTTPException(e.status, e.detail)
 
 
 @app.get("/health")
@@ -129,20 +178,101 @@ def capabilities():
     return {
         "version": app.version,
         "native_c_kernel": native_ops.native_available(),
-        "ocr": _which("tesseract") is not None,
-        "ghostscript": _which("gs") is not None,
-        "libreoffice": _which("soffice") is not None,
+        "ocr": engines.which("tesseract") is not None,
+        "ghostscript": engines.which("gs") is not None,
+        "libreoffice": engines.which("soffice") is not None,
+        "queue": bool(REDIS_URL),
         "ollama_configured": bool(os.environ.get("OLLAMA_URL", "http://localhost:11434")),
         "max_file_mb": MAX_FILE_MB,
     }
 
 
 # ---------------------------------------------------------------------
-# OCR — Tesseract (C++), fronted by our C scan-cleanup kernel.
-#   output=text -> {"text": ...}
-#   output=pdf  -> a searchable PDF: the original page images with an
-#                  invisible, selectable text layer (what Adobe calls
-#                  "Recognize Text"). Assembled with pikepdf (qpdf, C++).
+# Queued jobs (production path). Requires REDIS_URL + the ARQ worker.
+# ---------------------------------------------------------------------
+_arq_pool = None
+
+
+async def _pool():
+    global _arq_pool
+    if not REDIS_URL:
+        raise HTTPException(501, "Job queue not configured on this server (REDIS_URL unset) — use the synchronous endpoint.")
+    if _arq_pool is None:
+        from arq import create_pool
+        from arq.connections import RedisSettings
+
+        _arq_pool = await create_pool(RedisSettings.from_dsn(REDIS_URL))
+    return _arq_pool
+
+
+@app.post("/jobs/{kind}")
+@limiter.limit("20/minute")
+async def submit_job(request: Request, kind: str, file: UploadFile = File(...)):
+    if kind not in engines.JOB_KINDS:
+        raise HTTPException(404, f"Unknown job kind '{kind}'. Valid: {sorted(engines.JOB_KINDS)}")
+    pool = await _pool()
+    data = await file.read()
+    _check_size(data)
+
+    # Any extra multipart fields (language, target, level, ...) become
+    # engine options — same names as the synchronous endpoints.
+    form = await request.form()
+    options = {k: v for k, v in form.items() if k != "file" and isinstance(v, str)}
+
+    job_id = uuid.uuid4().hex
+    upload_ttl = int(os.environ.get("JOB_RESULT_TTL", "900"))
+    await pool.set(f"dockbench:upload:{job_id}", data, ex=upload_ttl)
+    await pool.enqueue_job("process_job", kind, file.filename or "input",
+                           options, _job_id=job_id)
+    return JSONResponse({"job_id": job_id, "status": "queued"})
+
+
+@app.get("/jobs/{job_id}")
+@limiter.limit("240/minute")
+async def job_status(request: Request, job_id: str):
+    if not job_id.isalnum():
+        raise HTTPException(422, "Invalid job id.")
+    pool = await _pool()
+    if await pool.exists(f"dockbench:result:{job_id}"):
+        return JSONResponse({"job_id": job_id, "status": "complete"})
+
+    from arq.jobs import Job, JobStatus
+
+    job = Job(job_id, pool)
+    status = await job.status()
+    if status == JobStatus.not_found:
+        raise HTTPException(404, "Unknown or expired job.")
+    if status == JobStatus.complete:
+        info = await job.result_info()
+        if info and not info.success:
+            return JSONResponse({"job_id": job_id, "status": "failed",
+                                 "error": str(info.result)[:500]})
+        return JSONResponse({"job_id": job_id, "status": "complete"})
+    return JSONResponse({
+        "job_id": job_id,
+        "status": "running" if status == JobStatus.in_progress else "queued",
+    })
+
+
+@app.get("/jobs/{job_id}/result")
+@limiter.limit("60/minute")
+async def job_result(request: Request, job_id: str):
+    if not job_id.isalnum():
+        raise HTTPException(422, "Invalid job id.")
+    pool = await _pool()
+    payload = await pool.get(f"dockbench:result:{job_id}")
+    if payload is None:
+        raise HTTPException(404, "Result not ready or expired.")
+    media_type = await pool.get(f"dockbench:resultmeta:{job_id}")
+    media_type = media_type.decode() if isinstance(media_type, bytes) else (media_type or "application/octet-stream")
+    if media_type == "text/plain":
+        return JSONResponse({"text": payload.decode("utf-8", "replace")})
+    return Response(content=payload, media_type=media_type)
+
+
+# ---------------------------------------------------------------------
+# Synchronous endpoints — same engines, processed inline. Fine for dev
+# and small deployments; the frontend prefers /jobs when available.
 # ---------------------------------------------------------------------
 @app.post("/ocr")
 @limiter.limit("10/minute")
@@ -153,298 +283,50 @@ async def ocr(
     output: str = Form("text"),
     enhance: bool = Form(True),
 ):
-    import pytesseract
-    from PIL import Image
-
-    if output not in ("text", "pdf"):
-        raise HTTPException(422, "output must be 'text' or 'pdf'")
-    # Tesseract language codes are alphanumeric plus underscore/plus
-    # (e.g. "eng", "deu", "eng+fra"); reject anything else before it
-    # reaches a command line.
-    if not language or not all(c.isalnum() or c in "+_" for c in language):
-        raise HTTPException(422, "Invalid language code.")
-
     data = await file.read()
     _check_size(data)
-    filename = (file.filename or "").lower()
-
-    def page_images():
-        if filename.endswith(".pdf"):
-            import fitz  # PyMuPDF — MuPDF's C core
-
-            doc = fitz.open(stream=data, filetype="pdf")
-            try:
-                for page in doc:
-                    pix = page.get_pixmap(dpi=200)
-                    yield Image.open(io.BytesIO(pix.tobytes("png")))
-            finally:
-                doc.close()
-        else:
-            yield Image.open(io.BytesIO(data))
-
-    try:
-        if output == "text":
-            pages_text = []
-            for img in page_images():
-                if enhance:
-                    img = native_ops.enhance_for_ocr(img)
-                pages_text.append(pytesseract.image_to_string(img, lang=language))
-            return JSONResponse({"text": "\n\n--- page break ---\n\n".join(pages_text)})
-
-        # output == "pdf": one searchable-PDF page per input page, merged.
-        import pikepdf
-
-        merged = pikepdf.Pdf.new()
-        for img in page_images():
-            ocr_input = native_ops.enhance_for_ocr(img) if enhance else img
-            page_pdf = pytesseract.image_to_pdf_or_hocr(
-                ocr_input, lang=language, extension="pdf"
-            )
-            with pikepdf.open(io.BytesIO(page_pdf)) as part:
-                merged.pages.extend(part.pages)
-        out = io.BytesIO()
-        merged.save(out)
-        merged.close()
-        return Response(content=out.getvalue(), media_type="application/pdf")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(422, f"Could not process file: {e}")
-    finally:
-        del data
+    payload, media_type = _engine(engines.run_ocr, data, file.filename or "",
+                                  language=language, output=output, enhance=enhance)
+    if media_type == "text/plain":
+        return JSONResponse({"text": payload})
+    return Response(content=payload, media_type=media_type)
 
 
-# ---------------------------------------------------------------------
-# Background removal — open-source rembg (Apache-2.0), self-hosted.
-# ---------------------------------------------------------------------
 @app.post("/remove-bg")
 @limiter.limit("10/minute")
 async def remove_bg(request: Request, file: UploadFile = File(...)):
-    from rembg import remove
-
     data = await file.read()
     _check_size(data)
-
-    try:
-        output = remove(data)
-    except Exception as e:
-        raise HTTPException(422, f"Could not process image: {e}")
-    finally:
-        del data
-
-    return Response(content=output, media_type="image/png")
-
-
-# ---------------------------------------------------------------------
-# Office <-> PDF conversion.
-#   docx/pptx/xlsx/odt/... -> pdf : LibreOffice headless (full fidelity)
-#   pdf -> docx                   : pdf2docx (layout-aware, PyMuPDF core)
-#   pdf -> pptx                   : page renders on real slides
-#   pdf -> xlsx                   : MuPDF table detection -> openpyxl
-# ---------------------------------------------------------------------
-OFFICE_EXTS = {".doc", ".docx", ".odt", ".rtf", ".ppt", ".pptx", ".odp",
-               ".xls", ".xlsx", ".ods", ".csv", ".txt", ".html"}
+    payload, media_type = _engine(engines.run_remove_bg, data)
+    return Response(content=payload, media_type=media_type)
 
 
 @app.post("/convert")
 @limiter.limit("10/minute")
-async def convert(
-    request: Request,
-    file: UploadFile = File(...),
-    target: str = Form(...),
-):
+async def convert(request: Request, file: UploadFile = File(...), target: str = Form(...)):
     data = await file.read()
     _check_size(data)
-    filename = file.filename or "input"
-    ext = os.path.splitext(filename)[1].lower()
-    target = target.lower().lstrip(".")
-
-    if target == "pdf" and ext in OFFICE_EXTS:
-        return _office_to_pdf(data, ext)
-    if ext == ".pdf" and target == "docx":
-        return _pdf_to_docx(data)
-    if ext == ".pdf" and target == "pptx":
-        return _pdf_to_pptx(data)
-    if ext == ".pdf" and target == "xlsx":
-        return _pdf_to_xlsx(data)
-    raise HTTPException(
-        422,
-        f"Unsupported conversion: {ext or 'unknown'} -> {target}. "
-        f"Supported: Office documents -> pdf, and pdf -> docx/pptx/xlsx.",
-    )
-
-
-def _office_to_pdf(data: bytes, ext: str) -> Response:
-    if not _which("soffice"):
-        raise HTTPException(501, "LibreOffice is not installed on this server (see backend/Dockerfile).")
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
-        src = os.path.join(tmp, "input" + ext)
-        with open(src, "wb") as f:
-            f.write(data)
-        # A private profile dir keeps parallel conversions from fighting
-        # over LibreOffice's lock files.
-        profile = os.path.join(tmp, "profile")
-        _run([
-            "soffice", "--headless", "--norestore",
-            f"-env:UserInstallation=file://{profile}",
-            "--convert-to", "pdf", "--outdir", tmp, src,
-        ], timeout=180)
-        out_path = os.path.join(tmp, "input.pdf")
-        if not os.path.exists(out_path):
-            raise HTTPException(422, "Conversion produced no output — is the file a valid document?")
-        with open(out_path, "rb") as f:
-            return Response(content=f.read(), media_type="application/pdf")
-
-
-def _pdf_to_docx(data: bytes) -> Response:
-    from pdf2docx import Converter
-
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
-        src = os.path.join(tmp, "input.pdf")
-        dst = os.path.join(tmp, "output.docx")
-        with open(src, "wb") as f:
-            f.write(data)
-        try:
-            cv = Converter(src)
-            cv.convert(dst)
-            cv.close()
-        except Exception as e:
-            raise HTTPException(422, f"Could not convert this PDF to Word: {e}")
-        with open(dst, "rb") as f:
-            return Response(
-                content=f.read(),
-                media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            )
-
-
-def _pdf_to_pptx(data: bytes) -> Response:
-    import fitz
-    from pptx import Presentation
-    from pptx.util import Emu
-
-    try:
-        doc = fitz.open(stream=data, filetype="pdf")
-    except Exception as e:
-        raise HTTPException(422, f"Could not open PDF: {e}")
-    prs = Presentation()
-    blank = prs.slide_layouts[6]
-    EMU_PER_POINT = 12700
-    try:
-        first = doc[0].rect
-        prs.slide_width = Emu(int(first.width * EMU_PER_POINT))
-        prs.slide_height = Emu(int(first.height * EMU_PER_POINT))
-        for page in doc:
-            pix = page.get_pixmap(dpi=150)
-            slide = prs.slides.add_slide(blank)
-            slide.shapes.add_picture(
-                io.BytesIO(pix.tobytes("png")), 0, 0,
-                width=prs.slide_width, height=prs.slide_height,
-            )
-    finally:
-        doc.close()
-    out = io.BytesIO()
-    prs.save(out)
-    return Response(
-        content=out.getvalue(),
-        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    )
-
-
-def _pdf_to_xlsx(data: bytes) -> Response:
-    import fitz
-    from openpyxl import Workbook
-
-    try:
-        doc = fitz.open(stream=data, filetype="pdf")
-    except Exception as e:
-        raise HTTPException(422, f"Could not open PDF: {e}")
-    wb = Workbook()
-    wb.remove(wb.active)
-    tables_found = 0
-    try:
-        for pageno, page in enumerate(doc, start=1):
-            for tno, table in enumerate(page.find_tables(), start=1):
-                ws = wb.create_sheet(title=f"p{pageno}-table{tno}"[:31])
-                for row in table.extract():
-                    ws.append([cell if cell is not None else "" for cell in row])
-                tables_found += 1
-    finally:
-        doc.close()
-    if tables_found == 0:
-        raise HTTPException(422, "No tables detected in this PDF.")
-    out = io.BytesIO()
-    wb.save(out)
-    return Response(
-        content=out.getvalue(),
-        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-
-
-# ---------------------------------------------------------------------
-# Deep PDF compression — Ghostscript (C). Far stronger than what a
-# browser can do: image downsampling, font subsetting, stream rewriting.
-# ---------------------------------------------------------------------
-GS_PRESETS = {"extreme": "/screen", "strong": "/ebook", "balanced": "/printer"}
+    payload, media_type = _engine(engines.run_convert, data, file.filename or "input", target)
+    return Response(content=payload, media_type=media_type)
 
 
 @app.post("/compress-pdf")
 @limiter.limit("10/minute")
-async def compress_pdf(
-    request: Request,
-    file: UploadFile = File(...),
-    level: str = Form("strong"),
-):
-    if not _which("gs"):
-        raise HTTPException(501, "Ghostscript is not installed on this server (see backend/Dockerfile).")
-    if level not in GS_PRESETS:
-        raise HTTPException(422, f"level must be one of {sorted(GS_PRESETS)}")
+async def compress_pdf(request: Request, file: UploadFile = File(...), level: str = Form("strong")):
     data = await file.read()
     _check_size(data)
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
-        src = os.path.join(tmp, "in.pdf")
-        dst = os.path.join(tmp, "out.pdf")
-        with open(src, "wb") as f:
-            f.write(data)
-        _run([
-            "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.5",
-            f"-dPDFSETTINGS={GS_PRESETS[level]}",
-            "-dNOPAUSE", "-dQUIET", "-dBATCH", "-dSAFER",
-            f"-sOutputFile={dst}", src,
-        ])
-        with open(dst, "rb") as f:
-            out = f.read()
-    # Ghostscript occasionally "compresses" a lean file into a bigger one;
-    # never hand back a worse result than the input.
-    if len(out) >= len(data):
-        return Response(content=data, media_type="application/pdf",
-                        headers={"X-Compression": "already-optimal"})
-    return Response(content=out, media_type="application/pdf",
-                    headers={"X-Compression": f"{len(data)}->{len(out)}"})
+    payload, media_type = _engine(engines.run_compress_pdf, data, level)
+    headers = {"X-Compression": "already-optimal" if payload is data else f"{len(data)}->{len(payload)}"}
+    return Response(content=payload, media_type=media_type, headers=headers)
 
 
-# ---------------------------------------------------------------------
-# PDF/A — ISO 19005 archival conversion via Ghostscript.
-# ---------------------------------------------------------------------
 @app.post("/pdfa")
 @limiter.limit("10/minute")
 async def pdfa(request: Request, file: UploadFile = File(...)):
-    if not _which("gs"):
-        raise HTTPException(501, "Ghostscript is not installed on this server (see backend/Dockerfile).")
     data = await file.read()
     _check_size(data)
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
-        src = os.path.join(tmp, "in.pdf")
-        dst = os.path.join(tmp, "out.pdf")
-        with open(src, "wb") as f:
-            f.write(data)
-        _run([
-            "gs", "-dPDFA=2", "-dBATCH", "-dNOPAUSE", "-dQUIET", "-dSAFER",
-            "-sColorConversionStrategy=UseDeviceIndependentColor",
-            "-sDEVICE=pdfwrite", "-dPDFACompatibilityPolicy=1",
-            f"-sOutputFile={dst}", src,
-        ])
-        with open(dst, "rb") as f:
-            return Response(content=f.read(), media_type="application/pdf")
+    payload, media_type = _engine(engines.run_pdfa, data)
+    return Response(content=payload, media_type=media_type)
 
 
 # ---------------------------------------------------------------------

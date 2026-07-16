@@ -1,0 +1,73 @@
+name: Release
+
+# Builds and publishes ready-to-run images to GitHub Container Registry:
+#   ghcr.io/hellomrsys-maker/dockbench-frontend
+#   ghcr.io/hellomrsys-maker/dockbench-backend
+#
+# - every push to the default branch  -> :latest
+# - every v* tag                      -> :vX.Y.Z (+ :latest) and a GitHub
+#   Release carrying dockbench-offline.zip (the double-click bundle)
+#
+# Deploying then becomes `docker compose pull && docker compose up -d`
+# on the server — no build resources needed there.
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [frontend, backend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/dockbench-${{ matrix.component }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern=v{{version}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.component }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,scope=${{ matrix.component }},mode=max
+
+  offline-bundle:
+    # The frontend folder IS the offline app — zip it and attach it to
+    # the release so non-technical users can download & double-click.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    needs: images
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build offline bundle
+        run: |
+          cd frontend
+          zip -r ../dockbench-offline.zip index.html manifest.json sw.js vendor/
+          cd ..
+          unzip -l dockbench-offline.zip | tail -3
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dockbench-offline.zip
+          generate_release_notes: true
