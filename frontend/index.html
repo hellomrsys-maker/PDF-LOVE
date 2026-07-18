@@ -261,6 +261,14 @@
      configured and actually injects content — see AD_CONFIG. */
   .ad-slot{min-height:0;overflow:hidden;}
   .ad-slot:empty{display:none;}
+  /* "Ask Dockbench" hero input — the plain-language front door. */
+  .assist-hero{display:flex;gap:8px;margin:0 0 28px;max-width:56ch;}
+  .assist-hero input{flex:1;padding:13px 16px;font-size:0.98rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-raised);font-family:inherit;}
+  .assist-hero input:focus{outline:none;border-color:var(--copper);}
+  .assist-hero .primary-btn{width:auto;margin-top:0;padding:12px 22px;}
+  .assist-chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+  .assist-step{display:flex;align-items:baseline;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);margin-top:8px;font-size:0.9rem;}
+  .assist-step .num{font-family:'IBM Plex Mono',monospace;color:var(--copper-deep);font-weight:600;flex-shrink:0;}
   .tool-card.search-hidden{display:none;}
   .section-label.search-hidden{display:none;}
   .tools.search-hidden{display:none;}
@@ -329,6 +337,11 @@
     <h1>Your files never leave <em>this tab.</em></h1>
     <p class="lede">Merge, split, compress, and convert PDFs and images entirely in your browser. No account, no upload, no daily limit — the processing happens on your device, not ours.</p>
 
+    <div class="assist-hero">
+      <input type="text" id="assist-hero-input" placeholder="Tell me what you need — e.g. &ldquo;make this PDF small enough to email&rdquo;" aria-label="Describe what you want to do">
+      <button class="primary-btn" id="assist-hero-btn">Ask</button>
+    </div>
+
     <div class="trace" aria-hidden="true">
       <div class="line"><span class="tag">select</span><span>photo.jpg</span></div>
       <div class="line"><span class="tag">route</span><span class="arrow">→</span> browser (wasm)<span> </span><span class="no">→ server</span></div>
@@ -347,7 +360,7 @@
     <div class="helper-line" style="max-width:56ch;">*Everything above the "AI / Server" and "Currency" sections works fully offline once this page has loaded once.</div>
   </section>
 
-  <div id="search-no-results" style="display:none;padding:20px;text-align:center;color:var(--ink-soft);">No tools match that search.</div>
+  <div id="search-no-results" style="display:none;padding:20px;text-align:center;color:var(--ink-soft);">No tools match that search. <button class="small-btn" id="no-results-ask" style="margin-left:8px;">Ask the assistant instead →</button></div>
 
   <div id="home-rows">
     <div class="section-label" id="label-fav-tools">// your pinned tools ★</div>
@@ -434,6 +447,10 @@ const AD_CONFIG = {
   rewarded: {
     enabled: false,     // flip true once scriptUrl below is real
     scriptUrl: null,    // your ad network's rewarded-video loader <script src>
+  },
+  result: {
+    enabled: false,     // passive slot at the bottom of a tool panel, shown
+    scriptUrl: null,    // only AFTER a result is delivered — never before/during
   },
 };
 const IS_FILE = location.protocol === 'file:';
@@ -618,6 +635,10 @@ function download(blob, filename, opts={}){
   _deliverDownload(blob, filename);
 }
 function _deliverDownload(blob, filename){
+  // A result just reached the user — the only moment the passive result-area
+  // ad slot (AD_CONFIG.result) is allowed to appear. Fired before the actual
+  // byte delivery below purely because the large-file path is async.
+  document.dispatchEvent(new CustomEvent('db-result-delivered'));
   // Very large results: stream straight to the user's disk (File System
   // Access API) instead of materializing a giant blob: URL in RAM. Falls
   // back to the classic anchor download everywhere else.
@@ -766,6 +787,14 @@ function buildDropzone(container, {multiple, accept, onFiles}){
     onFiles(files);
   });
   container.appendChild(dz);
+  // Assistant hand-off: if a file is waiting in the chain, load it into this
+  // panel automatically so the user never re-uploads. Deferred a tick because
+  // most tools declare the UI elements their onFiles touches *after* calling
+  // buildDropzone.
+  if(pendingAssistFile){
+    const pf = pendingAssistFile; pendingAssistFile = null;
+    setTimeout(()=>onFiles([pf]), 0);
+  }
   return dz;
 }
 
@@ -1936,6 +1965,16 @@ function toolBookmarkEditor(){
 let lastOutput = null; // { blob, filename }
 function offerChain(blob, filename, log){
   lastOutput = { blob, filename };
+  // Mid-assistant-flow: the next step takes top billing.
+  if(assistQueue.length){
+    const next = assistQueue[0];
+    const nbtn = document.createElement('button');
+    nbtn.className='primary-btn';
+    nbtn.style.marginTop='8px';
+    nbtn.textContent = `Continue to step ${assistStepNum+1} of ${assistTotal}: ${next.name} →`;
+    nbtn.onclick = assistOpenNext;
+    log.parentElement.appendChild(nbtn);
+  }
   const chainBtn = document.createElement('button');
   chainBtn.className='small-btn';
   chainBtn.style.marginTop='8px';
@@ -1957,6 +1996,219 @@ function openToolPicker(){
     card.onclick = ()=>{ closePanel(); t.fn(); };
     grid.appendChild(card);
   });
+}
+
+/* ---------- Ask Dockbench: the plain-language help desk ----------
+   The user says what they want in their own words ("make this small enough
+   to email and give me a markdown copy"); we split the request into steps,
+   match each one to a real tool, and walk them through — carrying the file
+   from step to step automatically. Rule-based and instant: no model to
+   download, works offline, same on a phone as on a workstation. */
+
+// Baby-language → exact tool name. Longest matching phrase wins, so specific
+// beats generic ("compress photo" → image tool, plain "compress" → PDF tool).
+const INTENT_SYNONYMS = [
+  [['make pdf smaller','compress pdf','shrink pdf','pdf too big','reduce pdf','smaller','compress','shrink','too big','email size','reduce size','make it small','lighter'],'Make PDF Smaller'],
+  [['make image smaller','compress image','compress photo','compress picture','shrink image','shrink photo','photo too big','image too big','smaller photo','smaller image','compress jpg','compress png'],'Make Image Smaller'],
+  [['merge','combine','join','put together','into one pdf','one file','stitch'],'Merge PDF'],
+  [['split','separate pages','extract pages','take out pages','page range','only some pages'],'Split PDF'],
+  [['photos to pdf','images to pdf','pictures to pdf','photo into pdf','image into pdf','pictures into one','jpg to pdf','png to pdf'],'Images to PDF'],
+  [['pdf to jpg','pdf to image','pdf to picture','pages as images','pdf to png'],'PDF to JPG'],
+  [['pdf to word','word file','editable word','docx','make it editable'],'PDF to Word'],
+  [['word to pdf','doc to pdf','docx to pdf'],'Word to PDF'],
+  [['markdown to pdf'],'Markdown to PDF'],
+  [['markdown','md file','.md'],'PDF to Markdown'],
+  [['pdf to text','plain text','txt file','just the text','copy the text','text only'],'PDF to Text'],
+  [['excel to pdf','spreadsheet to pdf','xlsx to pdf'],'Excel to PDF'],
+  [['pdf to excel','to spreadsheet'],'PDF to Excel'],
+  [['powerpoint to pdf','pptx to pdf','slides to pdf','presentation to pdf'],'PowerPoint to PDF'],
+  [['pdf to powerpoint','to slides','to presentation'],'PDF to PowerPoint'],
+  [['html to pdf','webpage to pdf','text to pdf'],'HTML / Text to PDF'],
+  [['table to csv','extract table','csv'],'Table to CSV'],
+  [['convert image','image format','webp','png to jpg','jpg to png','change format'],'Convert Image Format'],
+  [['ocr','scanned','searchable','scan to text','read the scan','recognize text','can\'t select text'],'OCR — Make Scans Searchable'],
+  [['scan document','scan to pdf','camera scan','use my camera'],'Scan Document'],
+  [['password protect','add a password','put a password','lock pdf','encrypt','protect'],'Protect PDF'],
+  [['unlock','remove password','remove the password','decrypt','forgot password'],'Unlock PDF'],
+  [['redact','black out','blackout','hide ssn','hide email','remove sensitive','hide private'],'Search & Redact'],
+  [['sanitize','remove scripts','strip metadata from pdf','clean the pdf'],'Sanitize PDF'],
+  [['sign','signature'],'Sign PDF'],
+  [['remove watermark','watermark gone'],'Redact / Remove Watermark'],
+  [['watermark'],'Add Watermark'],
+  [['stamp','approved','paid stamp'],'Digital Stamp'],
+  [['rotate pdf','turn pages','upside down','sideways','rotate'],'Rotate PDF'],
+  [['rotate image','rotate photo','rotate picture','flip'],'Rotate / Flip Image'],
+  [['organize','reorder','rearrange','move pages','delete pages','remove pages'],'Organize PDF'],
+  [['crop'],'Crop PDF'],
+  [['page numbers','number the pages','numbering'],'Page Numbering & Document ID'],
+  [['header','footer'],'Add Header & Footer'],
+  [['repair','broken','corrupted','won\'t open','wont open'],'Repair PDF'],
+  [['compare pdf','difference between','what changed'],'Compare PDF'],
+  [['duplicate pages','blank pages'],'Remove Duplicate/Blank Pages'],
+  [['extract images','get the pictures out','save images from','pull the images'],'Extract Images'],
+  [['metadata','author name','document properties'],'Edit Metadata'],
+  [['flatten'],'Flatten PDF'],
+  [['black-and-white','grayscale','greyscale','no color','no colour'],'Grayscale PDF'],
+  [['fill a form','fill form','form'],'PDF Forms'],
+  [['highlight'],'Highlight Important Text'],
+  [['edit pdf','edit the text','add text to pdf','fix a typo'],'PDF Editor'],
+  [['bookmark','table of contents','toc'],'Bookmarks / TOC'],
+  [['multiple pages on one','pages per sheet','n-up','print smaller'],'Put Multiple Pages on One Sheet'],
+  [['insert page','replace page','add a page'],'Insert / Replace Page'],
+  [['pdf/a','archival','archive format'],'PDF to PDF/A'],
+  [['remove background','cut out','transparent','no background','background gone','cutout'],'Remove Background'],
+  [['resize','change size','dimensions','make it 500'],'Resize Image'],
+  [['exif','photo metadata','location data','strip photo data'],'Remove Photo Metadata (EXIF)'],
+  [['passport','id photo','visa photo'],'Passport & ID Photo Maker'],
+  [['favicon'],'Favicon Generator'],
+  [['many photos','batch resize','lots of photos','all my photos'],'Batch Resize / Shrink Many Photos'],
+  [['business card'],'Business Card Designer'],
+  [['id card'],'ID Card Designer'],
+  [['certificate','award'],'Certificate / Award Maker'],
+  [['invoice','bill a client'],'Invoice Generator'],
+  [['gif'],'Video to GIF'],
+  [['trim video','cut video','shorten video','cut a clip'],'Trim Video'],
+  [['slideshow'],'Images to Slideshow Video'],
+  [['record screen','screen record','capture screen','record my screen'],'Screen Recorder'],
+  [['extract audio','sound from video','video to mp3','video to wav','just the audio'],'Extract Audio from Video'],
+  [['summarize','summary','tldr','tl;dr'],'AI Summarize (On Your Device)'],
+  [['translate'],'Translate Text (On Your Device)'],
+  [['speech to text','dictate','voice to text'],'Voice to Text (On Your Device)'],
+  [['read aloud','read to me','read it out','listen to'],'Read PDF Aloud'],
+  [['describe photo','alt text','caption'],'Describe a Photo / Alt-Text (On Your Device)'],
+  [['count words','word count','how many words'],'Word & Character Counter'],
+  [['qr'],'QR Code Generator'],
+  [['barcode'],'Barcode Generator'],
+  [['password generator','make a password','strong password','random password','new password'],'Password Generator'],
+  [['currency','exchange rate','convert money','dollars to','euros to'],'Currency Converter'],
+  [['loan','emi','monthly payment'],'Loan / EMI Calculator'],
+];
+
+// When the user is clearly talking about a photo/image, redirect PDF-default
+// matches to their image sibling ("compress my photo" → image compressor,
+// "turn my photos into one PDF" → Images to PDF, not Merge).
+const IMAGE_CONTEXT = /\b(photo|photos|image|images|picture|pictures|jpg|jpeg|png|selfie|screenshot)\b/;
+const IMAGE_SIBLING = {
+  'Make PDF Smaller':'Make Image Smaller',
+  'Rotate PDF':'Rotate / Flip Image',
+  'Merge PDF':'Images to PDF',
+};
+
+function matchIntent(clause){
+  let best=null, bestScore=0;
+  for(const [phrases, name] of INTENT_SYNONYMS){
+    for(const ph of phrases){
+      if(clause.includes(ph) && ph.length>bestScore){ best=name; bestScore=ph.length; }
+    }
+  }
+  if(!best){
+    // Fallback: token overlap against every tool's name + description.
+    const tokens = clause.split(/\W+/).filter(w=>w.length>2);
+    let fbScore=0;
+    for(const name in toolIndex){
+      const hay = (name+' '+toolIndex[name].tool.desc).toLowerCase();
+      let s=0; tokens.forEach(t=>{ if(hay.includes(t)) s+=t.length; });
+      if(s>fbScore){ fbScore=s; best=name; }
+    }
+    if(fbScore<6) return null; // demand real overlap, not a stray word
+  }
+  if(IMAGE_SIBLING[best] && IMAGE_CONTEXT.test(clause)) return IMAGE_SIBLING[best];
+  return best;
+}
+
+function parseIntents(text){
+  const cleaned = text.toLowerCase()
+    .replace(/black and white/g,'grayscale'); // protect the compound from the "and" split
+  const clauses = cleaned
+    .split(/\s*(?:,|;|\bplus\b|\band then\b|\band also\b|\bas well as\b|\bthen\b|\band\b|\balso\b)\s*|\s*\+\s*/)
+    .map(s=>s.trim()).filter(s=>s.length>1);
+  const seen = new Set();
+  return clauses.map(clause=>{
+    const name = matchIntent(clause);
+    if(name && seen.has(name)) return null; // same tool twice = one step
+    if(name) seen.add(name);
+    return { clause, name };
+  }).filter(Boolean);
+}
+
+/* Assistant flow state: the source file, and the queue of remaining steps.
+   Each step re-starts from the file uploaded to the assistant (fan-out), so
+   "compress AND markdown" gives two outputs of the ORIGINAL document —
+   predictable for non-technical users. With no uploaded file, tools just
+   open normally. */
+let assistQueue = [];
+let assistSourceFile = null;
+let pendingAssistFile = null;   // consumed by buildDropzone on next panel open
+let assistStepNum = 0, assistTotal = 0;
+
+function assistOpenNext(){
+  const step = assistQueue.shift();
+  if(!step) return;
+  assistStepNum++;
+  pendingAssistFile = assistSourceFile || fileFromLastOutput();
+  closePanel();
+  const entry = toolIndex[step.name];
+  if(entry) openTool(entry.tool);
+}
+
+function toolAskDockbench(prefill){
+  const body = panelShell({title:'✨ Ask Dockbench', desc:'Say what you want in your own words — no technical terms needed. I\'ll pick the right tools and walk you through, step by step.'});
+  buildDropzone(body, {multiple:false, accept:'', onFiles:(f)=>{ assistSourceFile=f[0]; fileInfo.textContent = `Working with: ${assistSourceFile.name} (${fmtBytes(assistSourceFile.size)})`; }});
+  const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:10px 0;font-size:0.85rem;'; body.appendChild(fileInfo);
+  assistSourceFile = null; assistQueue = []; assistStepNum = 0; assistTotal = 0;
+
+  const askRow=document.createElement('div'); askRow.className='assist-hero'; askRow.style.margin='10px 0';
+  const input=document.createElement('input'); input.type='text';
+  input.placeholder='e.g. compress this and give me a markdown copy';
+  const goBtn=document.createElement('button'); goBtn.className='primary-btn'; goBtn.textContent='Plan it';
+  askRow.appendChild(input); askRow.appendChild(goBtn); body.appendChild(askRow);
+
+  const chips=document.createElement('div'); chips.className='assist-chips';
+  ['make this small enough to email','turn my photos into one PDF','compress and make a markdown copy','black out private details','make this scan searchable'].forEach(ex=>{
+    const c=document.createElement('button'); c.className='small-btn'; c.textContent=ex;
+    c.onclick=()=>{ input.value=ex; plan(); };
+    chips.appendChild(c);
+  });
+  body.appendChild(chips);
+
+  const planBox=document.createElement('div'); body.appendChild(planBox);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  function plan(){
+    planBox.innerHTML=''; log.textContent='';
+    const text = input.value.trim();
+    if(!text){ log.textContent='Type what you want to do first.'; return; }
+    const intents = parseIntents(text);
+    const matched = intents.filter(i=>i.name);
+    const unmatched = intents.filter(i=>!i.name);
+    if(!matched.length){
+      log.textContent='I couldn\'t match that to a tool — try different words (e.g. "make it smaller", "merge my files"), or browse the tool grid below.';
+      return;
+    }
+    matched.forEach((step,i)=>{
+      const t = toolIndex[step.name].tool;
+      const row=document.createElement('div'); row.className='assist-step';
+      row.innerHTML = `<span class="num">Step ${i+1}</span><span>${t.icon} <strong>${escapeXml(step.name)}</strong> — ${escapeXml(t.desc)}</span>`;
+      planBox.appendChild(row);
+    });
+    unmatched.forEach(step=>{
+      const row=document.createElement('div'); row.className='assist-step';
+      row.innerHTML = `<span class="num">?</span><span>I couldn't match "${escapeXml(step.clause)}" — that part will be skipped.</span>`;
+      planBox.appendChild(row);
+    });
+    const startBtn=document.createElement('button'); startBtn.className='primary-btn';
+    startBtn.textContent = matched.length===1 ? `Open ${matched[0].name}` : `Start step 1 of ${matched.length}`;
+    startBtn.onclick=()=>{
+      assistQueue = matched.slice();
+      assistTotal = matched.length; assistStepNum = 0;
+      assistOpenNext();
+    };
+    planBox.appendChild(startBtn);
+    if(assistSourceFile) log.textContent='Your file will be loaded into each step automatically.';
+  }
+  goBtn.onclick = plan;
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') plan(); });
+  if(typeof prefill==='string' && prefill.trim()){ input.value = prefill.trim(); plan(); }
 }
 
 function toolPDFToText(){
@@ -6481,6 +6733,7 @@ const textTools = [
 renderGrid('text-tools', textTools);
 
 const utilityTools = [
+  {icon:'✨', name:'Ask Dockbench', desc:'Say what you need in your own words — get walked through it, step by step.', fn:toolAskDockbench},
   {icon:'▦', name:'QR Code Generator', desc:'Turn a link or text into a QR code.', fn:toolQRGenerate},
   {icon:'🔍', name:'QR Code Reader', desc:'Read a QR code from a photo.', fn:toolQRRead},
   {icon:'🔑', name:'Password Generator', desc:'Make a strong, random password.', fn:toolPasswordGenerator},
@@ -6524,7 +6777,7 @@ const CATEGORIES = [
   ['ai-tools','AI on-device'], ['api-tools','Server'],
 ];
 const SECTION_IDS = CATEGORIES.slice(1).map(c=>c[0]);
-const POPULAR = ['Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
+const POPULAR = ['Ask Dockbench','Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
                  'Protect PDF','Make Image Smaller','Resize Image','PDF to Word','Video to GIF','Invoice Generator'];
 let activeCategory = 'all';
 let serverAvailable = false; // Server tab/tools appear only when a backend answers
@@ -6606,6 +6859,21 @@ function applyView(){
 searchInput.addEventListener('input', applyView);
 applyView();
 
+// "Ask Dockbench" entry points: the hero input and the search dead-end.
+const assistHeroInput = document.getElementById('assist-hero-input');
+function openAssistFromHero(){
+  const q = assistHeroInput.value.trim();
+  assistHeroInput.value='';
+  toolAskDockbench(q);
+}
+document.getElementById('assist-hero-btn').onclick = openAssistFromHero;
+assistHeroInput.addEventListener('keydown', e=>{ if(e.key==='Enter') openAssistFromHero(); });
+document.getElementById('no-results-ask').onclick = ()=>{
+  const q = searchInput.value.trim();
+  searchInput.value=''; applyView();
+  toolAskDockbench(q);
+};
+
 // keyboard: Ctrl/Cmd+K focuses search, Escape closes the tool panel
 document.addEventListener('keydown', e=>{
   if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){ e.preventDefault(); searchInput.focus(); searchInput.select(); }
@@ -6642,6 +6910,26 @@ function initBannerAd(){
   document.head.appendChild(s);
 }
 initBannerAd();
+
+// Result-area passive ad (see AD_CONFIG.result) — only ever appears at the
+// bottom of a tool panel AFTER a result has been delivered, never before or
+// during processing. Dormant (zero DOM, zero requests) until configured.
+document.addEventListener('db-result-delivered', ()=>{
+  const cfg = AD_CONFIG.result;
+  if(!cfg.enabled || !cfg.scriptUrl || IS_FILE) return;
+  if(!overlay.classList.contains('open')) return;
+  if(!document.getElementById('result-ad-script')){
+    const s = document.createElement('script');
+    s.id='result-ad-script'; s.async = true; s.src = cfg.scriptUrl;
+    s.onerror = ()=>{ /* unreachable/blocked — slot stays empty */ };
+    document.head.appendChild(s);
+  }
+  if(!panel.querySelector('.ad-slot')){
+    const slot = document.createElement('div');
+    slot.className='ad-slot';
+    panel.appendChild(slot);
+  }
+});
 
 // Register service worker for offline/PWA support. Guarded because this
 // only works when served over http(s), not opened directly as a file://.

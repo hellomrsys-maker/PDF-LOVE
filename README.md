@@ -92,6 +92,14 @@ generator, QR/barcode, plus text, utility, finance, and fully on-device AI
 tools (summarize, translate, voice-to-text, image captioning via
 Transformers.js — model downloads once, then offline).
 
+**Ask Dockbench (plain-language help desk)**: type what you want in your
+own words — "compress this and give me a markdown copy", "make this scan
+searchable" — and the assistant splits the request into steps, picks the
+right tools, and walks you through with the file carried from step to step
+automatically. Rule-based and instant: no model download, works offline,
+multi-task requests supported. It's also the front door for people who
+don't know what MB/KB or "OCR" mean.
+
 **On-device OCR**: the real Tesseract engine compiled to WebAssembly ships
 with the app (`vendor/tesseract`, ~19 MB, precached) — scanned PDFs become
 searchable PDFs or plain text without any server, offline after the first
