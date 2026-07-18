@@ -257,6 +257,10 @@
   .jump-chip{padding:6px 14px;border:1px solid var(--line);border-radius:100px;background:var(--paper-raised);font-size:0.8rem;cursor:pointer;color:var(--ink-soft);font-family:inherit;}
   .jump-chip:hover{border-color:var(--copper);color:var(--copper-deep);}
   .jump-chip.chip-active{background:var(--copper);border-color:var(--copper);color:#fff;}
+  /* Collapses to nothing (zero layout shift) until a real ad network is
+     configured and actually injects content — see AD_CONFIG. */
+  .ad-slot{min-height:0;overflow:hidden;}
+  .ad-slot:empty{display:none;}
   .tool-card.search-hidden{display:none;}
   .section-label.search-hidden{display:none;}
   .tools.search-hidden{display:none;}
@@ -317,6 +321,8 @@
   <nav class="wrap cat-tabs" id="cat-tabs" aria-label="Tool categories"></nav>
 </header>
 
+<div class="wrap ad-slot" id="ad-banner-slot" aria-hidden="true"></div>
+
 <div class="wrap">
   <section class="hero">
     <div class="eyebrow">local-only document &amp; image tools</div>
@@ -333,7 +339,7 @@
     <div class="promise-grid">
       <div class="promise-item"><span class="promise-check">✓</span> No sign-up, ever</div>
       <div class="promise-item"><span class="promise-check">✓</span> No "2 files a day" limit</div>
-      <div class="promise-item"><span class="promise-check">✓</span> No watermark stamped on your file</div>
+      <div class="promise-item"><span class="promise-check">✓</span> No hidden or forced watermark — ever</div>
       <div class="promise-item"><span class="promise-check">✓</span> No file-size ceiling</div>
       <div class="promise-item"><span class="promise-check">✓</span> Works with your Wi-Fi off*</div>
       <div class="promise-item"><span class="promise-check">✓</span> 100 tools, all in one place</div>
@@ -411,6 +417,24 @@ const VENDOR_FALLBACKS = {
   'vendor/jsbarcode.all.min.js': 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
   'vendor/qpdf.js':           'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js',
   'vendor/qpdf.wasm':         'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm',
+};
+/* ---------- optional ad monetization (disabled by default) ----------
+   Individuals never pay and never log in — that stays true no matter what.
+   These are the only two monetization surfaces on the free tier:
+     1. A passive banner (never blocks anything, just sits on the page).
+     2. An optional rewarded ad that removes a small corner mark from a
+        free-tier PDF export — the user can also just keep the mark.
+   Both are fully inert (zero network requests, zero UI) until a real ad
+   network is configured below and its `enabled` flag is flipped true. */
+const AD_CONFIG = {
+  banner: {
+    enabled: false,     // flip true once bannerSlotId/scriptUrl below are real
+    scriptUrl: null,    // your ad network's loader <script src>
+  },
+  rewarded: {
+    enabled: false,     // flip true once scriptUrl below is real
+    scriptUrl: null,    // your ad network's rewarded-video loader <script src>
+  },
 };
 const IS_FILE = location.protocol === 'file:';
 async function vendorAsset(path){
@@ -576,7 +600,24 @@ function fmtBytes(b){
   if(b<1024*1024) return (b/1024).toFixed(1)+' KB';
   return (b/1024/1024).toFixed(2)+' MB';
 }
-function download(blob, filename){
+// download() is the single delivery point for every tool's output. Free-
+// tier PDF exports (blob.type==='application/pdf') optionally carry a small
+// removable corner mark — see showWatermarkChoice below — unless the call
+// site opts out via {skipWatermark:true} (the pre-existing Add Watermark
+// tool, and server-assisted/self-hosted-backend tools, which are a
+// different trust tier entirely). This check is purely structural: images,
+// video, zips, text, csv, markdown, etc. never carry this MIME type, so
+// they're automatically excluded — no per-tool tagging needed or possible
+// to forget. Nothing here ever blocks a download: if ads aren't configured
+// (the shipped default) or the user is offline, this is a straight passthrough.
+function download(blob, filename, opts={}){
+  if(!opts.skipWatermark && blob.type==='application/pdf' && AD_CONFIG.rewarded.enabled){
+    showWatermarkChoice(blob, filename);
+    return;
+  }
+  _deliverDownload(blob, filename);
+}
+function _deliverDownload(blob, filename){
   // Very large results: stream straight to the user's disk (File System
   // Access API) instead of materializing a giant blob: URL in RAM. Falls
   // back to the classic anchor download everywhere else.
@@ -602,6 +643,83 @@ function _anchorDownload(blob, filename){
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url), 4000);
+}
+
+// Stamps a small, low-opacity corner mark onto a PDF blob (re-parses the
+// already-built PDF via pdf-lib rather than requiring every tool function
+// to route through a shared "finish" step). Never throws past this
+// function — a stamping failure just returns the original bytes so a
+// download is never blocked by this optional feature.
+async function addCornerMark(blob){
+  try{
+    const bytes = await blob.arrayBuffer();
+    const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
+    const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+    doc.getPages().forEach(p=>{
+      const { width } = p.getSize();
+      p.drawText('Dockbench', {
+        x: Math.max(width-70, 8), y: 8, size: 8, font,
+        color: PDFLib.rgb(0.55,0.55,0.55), opacity: 0.55
+      });
+    });
+    const out = await doc.save();
+    return new Blob([out], {type:'application/pdf'});
+  }catch(e){
+    return blob;
+  }
+}
+
+// Resolves true if the user watched a rewarded ad to completion, false on
+// any decline/error/timeout/unconfigured-network — the caller treats both
+// "declined" and "unavailable" identically (deliver the marked file), so
+// there's never a dead end.
+function showRewardedAd(){
+  return new Promise(resolve=>{
+    const cfg = AD_CONFIG.rewarded;
+    if(!cfg.enabled || !cfg.scriptUrl || IS_FILE){ resolve(false); return; }
+    // Placeholder: a real integration loads cfg.scriptUrl once, calls that
+    // network's "show rewarded ad" API, and resolves(true) on its
+    // completed-view callback / resolves(false) on error, skip, or timeout.
+    resolve(false);
+  });
+}
+
+// Offered only for free-tier, on-device PDF exports when a rewarded-ad
+// network is actually configured (AD_CONFIG.rewarded.enabled). Reuses the
+// same panelShell/overlay modal every tool already uses.
+function showWatermarkChoice(blob, filename){
+  const body = panelShell({
+    title: 'Remove the Dockbench mark?',
+    desc: 'This free export carries a small corner mark. Watch a short ad for a clean copy, or download it as-is — your choice.'
+  });
+  const watchBtn = document.createElement('button');
+  watchBtn.className = 'primary-btn';
+  watchBtn.textContent = 'Watch a short ad & remove the mark';
+  const plainBtn = document.createElement('button');
+  plainBtn.className = 'small-btn';
+  plainBtn.style.marginTop = '10px';
+  plainBtn.textContent = 'Download with the small mark';
+  const log = document.createElement('div'); log.className = 'runlog';
+  body.appendChild(watchBtn); body.appendChild(plainBtn); body.appendChild(log);
+
+  const disableBoth = ()=>{ watchBtn.disabled = true; plainBtn.disabled = true; };
+
+  watchBtn.onclick = async ()=>{
+    disableBoth();
+    log.textContent = 'Loading ad...';
+    const watched = await showRewardedAd();
+    if(watched){
+      log.innerHTML = '<span class="ok">✓ Thanks — here\'s your clean file.</span>';
+      _deliverDownload(blob, filename);
+    }else{
+      log.textContent = 'Ad unavailable right now — downloading with the small mark instead.';
+      _deliverDownload(await addCornerMark(blob), filename);
+    }
+  };
+  plainBtn.onclick = async ()=>{
+    disableBoth();
+    _deliverDownload(await addCornerMark(blob), filename);
+  };
 }
 
 /* ---------- memory guard ----------
@@ -3957,7 +4075,9 @@ function toolServerFile({title, desc, engine, accept, endpoint, fields={}, outNa
       const extra = getExtra ? getExtra() : {};
       const blob = await apiProcess(endpoint, {file, ...fields, ...extra}, {onStatus:(m)=>log.textContent=m});
       const name = typeof outName==='function' ? outName(file) : outName;
-      download(new Blob([blob], {type: outType}), name);
+      // Server-assisted tool: the file went to the user's own self-hosted
+      // backend, a different trust/monetization tier — never gated here.
+      download(new Blob([blob], {type: outType}), name, {skipWatermark:true});
       log.innerHTML = '<span class="ok">✓ Done — processed by your own server, nothing retained.</span>';
     }catch(e){
       log.innerHTML = apiErrorHelp(e);
@@ -4003,7 +4123,8 @@ function toolServerOCR(){
       const language = document.getElementById('ocr-lang').value;
       if(output==='pdf'){
         const blob = await apiProcess('/ocr', {file, language, output:'pdf'}, {onStatus:(m)=>log.textContent=m});
-        download(new Blob([blob],{type:'application/pdf'}), file.name.replace(/\.(pdf|png|jpe?g|tiff?)$/i,'')+'-searchable.pdf');
+        // Server-assisted tool — never gated (see toolServerFile note above).
+        download(new Blob([blob],{type:'application/pdf'}), file.name.replace(/\.(pdf|png|jpe?g|tiff?)$/i,'')+'-searchable.pdf', {skipWatermark:true});
       } else {
         const j = await apiProcess('/ocr', {file, language, output:'text'}, {expect:'json', onStatus:(m)=>log.textContent=m});
         resultBox.value = j.text || '';
@@ -4411,7 +4532,8 @@ function toolAddWatermark(){
       });
     });
     const out = await doc.save();
-    download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+'-watermarked.pdf');
+    // This IS the opt-in watermark tool — never gated behind its own removal flow.
+    download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+'-watermarked.pdf', {skipWatermark:true});
     log.innerHTML='<span class="ok">✓ Done — watermarked locally, 0 bytes uploaded.</span>';
   };
 }
@@ -6504,6 +6626,22 @@ if(!IS_FILE){
     })
     .catch(()=>{});
 }
+
+// Passive banner ad (see AD_CONFIG) — a no-op until a real network is
+// configured, so out of the box this makes zero network requests and
+// leaves #ad-banner-slot empty (collapsed to nothing by .ad-slot:empty).
+function initBannerAd(){
+  const cfg = AD_CONFIG.banner;
+  if(!cfg.enabled || !cfg.scriptUrl || IS_FILE) return;
+  const slot = document.getElementById('ad-banner-slot');
+  if(!slot) return;
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = cfg.scriptUrl;
+  s.onerror = ()=>{ /* network unreachable or blocked — slot just stays empty */ };
+  document.head.appendChild(s);
+}
+initBannerAd();
 
 // Register service worker for offline/PWA support. Guarded because this
 // only works when served over http(s), not opened directly as a file://.
