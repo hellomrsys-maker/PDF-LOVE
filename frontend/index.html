@@ -417,6 +417,8 @@
 <footer>
   <div class="wrap">
     Dockbench is a static, client-side application. PDF and image tools above run on WebAssembly/Canvas in your browser. Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate opt-in backend — see <code>/backend</code> in the project for the self-hosted, open-source API that powers them.
+    Dockbench never checks for one automatically — <button class="small-btn" id="check-backend-btn" style="margin-left:4px;">Have a self-hosted backend? Check for it →</button>
+    <span id="check-backend-status" style="margin-left:8px;font-size:0.85rem;"></span>
   </div>
 </footer>
 
@@ -6975,19 +6977,35 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape' && overlay.classList.contains('open')) closePanel();
 });
 
-// backend status dot (served mode only — on file:// there is no /api origin)
-if(!IS_FILE){
-  const ctrl = new AbortController();
-  setTimeout(()=>ctrl.abort(), 3000);
-  fetch(API_BASE+'/capabilities', {signal:ctrl.signal})
-    .then(r=>{
-      if(!r.ok) return;
-      document.getElementById('backend-dot').classList.add('up');
-      serverAvailable = true;
-      catTabs.querySelector('[data-cat=api-tools]').style.display='';
-      applyView();
-    })
-    .catch(()=>{});
+// Backend check is manual, not automatic — Dockbench makes zero network
+// requests of its own accord, on load or otherwise (installed app or plain
+// browser tab, same rule). Clicking the footer button is the only thing
+// that ever triggers this probe.
+const checkBackendBtn = document.getElementById('check-backend-btn');
+const checkBackendStatus = document.getElementById('check-backend-status');
+if(IS_FILE){
+  checkBackendBtn.style.display = 'none'; // no /api origin at all on file://
+} else {
+  checkBackendBtn.onclick = ()=>{
+    checkBackendBtn.disabled = true;
+    checkBackendStatus.textContent = 'Checking...';
+    const ctrl = new AbortController();
+    setTimeout(()=>ctrl.abort(), 3000);
+    fetch(API_BASE+'/capabilities', {signal:ctrl.signal})
+      .then(r=>{
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        document.getElementById('backend-dot').classList.add('up');
+        serverAvailable = true;
+        catTabs.querySelector('[data-cat=api-tools]').style.display='';
+        applyView();
+        checkBackendStatus.textContent = '✓ Found — Server tab unlocked above.';
+        checkBackendBtn.style.display = 'none';
+      })
+      .catch(()=>{
+        checkBackendStatus.textContent = 'No backend found at '+API_BASE+' — that\'s expected if you haven\'t set one up.';
+        checkBackendBtn.disabled = false;
+      });
+  };
 }
 
 // Passive banner ad (see AD_CONFIG) — a no-op until a real network is
