@@ -323,7 +323,7 @@
 <header>
   <div class="wrap header-row">
     <div class="brand"><span class="dot"></span>Dockbench</div>
-    <div class="header-search"><input type="text" id="tool-search" placeholder="Search 100 tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
+    <div class="header-search"><input type="text" id="tool-search" placeholder="Search 104 tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
     <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
   </div>
   <nav class="wrap cat-tabs" id="cat-tabs" aria-label="Tool categories"></nav>
@@ -355,7 +355,7 @@
       <div class="promise-item"><span class="promise-check">✓</span> No hidden or forced watermark — ever</div>
       <div class="promise-item"><span class="promise-check">✓</span> No file-size ceiling</div>
       <div class="promise-item"><span class="promise-check">✓</span> Works with your Wi-Fi off*</div>
-      <div class="promise-item"><span class="promise-check">✓</span> 100 tools, all in one place</div>
+      <div class="promise-item"><span class="promise-check">✓</span> 104 tools, all in one place</div>
     </div>
     <div class="helper-line" style="max-width:56ch;">*Everything above the "AI / Server" and "Currency" sections works fully offline once this page has loaded once.</div>
   </section>
@@ -2041,7 +2041,7 @@ function openToolPicker(){
 // stays the most complete language; extend this same array as needed, no
 // separate code path required.
 const INTENT_SYNONYMS = [
-  [['make pdf smaller','compress pdf','shrink pdf','pdf too big','reduce pdf','smaller','compress','shrink','too big','email size','reduce size','make it small','lighter','file size',
+  [['make pdf smaller','compress pdf','shrink pdf','pdf too big','reduce pdf','smaller','compress','shrink','too big','email size','reduce size','make it small','small enough to email','lighter','file size',
     'comprimir pdf','reducir el tamaño','hacer mas pequeño','pesa mucho','muy pesado','achicar el pdf',
     'pdf chota karo','size kam karo','file bahut badi hai','chota karna hai','साइज़ कम करो','पीडीएफ छोटा करो'],'Make PDF Smaller'],
   [['make image smaller','compress image','compress photo','compress picture','shrink image','shrink photo','photo too big','image too big','smaller photo','smaller image','compress jpg','compress png',
@@ -6938,7 +6938,10 @@ function applyView(){
 searchInput.addEventListener('input', applyView);
 applyView();
 
-// "Ask Dockbench" entry points: the hero input and the search dead-end.
+// "Ask Dockbench" entry points: the hero input, the search dead-end, and a
+// ?ask=... URL param — the link target for external guide/SEO pages so a
+// page titled "how do I make a PDF smaller?" can deep-link straight into
+// the assistant with the question already asked.
 const assistHeroInput = document.getElementById('assist-hero-input');
 function openAssistFromHero(){
   const q = assistHeroInput.value.trim();
@@ -6952,6 +6955,10 @@ document.getElementById('no-results-ask').onclick = ()=>{
   searchInput.value=''; applyView();
   toolAskDockbench(q);
 };
+(function openAssistFromQueryParam(){
+  const q = new URLSearchParams(location.search).get('ask');
+  if(q && q.trim()) toolAskDockbench(q.trim());
+})();
 
 // keyboard: Ctrl/Cmd+K focuses search, Escape closes the tool panel
 document.addEventListener('keydown', e=>{

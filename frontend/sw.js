@@ -1,6 +1,18 @@
-const CACHE_NAME = 'dockbench-v4';
+const CACHE_NAME = 'dockbench-v5';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
+  // Installable-app icons referenced by manifest.json.
+  './icons/icon-48.png',
+  './icons/icon-72.png',
+  './icons/icon-96.png',
+  './icons/icon-128.png',
+  './icons/icon-144.png',
+  './icons/icon-152.png',
+  './icons/icon-192.png',
+  './icons/icon-384.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
   // Self-hosted libraries: precached so every tool (including the WASM
   // encryption engine) works fully offline after the first visit.
   './vendor/pdf-lib.min.js',

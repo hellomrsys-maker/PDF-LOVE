@@ -1,6 +1,6 @@
 # Dockbench
 
-A 105-tool PDF, image & video workbench where **everything — OCR, AI
+A 104-tool PDF, image & video workbench where **everything — OCR, AI
 background removal, compression, conversion — runs on the user's own
 device**. The only server you need is any static file host to deliver the
 app; a self-hosted backend remains available as a purely optional extra
@@ -12,7 +12,7 @@ after the first page load the core app runs **fully offline**.
 
 | | Dockbench | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
 |---|---|---|---|
-| Files stay on-device | ✅ ~100 of 105 tools (incl. OCR & AI cut-out) | ❌ every tool uploads | ❌ every tool goes to the server |
+| Files stay on-device | ✅ 97 of 104 tools (incl. OCR & AI cut-out) | ❌ every tool uploads | ❌ every tool goes to the server |
 | Works by double-clicking the HTML file | ✅ no server needed at all | ❌ | ❌ |
 | Video tools (GIF, trim, slideshow, screen rec.) | ✅ on-device | partial, cloud | ❌ |
 | Works offline (PWA) | ✅ core app + encryption | ❌ | ❌ needs the server |
@@ -34,7 +34,7 @@ open-source.
 
 ```
 ├── frontend/
-│   ├── index.html        ← the entire client-side app (100 tools)
+│   ├── index.html        ← the entire client-side app (104 tools)
 │   ├── vendor/           ← all JS/WASM libraries, self-hosted (no CDN needed)
 │   ├── manifest.json, sw.js  ← installable PWA, offline-capable
 │   ├── nginx.conf        ← production static hosting + /api/ reverse proxy
@@ -235,6 +235,21 @@ matches the real binary), Python syntax, a real import of the backend app, a
 `-Wall -Wextra -Werror` compile of the C kernel, and an end-to-end
 binarization test of both the C path and the Pillow fallback (including
 inverted-scan correction).
+
+## Guides & Play Store
+
+`frontend/guides/` has 7 static, plain-language SEO pages ("How do I make a
+PDF small enough to email?", "Why can't I select text in my scanned PDF?",
+etc.), each ending in a link that deep-links straight into the assistant
+with the question pre-filled (`index.html?ask=...`). `frontend/icons/` has
+a full PWA/TWA icon set (including maskable variants), a Play Store feature
+graphic, and real screenshots of the running app — all generated from the
+actual app, not mockups. `twa/twa-manifest.json` plus
+`frontend/.well-known/assetlinks.json` are a starting scaffold for
+packaging the existing PWA as a Trusted Web Activity; **`deploy/PLAY_STORE.md`**
+has the full step-by-step (Bubblewrap, signing, Play Console submission,
+draft listing copy) and **`deploy/PRIVACY_POLICY.md`** is a ready-to-host
+policy reflecting what the app actually does and doesn't collect.
 
 ## Roadmap (not yet built)
 

@@ -6,6 +6,9 @@ COPY index.html /usr/share/nginx/html/index.html
 COPY manifest.json /usr/share/nginx/html/manifest.json
 COPY sw.js /usr/share/nginx/html/sw.js
 COPY vendor/ /usr/share/nginx/html/vendor/
+COPY icons/ /usr/share/nginx/html/icons/
+COPY guides/ /usr/share/nginx/html/guides/
+COPY .well-known/ /usr/share/nginx/html/.well-known/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
