@@ -1963,6 +1963,22 @@ function toolBookmarkEditor(){
 
 /* ================= Chaining: remember the last output so tools can pick it up ================= */
 let lastOutput = null; // { blob, filename }
+// Commonly-paired next step, offered only when the assistant isn't already
+// mid-flow (it has its own queue) — a light nudge, not a second wizard.
+const SUGGESTED_NEXT = {
+  'Make PDF Smaller': ['Protect PDF'],
+  'Merge PDF': ['Page Numbering & Document ID'],
+  'Scan Document': ['OCR — Make Scans Searchable'],
+  'OCR — Make Scans Searchable': ['Make PDF Smaller'],
+  'Images to PDF': ['Make PDF Smaller'],
+  'Remove Background': ['Resize Image'],
+  'Sign PDF': ['Protect PDF'],
+  'Word to PDF': ['Protect PDF'],
+  'Excel to PDF': ['Protect PDF'],
+  'PowerPoint to PDF': ['Protect PDF'],
+  'Split PDF': ['Make PDF Smaller'],
+};
+
 function offerChain(blob, filename, log){
   lastOutput = { blob, filename };
   // Mid-assistant-flow: the next step takes top billing.
@@ -1974,6 +1990,17 @@ function offerChain(blob, filename, log){
     nbtn.textContent = `Continue to step ${assistStepNum+1} of ${assistTotal}: ${next.name} →`;
     nbtn.onclick = assistOpenNext;
     log.parentElement.appendChild(nbtn);
+  } else {
+    (SUGGESTED_NEXT[lastOpenedToolName]||[]).forEach(nextName=>{
+      const entry = toolIndex[nextName];
+      if(!entry) return;
+      const sbtn = document.createElement('button');
+      sbtn.className='small-btn';
+      sbtn.style.marginTop='8px';
+      sbtn.textContent = `Also want to ${nextName.toLowerCase()}? →`;
+      sbtn.onclick = ()=>{ pendingAssistFile = fileFromLastOutput(); closePanel(); openTool(entry.tool); };
+      log.parentElement.appendChild(sbtn);
+    });
   }
   const chainBtn = document.createElement('button');
   chainBtn.className='small-btn';
@@ -2007,18 +2034,40 @@ function openToolPicker(){
 
 // Baby-language → exact tool name. Longest matching phrase wins, so specific
 // beats generic ("compress photo" → image tool, plain "compress" → PDF tool).
+// English phrases, plus a starting Spanish/Hindi (Devanagari + Hinglish) set
+// for the ~20 most-used tools — matchIntent doesn't care what language a
+// phrase is written in, it's still one flat substring scan, so mixed-language
+// input ("compress this pdf aur markdown bhi chahiye") already works. English
+// stays the most complete language; extend this same array as needed, no
+// separate code path required.
 const INTENT_SYNONYMS = [
-  [['make pdf smaller','compress pdf','shrink pdf','pdf too big','reduce pdf','smaller','compress','shrink','too big','email size','reduce size','make it small','lighter'],'Make PDF Smaller'],
-  [['make image smaller','compress image','compress photo','compress picture','shrink image','shrink photo','photo too big','image too big','smaller photo','smaller image','compress jpg','compress png'],'Make Image Smaller'],
-  [['merge','combine','join','put together','into one pdf','one file','stitch'],'Merge PDF'],
-  [['split','separate pages','extract pages','take out pages','page range','only some pages'],'Split PDF'],
-  [['photos to pdf','images to pdf','pictures to pdf','photo into pdf','image into pdf','pictures into one','jpg to pdf','png to pdf'],'Images to PDF'],
+  [['make pdf smaller','compress pdf','shrink pdf','pdf too big','reduce pdf','smaller','compress','shrink','too big','email size','reduce size','make it small','lighter','file size',
+    'comprimir pdf','reducir el tamaño','hacer mas pequeño','pesa mucho','muy pesado','achicar el pdf',
+    'pdf chota karo','size kam karo','file bahut badi hai','chota karna hai','साइज़ कम करो','पीडीएफ छोटा करो'],'Make PDF Smaller'],
+  [['make image smaller','compress image','compress photo','compress picture','shrink image','shrink photo','photo too big','image too big','smaller photo','smaller image','compress jpg','compress png',
+    'comprimir imagen','comprimir foto','reducir foto','achicar la foto',
+    'photo chota karo','image size kam karo','फोटो छोटा करो'],'Make Image Smaller'],
+  [['merge','combine','join','put together','into one pdf','one file','stitch','combine files',
+    'unir pdf','combinar pdf','juntar archivos','unir archivos',
+    'pdf jodo','milado','ek saath jodo','मिला दो','जोड़ दो'],'Merge PDF'],
+  [['split','separate pages','extract pages','take out pages','page range','only some pages',
+    'separar paginas','dividir pdf','sacar paginas',
+    'pdf todo','pages alag karo','अलग करो'],'Split PDF'],
+  [['photos to pdf','images to pdf','pictures to pdf','photo into pdf','image into pdf','pictures into one','jpg to pdf','png to pdf',
+    'fotos a pdf','imagenes a pdf','convertir fotos a pdf',
+    'photo ko pdf banao','tasveer pdf mein','फोटो को पीडीएफ बनाओ'],'Images to PDF'],
   [['pdf to jpg','pdf to image','pdf to picture','pages as images','pdf to png'],'PDF to JPG'],
-  [['pdf to word','word file','editable word','docx','make it editable'],'PDF to Word'],
-  [['word to pdf','doc to pdf','docx to pdf'],'Word to PDF'],
+  [['pdf to word','word file','editable word','docx','make it editable',
+    'pdf a word','convertir a word','word editable',
+    'pdf ko word banao','word file chahiye','वर्ड फाइल चाहिए'],'PDF to Word'],
+  [['word to pdf','doc to pdf','docx to pdf',
+    'word a pdf','documento a pdf',
+    'word ko pdf banao'],'Word to PDF'],
   [['markdown to pdf'],'Markdown to PDF'],
   [['markdown','md file','.md'],'PDF to Markdown'],
-  [['pdf to text','plain text','txt file','just the text','copy the text','text only'],'PDF to Text'],
+  [['pdf to text','plain text','txt file','just the text','copy the text','text only',
+    'pdf a texto','solo el texto',
+    'sirf text chahiye','text nikalo'],'PDF to Text'],
   [['excel to pdf','spreadsheet to pdf','xlsx to pdf'],'Excel to PDF'],
   [['pdf to excel','to spreadsheet'],'PDF to Excel'],
   [['powerpoint to pdf','pptx to pdf','slides to pdf','presentation to pdf'],'PowerPoint to PDF'],
@@ -2026,20 +2075,32 @@ const INTENT_SYNONYMS = [
   [['html to pdf','webpage to pdf','text to pdf'],'HTML / Text to PDF'],
   [['table to csv','extract table','csv'],'Table to CSV'],
   [['convert image','image format','webp','png to jpg','jpg to png','change format'],'Convert Image Format'],
-  [['ocr','scanned','searchable','scan to text','read the scan','recognize text','can\'t select text'],'OCR — Make Scans Searchable'],
+  [['ocr','scanned','searchable','scan to text','read the scan','recognize text','can\'t select text',"cannot select text",
+    'texto escaneado','no puedo seleccionar el texto','hacer buscable',
+    'scan ka text nahi mil raha','text select nahi ho raha','ocr karo'],'OCR — Make Scans Searchable'],
   [['scan document','scan to pdf','camera scan','use my camera'],'Scan Document'],
-  [['password protect','add a password','put a password','lock pdf','encrypt','protect'],'Protect PDF'],
-  [['unlock','remove password','remove the password','decrypt','forgot password'],'Unlock PDF'],
-  [['redact','black out','blackout','hide ssn','hide email','remove sensitive','hide private'],'Search & Redact'],
+  [['password protect','add a password','put a password','lock pdf','encrypt','protect',
+    'poner contraseña','proteger pdf','agregar contraseña','encriptar',
+    'password lagao','pdf lock karo','पासवर्ड लगाओ'],'Protect PDF'],
+  [['unlock','remove password','remove the password','decrypt','forgot password',
+    'quitar contraseña','desbloquear pdf','olvide la contraseña',
+    'password hatao','lock kholo','pdf unlock karo'],'Unlock PDF'],
+  [['redact','black out','blackout','hide ssn','hide email','remove sensitive','hide private',
+    'tapar informacion','ocultar datos','censurar',
+    'private jankari chupao','details chupao'],'Search & Redact'],
   [['sanitize','remove scripts','strip metadata from pdf','clean the pdf'],'Sanitize PDF'],
-  [['sign','signature'],'Sign PDF'],
+  [['sign','signature','add my signature','put my signature','esign','e-sign',
+    'firmar pdf','poner mi firma',
+    'sign karo','apna signature dalo'],'Sign PDF'],
   [['remove watermark','watermark gone'],'Redact / Remove Watermark'],
-  [['watermark'],'Add Watermark'],
+  [['add a watermark','stamp text on every page','put text on every page','watermark'],'Add Watermark'],
   [['stamp','approved','paid stamp'],'Digital Stamp'],
-  [['rotate pdf','turn pages','upside down','sideways','rotate'],'Rotate PDF'],
+  [['rotate pdf','turn pages','upside down','sideways','rotate',
+    'girar pdf','rotar pdf',
+    'pdf ghumao','rotate karo'],'Rotate PDF'],
   [['rotate image','rotate photo','rotate picture','flip'],'Rotate / Flip Image'],
   [['organize','reorder','rearrange','move pages','delete pages','remove pages'],'Organize PDF'],
-  [['crop'],'Crop PDF'],
+  [['crop','crop pdf','trim the margins','cut the edges'],'Crop PDF'],
   [['page numbers','number the pages','numbering'],'Page Numbering & Document ID'],
   [['header','footer'],'Add Header & Footer'],
   [['repair','broken','corrupted','won\'t open','wont open'],'Repair PDF'],
@@ -2047,40 +2108,56 @@ const INTENT_SYNONYMS = [
   [['duplicate pages','blank pages'],'Remove Duplicate/Blank Pages'],
   [['extract images','get the pictures out','save images from','pull the images'],'Extract Images'],
   [['metadata','author name','document properties'],'Edit Metadata'],
-  [['flatten'],'Flatten PDF'],
-  [['black-and-white','grayscale','greyscale','no color','no colour'],'Grayscale PDF'],
+  [['flatten','flatten pdf','make form uneditable','lock the form'],'Flatten PDF'],
+  [['black-and-white','grayscale','greyscale','no color','no colour',
+    'blanco y negro','sin color',
+    'black and white karo','rangeen mat rakho'],'Grayscale PDF'],
   [['fill a form','fill form','form'],'PDF Forms'],
-  [['highlight'],'Highlight Important Text'],
+  [['highlight','highlight text','mark important parts'],'Highlight Important Text'],
   [['edit pdf','edit the text','add text to pdf','fix a typo'],'PDF Editor'],
-  [['bookmark','table of contents','toc'],'Bookmarks / TOC'],
+  [['bookmark','add bookmarks','table of contents','toc'],'Bookmarks / TOC'],
   [['multiple pages on one','pages per sheet','n-up','print smaller'],'Put Multiple Pages on One Sheet'],
   [['insert page','replace page','add a page'],'Insert / Replace Page'],
   [['pdf/a','archival','archive format'],'PDF to PDF/A'],
-  [['remove background','cut out','transparent','no background','background gone','cutout'],'Remove Background'],
-  [['resize','change size','dimensions','make it 500'],'Resize Image'],
+  [['remove background','cut out','transparent','no background','background gone','cutout',
+    'quitar el fondo','fondo transparente',
+    'background hatao','background nikalo'],'Remove Background'],
+  [['resize','change size','dimensions','make it 500',
+    'cambiar el tamaño','redimensionar',
+    'size badlo','photo ka size'],'Resize Image'],
   [['exif','photo metadata','location data','strip photo data'],'Remove Photo Metadata (EXIF)'],
   [['passport','id photo','visa photo'],'Passport & ID Photo Maker'],
-  [['favicon'],'Favicon Generator'],
+  [['favicon','website icon','tab icon'],'Favicon Generator'],
   [['many photos','batch resize','lots of photos','all my photos'],'Batch Resize / Shrink Many Photos'],
   [['business card'],'Business Card Designer'],
   [['id card'],'ID Card Designer'],
   [['certificate','award'],'Certificate / Award Maker'],
   [['invoice','bill a client'],'Invoice Generator'],
-  [['gif'],'Video to GIF'],
+  [['gif','make a gif','turn video into gif'],'Video to GIF'],
   [['trim video','cut video','shorten video','cut a clip'],'Trim Video'],
   [['slideshow'],'Images to Slideshow Video'],
   [['record screen','screen record','capture screen','record my screen'],'Screen Recorder'],
   [['extract audio','sound from video','video to mp3','video to wav','just the audio'],'Extract Audio from Video'],
-  [['summarize','summary','tldr','tl;dr'],'AI Summarize (On Your Device)'],
-  [['translate'],'Translate Text (On Your Device)'],
+  [['summarize','summary','tldr','tl;dr',
+    'resumir texto','hacer un resumen',
+    'summary banao','chota kar ke batao'],'AI Summarize (On Your Device)'],
+  [['translate',
+    'traducir texto','traducir',
+    'translate karo','anuvad karo'],'Translate Text (On Your Device)'],
   [['speech to text','dictate','voice to text'],'Voice to Text (On Your Device)'],
   [['read aloud','read to me','read it out','listen to'],'Read PDF Aloud'],
   [['describe photo','alt text','caption'],'Describe a Photo / Alt-Text (On Your Device)'],
   [['count words','word count','how many words'],'Word & Character Counter'],
-  [['qr'],'QR Code Generator'],
-  [['barcode'],'Barcode Generator'],
-  [['password generator','make a password','strong password','random password','new password'],'Password Generator'],
-  [['currency','exchange rate','convert money','dollars to','euros to'],'Currency Converter'],
+  [['qr','qr code','make a qr code','generate qr',
+    'codigo qr','generar qr',
+    'qr code banao'],'QR Code Generator'],
+  [['barcode','make a barcode','generate barcode'],'Barcode Generator'],
+  [['password generator','make a password','strong password','random password','new password',
+    'generar contraseña','contraseña segura',
+    'password banao','strong password chahiye'],'Password Generator'],
+  [['currency','exchange rate','convert money','dollars to','euros to',
+    'convertir moneda','tipo de cambio',
+    'currency convert karo','paisa convert karo'],'Currency Converter'],
   [['loan','emi','monthly payment'],'Loan / EMI Calculator'],
 ];
 
@@ -2120,7 +2197,7 @@ function parseIntents(text){
   const cleaned = text.toLowerCase()
     .replace(/black and white/g,'grayscale'); // protect the compound from the "and" split
   const clauses = cleaned
-    .split(/\s*(?:,|;|\bplus\b|\band then\b|\band also\b|\bas well as\b|\bthen\b|\band\b|\balso\b)\s*|\s*\+\s*/)
+    .split(/\s*(?:,|;|\bplus\b|\band then\b|\band also\b|\bas well as\b|\bthen\b|\band\b|\balso\b|\by\b|\baur\b)\s*|\s*\+\s*/)
     .map(s=>s.trim()).filter(s=>s.length>1);
   const seen = new Set();
   return clauses.map(clause=>{
@@ -6678,10 +6755,12 @@ const toolIndex = {}; // name -> {tool, sectionId}
 let favs = new Set(JSON.parse(localStorage.getItem('dockbench.favs')||'[]'));
 let recents = JSON.parse(localStorage.getItem('dockbench.recents')||'[]');
 
+let lastOpenedToolName = null; // single tracking point, reused by offerChain's "also want to" suggestion
 function openTool(t){
   recents = [t.name, ...recents.filter(n=>n!==t.name)].slice(0,8);
   try{ localStorage.setItem('dockbench.recents', JSON.stringify(recents)); }catch(e){}
   renderHomeRows();
+  lastOpenedToolName = t.name;
   t.fn();
 }
 function makeCard(t, sectionId){

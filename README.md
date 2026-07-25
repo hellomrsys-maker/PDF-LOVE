@@ -97,7 +97,11 @@ own words — "compress this and give me a markdown copy", "make this scan
 searchable" — and the assistant splits the request into steps, picks the
 right tools, and walks you through with the file carried from step to step
 automatically. Rule-based and instant: no model download, works offline,
-multi-task requests supported. It's also the front door for people who
+multi-task requests supported, and after finishing a step it can suggest a
+commonly-paired next one (e.g. compress → protect with a password). It
+understands starting Spanish and Hindi (Devanagari + Hinglish) phrasing for
+the ~20 most-used tools alongside English — the same flat phrase list, no
+separate code path, easy to extend. It's also the front door for people who
 don't know what MB/KB or "OCR" mean.
 
 **On-device OCR**: the real Tesseract engine compiled to WebAssembly ships
