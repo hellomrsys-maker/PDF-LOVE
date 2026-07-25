@@ -68,6 +68,14 @@
     display:flex;align-items:center;gap:6px;
     background:var(--paper-raised);
   }
+  .install-btn{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:0.8rem;font-weight:600;
+    color:#fff;background:var(--copper);
+    border:none;padding:8px 14px;border-radius:100px;
+    cursor:pointer;white-space:nowrap;display:none;
+  }
+  .install-btn:hover{background:var(--copper-deep);}
 
   /* ---------- hero ---------- */
   .hero{padding:64px 0 40px;}
@@ -325,6 +333,7 @@
     <div class="brand"><span class="dot"></span>Dockbench</div>
     <div class="header-search"><input type="text" id="tool-search" placeholder="Search 104 tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
     <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
+    <button class="install-btn" id="install-btn" title="Install Dockbench as an app on this device">⬇ Install</button>
   </div>
   <nav class="wrap cat-tabs" id="cat-tabs" aria-label="Tool categories"></nav>
 </header>
@@ -7016,6 +7025,58 @@ document.addEventListener('db-result-delivered', ()=>{
     panel.appendChild(slot);
   }
 });
+
+// Visible "Install" button — the PWA is already installable via the
+// browser's own (easy-to-miss) UI; this makes it an obvious, always-visible
+// affordance instead, on both desktop and mobile. Meaningless on file://
+// (double-clicked HTML has no installable origin).
+(function initInstallButton(){
+  const installBtn = document.getElementById('install-btn');
+  if(!installBtn || IS_FILE) return;
+  const alreadyInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(alreadyInstalled) return;
+
+  let deferredPrompt = null;
+  installBtn.style.display = 'inline-flex'; // visible immediately; adapts to what the browser actually supports
+
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  window.addEventListener('appinstalled', ()=>{ installBtn.style.display = 'none'; deferredPrompt = null; });
+
+  function showManualInstallInstructions(){
+    const body = panelShell({
+      title: 'Install Dockbench',
+      desc: 'Add Dockbench to your desktop, taskbar, or home screen — it opens like a real app and works offline after that.'
+    });
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+    let steps;
+    if(isIOS){
+      steps = 'On iPhone/iPad Safari: tap the <strong>Share</strong> icon, then <strong>Add to Home Screen</strong>.';
+    } else if(isSafari){
+      steps = 'On Mac Safari: open the <strong>File</strong> menu, then <strong>Add to Dock</strong> (Safari 17+).';
+    } else {
+      steps = 'Look for an install icon at the right edge of the address bar, or open the browser menu (⋮ or ≡) and choose <strong>Install Dockbench</strong> / <strong>Add to Home screen</strong>.';
+    }
+    const p = document.createElement('div');
+    p.innerHTML = `<p style="margin-top:0;">${steps}</p>`;
+    body.appendChild(p);
+  }
+
+  installBtn.onclick = async ()=>{
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      if(outcome === 'accepted') installBtn.style.display = 'none';
+    } else {
+      showManualInstallInstructions();
+    }
+  };
+})();
 
 // Register service worker for offline/PWA support. Guarded because this
 // only works when served over http(s), not opened directly as a file://.
