@@ -419,6 +419,7 @@
     Dockbench is a static, client-side application. PDF and image tools above run on WebAssembly/Canvas in your browser. Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate opt-in backend — see <code>/backend</code> in the project for the self-hosted, open-source API that powers them.
     Dockbench never checks for one automatically — <button class="small-btn" id="check-backend-btn" style="margin-left:4px;">Have a self-hosted backend? Check for it →</button>
     <span id="check-backend-status" style="margin-left:8px;font-size:0.85rem;"></span>
+    <br><button class="small-btn" id="license-btn" style="margin-top:8px;">Have a license key? Manage it →</button>
   </div>
 </footer>
 
@@ -464,6 +465,19 @@ const AD_CONFIG = {
     scriptUrl: null,    // only AFTER a result is delivered — never before/during
   },
 };
+
+/* ---------- offline licensing (for deployments with no internet at all) ----
+   Ad revenue requires a live connection — there's no way around that, an ad
+   network has to serve the creative and verify the impression in real time.
+   For a genuinely offline deployment (a library, a school, an air-gapped
+   office), that revenue path simply doesn't exist. This is the alternative:
+   a cryptographically signed license key, verified entirely on-device via
+   the browser's Web Crypto API — no server involved, before or after,
+   ever. See licensing/README.md for how to generate keys and mint licenses.
+   Paste your public-key.json contents below once you've run
+   `node licensing/keygen.js` — until then this stays null and the license
+   panel honestly says "not configured yet" rather than rejecting real keys. */
+const LICENSE_PUBLIC_KEY_JWK = null;
 const IS_FILE = location.protocol === 'file:';
 async function vendorAsset(path){
   // Returns the local path if it's actually there, else the CDN fallback.
@@ -639,7 +653,7 @@ function fmtBytes(b){
 // to forget. Nothing here ever blocks a download: if ads aren't configured
 // (the shipped default) or the user is offline, this is a straight passthrough.
 function download(blob, filename, opts={}){
-  if(!opts.skipWatermark && blob.type==='application/pdf' && AD_CONFIG.rewarded.enabled){
+  if(!opts.skipWatermark && blob.type==='application/pdf' && AD_CONFIG.rewarded.enabled && !activeLicense){
     showWatermarkChoice(blob, filename);
     return;
   }
@@ -716,9 +730,111 @@ function showRewardedAd(){
   });
 }
 
+/* ---------- offline license verification (Web Crypto, zero network) ----
+   A license key is "<base64url-JSON-payload>.<base64url-ECDSA-signature>".
+   Verifying it needs only the public key already embedded above — nothing
+   here ever touches the network, so this works exactly the same on a
+   machine that has never once been online. */
+function b64urlToBytes(s){
+  s = s.replace(/-/g,'+').replace(/_/g,'/');
+  while(s.length % 4) s += '=';
+  const bin = atob(s);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+let _licensePublicKeyPromise = null;
+function getLicensePublicKey(){
+  if(!LICENSE_PUBLIC_KEY_JWK) return Promise.resolve(null);
+  if(!_licensePublicKeyPromise){
+    _licensePublicKeyPromise = crypto.subtle.importKey(
+      'jwk', LICENSE_PUBLIC_KEY_JWK, {name: 'ECDSA', namedCurve: 'P-256'}, false, ['verify']
+    ).catch(()=>null);
+  }
+  return _licensePublicKeyPromise;
+}
+async function verifyLicenseKey(keyStr){
+  const key = await getLicensePublicKey();
+  if(!key) return {valid:false, reason:'License verification isn\'t configured on this deployment yet.'};
+  const parts = (keyStr||'').trim().split('.');
+  if(parts.length !== 2) return {valid:false, reason:'That doesn\'t look like a valid license key.'};
+  const [payloadB64, sigB64] = parts;
+  let payload;
+  try{ payload = JSON.parse(new TextDecoder().decode(b64urlToBytes(payloadB64))); }
+  catch(e){ return {valid:false, reason:'Could not read this license key.'}; }
+  let ok;
+  try{
+    ok = await crypto.subtle.verify(
+      {name: 'ECDSA', hash: 'SHA-256'}, key, b64urlToBytes(sigB64), new TextEncoder().encode(payloadB64)
+    );
+  }catch(e){ return {valid:false, reason:'Could not read this license key.'}; }
+  if(!ok) return {valid:false, reason:'This license key\'s signature does not check out.'};
+  if(payload.expires && new Date(payload.expires) < new Date()){
+    return {valid:false, reason:'This license key expired on '+payload.expires+'.'};
+  }
+  return {valid:true, payload};
+}
+
+let activeLicense = null; // {tier, licensee, seats, issued, expires} once verified this session
+async function loadStoredLicense(){
+  const stored = localStorage.getItem('dockbench.licenseKey');
+  if(!stored) return;
+  const result = await verifyLicenseKey(stored);
+  if(result.valid) activeLicense = result.payload;
+  else localStorage.removeItem('dockbench.licenseKey'); // stale, tampered, or expired — stop asking
+}
+loadStoredLicense();
+
+// Reachable from the footer, or as a shortcut from the watermark-removal
+// prompt — same panel either way. opts.onActivated, if given, fires right
+// after a successful activation (used by the watermark prompt to resume
+// delivering the file the user was originally trying to download, so
+// switching to "I have a license" mid-flow never loses their work).
+function showLicensePanel(opts={}){
+  if(activeLicense){
+    const body = panelShell({
+      title: 'Licensed ✓',
+      desc: `This device is licensed (${escapeXml(activeLicense.tier)}${activeLicense.licensee ? ' — '+escapeXml(activeLicense.licensee) : ''}). Free PDF exports never carry a watermark or ad prompt here.`
+    });
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'small-btn';
+    clearBtn.textContent = 'Remove this license from this device';
+    clearBtn.onclick = ()=>{ localStorage.removeItem('dockbench.licenseKey'); activeLicense = null; closePanel(); };
+    body.appendChild(clearBtn);
+    return;
+  }
+  const body = panelShell({
+    title: 'Enter a license key',
+    desc: 'Verified entirely on this device via cryptographic signature — no internet required, works forever once activated, even on a machine that\'s never been online.'
+  });
+  const input = document.createElement('textarea');
+  input.rows = 3;
+  input.style.cssText = 'width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:monospace;font-size:0.8rem;';
+  input.placeholder = 'Paste your license key here';
+  body.appendChild(input);
+  const btn = document.createElement('button'); btn.className = 'primary-btn'; btn.textContent = 'Activate';
+  body.appendChild(btn);
+  const log = document.createElement('div'); log.className = 'runlog'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    btn.disabled = true;
+    log.textContent = 'Verifying (entirely on this device, no network involved)...';
+    const result = await verifyLicenseKey(input.value);
+    btn.disabled = false;
+    if(result.valid){
+      activeLicense = result.payload;
+      try{ localStorage.setItem('dockbench.licenseKey', input.value.trim()); }catch(e){}
+      log.innerHTML = '<span class="ok">✓ Activated — no more watermark prompts on this device.</span>';
+      if(opts.onActivated) opts.onActivated();
+    } else {
+      log.textContent = result.reason;
+    }
+  };
+}
+
 // Offered only for free-tier, on-device PDF exports when a rewarded-ad
-// network is actually configured (AD_CONFIG.rewarded.enabled). Reuses the
-// same panelShell/overlay modal every tool already uses.
+// network is actually configured (AD_CONFIG.rewarded.enabled) and this
+// device doesn't already have a valid offline license. Reuses the same
+// panelShell/overlay modal every tool already uses.
 function showWatermarkChoice(blob, filename){
   const body = panelShell({
     title: 'Remove the Dockbench mark?',
@@ -731,8 +847,14 @@ function showWatermarkChoice(blob, filename){
   plainBtn.className = 'small-btn';
   plainBtn.style.marginTop = '10px';
   plainBtn.textContent = 'Download with the small mark';
+  const licenseBtn = document.createElement('button');
+  licenseBtn.className = 'small-btn';
+  licenseBtn.style.marginTop = '10px';
+  licenseBtn.style.marginLeft = '8px';
+  licenseBtn.textContent = 'Have a license key instead? →';
+  licenseBtn.onclick = ()=>showLicensePanel({onActivated: ()=>_deliverDownload(blob, filename)});
   const log = document.createElement('div'); log.className = 'runlog';
-  body.appendChild(watchBtn); body.appendChild(plainBtn); body.appendChild(log);
+  body.appendChild(watchBtn); body.appendChild(plainBtn); body.appendChild(licenseBtn); body.appendChild(log);
 
   const disableBoth = ()=>{ watchBtn.disabled = true; plainBtn.disabled = true; };
 
@@ -7007,6 +7129,8 @@ if(IS_FILE){
       });
   };
 }
+
+document.getElementById('license-btn').onclick = ()=>showLicensePanel();
 
 // Passive banner ad (see AD_CONFIG) — a no-op until a real network is
 // configured, so out of the box this makes zero network requests and

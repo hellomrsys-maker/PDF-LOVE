@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 *.so
 .DS_Store
+
+# Offline license signing key — secret, never commit. See licensing/README.md.
+licensing/private-key.json

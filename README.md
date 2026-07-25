@@ -236,6 +236,20 @@ matches the real binary), Python syntax, a real import of the backend app, a
 binarization test of both the C path and the Pillow fallback (including
 inverted-scan correction).
 
+## Offline licensing (for deployments with no internet at all)
+
+Ad revenue needs a live connection — there's no way around that, an ad
+network has to serve the creative and verify the impression in real time.
+For a genuinely offline deployment (a library, a school, a government
+office, any air-gapped machine), that path doesn't exist, so Dockbench has
+a separate one: a cryptographically signed license key, verified entirely
+on-device via the Web Crypto API, no server involved before or after, ever.
+Run `node licensing/keygen.js` once (keep `private-key.json` secret, embed
+`public-key.json`'s contents in `frontend/index.html`), then
+`node licensing/mint.js` to sell licenses — see **licensing/README.md**
+for the full walkthrough, including institutional/site licensing for
+many offline machines at once.
+
 ## Guides & Play Store
 
 `frontend/guides/` has 7 static, plain-language SEO pages ("How do I make a
