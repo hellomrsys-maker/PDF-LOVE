@@ -13,8 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-calc-nogui \
     fonts-liberation \
     gcc \
+    g++ \
     ffmpeg \
-    qpdf \
+    libqpdf-dev \
     libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
@@ -25,10 +26,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Compile the native C image kernel (see native/imgproc.c). If this step
-# is removed, the API still runs — native_ops.py falls back to Pillow.
+# Build the fused C/C++ extensions (native/imgprocmodule.c and
+# native/pdfops.cpp). These run inside the interpreter process rather than
+# behind a ctypes bridge or a subprocess; see setup.py. If this step is
+# removed the API still runs — native_ops.py falls back to Pillow and
+# premium_pdf.py to pikepdf — it is just slower.
 COPY native/ native/
-RUN gcc -O3 -shared -fPIC -o native/imgproc.so native/imgproc.c
+COPY setup.py ./
+RUN python3 setup.py build_ext --inplace && rm -rf build
 
 # Every backend module, not a hand-maintained subset — omitting one here is
 # how the image ends up unable to import its own entrypoint.

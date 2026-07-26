@@ -12,3 +12,8 @@ licensing/private-key.json
 !.dev.vars.example
 .env*
 !.env.example
+
+# Compiled native extensions (built by backend/setup.py and the Dockerfile)
+backend/*.so
+backend/native/*.so
+backend/build/

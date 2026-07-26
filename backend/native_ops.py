@@ -1,19 +1,25 @@
 """
-native_ops — the C/Python bridge.
+native_ops — the C image kernel, exposed as one call: `enhance_for_ocr(img)`.
 
-Loads native/imgproc.so (compiled from native/imgproc.c in the Dockerfile)
-via ctypes and exposes one high-level call, `enhance_for_ocr(img)`, which
-runs the scan-cleanup pipeline used before Tesseract:
+It runs the scan-cleanup pipeline used before Tesseract:
 
     grayscale -> percentile contrast stretch -> flip inverted scans
     -> Otsu binarization
 
-The C kernel does this in exactly two passes over the pixels (grayscale +
-histogram, then a single LUT application); everything in between operates
-on the 256-bin histogram, so a 300-DPI A4 page cleans up in tens of
-milliseconds. Every step has a pure-Pillow fallback so the API still works
-when the shared library hasn't been built (e.g. running main.py directly
-on a dev machine, or in CI).
+in exactly two passes over the pixels; everything in between operates on a
+256-bin histogram, so a 300-DPI A4 page cleans up in tens of milliseconds.
+
+Three implementations, tried in order, all producing identical output:
+
+  1. dockbench_imgproc  — compiled CPython extension. The whole pipeline is
+     one call and the GIL is released during it, so pages of a scanned PDF
+     binarize in parallel across cores. This is the path that ships.
+  2. imgproc.so via ctypes — the older bridge. Kept because it works with a
+     bare `gcc -shared` and no Python headers, which is a convenient escape
+     hatch when the extension can't be built.
+  3. Pure Pillow — no compiler needed at all.
+
+Nothing here ever requires the network.
 """
 
 import ctypes
@@ -21,6 +27,13 @@ import logging
 import os
 
 logger = logging.getLogger("dockbench.native")
+
+# Preferred path: the fused extension (see native/imgprocmodule.c).
+try:
+    import dockbench_imgproc as _ext
+    logger.info("Fused C image kernel loaded (dockbench_imgproc)")
+except ImportError:
+    _ext = None
 
 _LIB_PATHS = (
     os.path.join(os.path.dirname(__file__), "native", "imgproc.so"),
@@ -53,13 +66,35 @@ if _lib is not None:
 
 
 def native_available() -> bool:
-    return _lib is not None
+    """True when any compiled C path is in use (fused extension or ctypes)."""
+    return _ext is not None or _lib is not None
+
+
+def native_backend() -> str:
+    """Which implementation enhance_for_ocr will actually use — reported by
+    /capabilities so a deployment can be checked without guessing."""
+    if _ext is not None:
+        return "extension"
+    if _lib is not None:
+        return "ctypes"
+    return "pillow"
 
 
 def enhance_for_ocr(img):
     """Take a PIL image of a scanned page, return a cleaned 1-band PIL
-    image ready for Tesseract. Uses the C kernel when available."""
+    image ready for Tesseract. Uses the fastest available C path."""
     from PIL import Image
+
+    if _ext is not None:
+        if img.mode not in ("RGB", "RGBA", "L"):
+            img = img.convert("RGB")
+        w, h = img.size
+        if w * h == 0:
+            return img.convert("L")
+        channels = {"L": 1, "RGB": 3, "RGBA": 4}[img.mode]
+        # One boundary crossing for the whole pipeline, GIL released inside.
+        out = _ext.enhance(img.tobytes(), w, h, channels)
+        return Image.frombytes("L", (w, h), out)
 
     if _lib is None:
         return _enhance_pillow(img)

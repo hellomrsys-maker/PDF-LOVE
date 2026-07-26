@@ -221,9 +221,16 @@ def health():
 def capabilities():
     """Lets the frontend discover which optional engines this deployment
     has, so it can enable exactly the tools that will actually work."""
+    import premium_pdf
+
     return {
         "version": app.version,
         "native_c_kernel": native_ops.native_available(),
+        # Which implementation each fused path actually resolved to:
+        # "extension" = compiled in-process, the fast path; anything else
+        # is a working fallback. Lets a deployment be checked, not assumed.
+        "imgproc_backend": native_ops.native_backend(),
+        "pdf_backend": premium_pdf.pdf_backend(),
         "ocr": engines.which("tesseract") is not None,
         "ghostscript": engines.which("gs") is not None,
         "libreoffice": engines.which("soffice") is not None,
