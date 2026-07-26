@@ -222,6 +222,31 @@
   .primary-btn:hover{background:var(--copper-deep);}
   .primary-btn:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed;}
 
+  /* Shown by the service-worker registration when a newer build is waiting.
+     Fixed to the bottom so it never displaces a tool mid-operation. */
+  #sw-update-bar{
+    position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:9999;
+    display:flex;align-items:center;gap:12px;
+    background:var(--paper-raised);color:var(--ink);
+    border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px 10px 16px;font-size:0.88rem;
+    box-shadow:0 6px 24px rgba(0,0,0,0.18);
+    max-width:calc(100vw - 32px);
+  }
+  #sw-update-bar button{
+    border:none;border-radius:7px;cursor:pointer;font:inherit;font-weight:600;
+  }
+  #sw-update-btn{background:var(--copper);color:#fff;padding:7px 14px;}
+  #sw-update-btn:hover{background:var(--copper-deep);}
+  #sw-update-dismiss{
+    background:transparent;color:var(--ink-soft);padding:7px 9px;font-weight:400;
+  }
+  #sw-update-dismiss:hover{color:var(--ink);}
+  @media (prefers-reduced-motion:no-preference){
+    #sw-update-bar{animation:sw-bar-in .22s ease-out;}
+    @keyframes sw-bar-in{from{opacity:0;transform:translateX(-50%) translateY(8px);}}
+  }
+
   .runlog{
     font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
     color:var(--ink-soft);margin-top:14px;min-height:20px;
@@ -7229,8 +7254,50 @@ document.addEventListener('db-result-delivered', ()=>{
 // Register service worker for offline/PWA support. Guarded because this
 // only works when served over http(s), not opened directly as a file://.
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{ /* offline support unavailable in this context */ });
+  window.addEventListener('load', async ()=>{
+    let reg;
+    try{ reg = await navigator.serviceWorker.register('sw.js'); }
+    catch(e){ return; /* offline support unavailable in this context */ }
+
+    // A new service worker only takes over once the old one is released.
+    // Without this prompt an installed app can sit on a previous build
+    // until every tab is closed — which looks exactly like "I installed it
+    // and it doesn't work". Offer the reload instead of forcing it, so a
+    // tool that is mid-operation is never swapped out underneath the user.
+    const offerUpdate = (worker)=>{
+      if(document.getElementById('sw-update-bar')) return;
+      const bar = document.createElement('div');
+      bar.id = 'sw-update-bar';
+      bar.setAttribute('role','status');
+      bar.innerHTML = `<span>A new version of Dockbench is ready.</span>
+        <button type="button" id="sw-update-btn">Reload</button>
+        <button type="button" id="sw-update-dismiss" aria-label="Dismiss">✕</button>`;
+      document.body.appendChild(bar);
+      document.getElementById('sw-update-btn').onclick = ()=>{
+        worker.postMessage('SKIP_WAITING');
+      };
+      document.getElementById('sw-update-dismiss').onclick = ()=> bar.remove();
+    };
+
+    if(reg.waiting) offerUpdate(reg.waiting);
+    reg.addEventListener('updatefound', ()=>{
+      const nw = reg.installing;
+      if(!nw) return;
+      nw.addEventListener('statechange', ()=>{
+        // controller present => this is an update, not the first install
+        if(nw.state === 'installed' && navigator.serviceWorker.controller) offerUpdate(nw);
+      });
+    });
+
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      if(reloading) return;
+      reloading = true;
+      location.reload();
+    });
+
+    // Catch updates in a long-lived installed window that is never reloaded.
+    setInterval(()=>reg.update().catch(()=>{}), 60*60*1000);
   });
 }
 

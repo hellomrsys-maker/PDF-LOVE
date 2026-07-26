@@ -63,9 +63,37 @@ jobs:
       - name: Build offline bundle
         run: |
           cd frontend
-          zip -r ../dockbench-offline.zip index.html manifest.json sw.js vendor/
+          # icons/ and guides/ were previously omitted, so every manifest
+          # icon 404'd and the help pages were missing from the download.
+          zip -r ../dockbench-offline.zip \
+            index.html manifest.json sw.js vendor/ icons/ guides/ company/
           cd ..
           unzip -l dockbench-offline.zip | tail -3
+      - name: Verify the bundle is self-contained
+        run: |
+          python3 - <<'PY'
+          import zipfile, re, sys
+          z = zipfile.ZipFile('dockbench-offline.zip')
+          names = set(z.namelist())
+          missing = []
+          # every asset the service worker promises to precache must be in here
+          sw = z.read('sw.js').decode()
+          for path in re.findall(r"'\./([^']+)'", sw):
+              if path and path not in names:
+                  missing.append('sw precache: ' + path)
+          # every icon the manifest references
+          import json
+          mf = json.loads(z.read('manifest.json'))
+          for icon in mf.get('icons', []):
+              src = icon['src']
+              if not src.startswith('data:') and src not in names:
+                  missing.append('manifest icon: ' + src)
+          if missing:
+              print('Bundle is missing files referenced by the app:')
+              for m in missing: print('  -', m)
+              sys.exit(1)
+          print(f'Bundle OK: {len(names)} files, nothing dangling.')
+          PY
       - name: Attach to release
         uses: softprops/action-gh-release@v2
         with:

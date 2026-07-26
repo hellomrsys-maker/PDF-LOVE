@@ -23,5 +23,11 @@
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "icons/screenshot-1-hero-assistant.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "Ask Dockbench in plain language" },
+    { "src": "icons/screenshot-2-tool-grid.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "104 tools, organised by category" },
+    { "src": "icons/screenshot-3-assistant-plan.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "The assistant plans multi-step jobs" },
+    { "src": "icons/screenshot-4-merge-tool.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "Merging PDFs entirely on-device" }
   ]
 }
