@@ -20,6 +20,10 @@ import subprocess
 import tempfile
 
 import native_ops
+import logging
+from typing import List, Tuple
+import pikepdf
+from .connectivity import is_online
 
 
 class EngineError(Exception):
@@ -255,10 +259,13 @@ GS_PRESETS = {"extreme": "/screen", "strong": "/ebook", "balanced": "/printer"}
 
 
 def run_compress_pdf(data: bytes, level: str = "strong"):
+    # Normalize level to lower‑case for case‑insensitive usage
+    level = level.lower()
     if not which("gs"):
-        raise EngineError(501, "Ghostscript is not installed on this server (see backend/Dockerfile).")
+        raise EngineError(503, "Ghostscript is not installed on this server (see backend/Dockerfile).")
     if level not in GS_PRESETS:
         raise EngineError(422, f"level must be one of {sorted(GS_PRESETS)}")
+    logging.info("Compress‑PDF: input=%d bytes, preset=%s", len(data), level)
     with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
         src = os.path.join(tmp, "in.pdf")
         dst = os.path.join(tmp, "out.pdf")
@@ -270,9 +277,13 @@ def run_compress_pdf(data: bytes, level: str = "strong"):
             "-dNOPAUSE", "-dQUIET", "-dBATCH", "-dSAFER",
             f"-sOutputFile={dst}", src,
         ])
-        with open(dst, "rb") as f:
-            out = f.read()
-    # Never hand back a worse result than the input.
+        try:
+            with open(dst, "rb") as f:
+                out = f.read()
+        except FileNotFoundError:
+            raise EngineError(422, "Ghostscript failed to produce an output PDF.")
+    logging.info("Compress‑PDF: output=%d bytes", len(out))
+    # Never hand back a larger file than the input.
     return (data if len(out) >= len(data) else out), "application/pdf"
 
 
@@ -293,8 +304,52 @@ def run_pdfa(data: bytes):
         with open(dst, "rb") as f:
             return f.read(), "application/pdf"
 
+# ---------------------------------------------------------------------
+# Video processing – FFmpeg (C).
+# ---------------------------------------------------------------------
+def run_video_process(data: bytes, filename: str, codec: str = "h264", quality: str = "23"):
+    """Process a video file with FFmpeg.
 
-# Registry used by both the job API and the worker: kind -> callable.
+    * ``codec`` – video codec (e.g., ``h264`` or ``vp9``).
+    * ``quality`` – CRF value (0‑51, lower = higher quality).
+    """
+    if not which("ffmpeg"):
+        raise EngineError(503, "FFmpeg is not installed on this server (see backend/Dockerfile).")
+    # Ensure quality is an integer within valid range
+    try:
+        crf = int(quality)
+        if not (0 <= crf <= 51):
+            raise ValueError()
+    except ValueError:
+        raise EngineError(422, f"Invalid quality value '{quality}'. Must be integer 0‑51.")
+    # Create temporary files for input and output
+    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
+        src = os.path.join(tmp, filename)
+        dst = os.path.join(tmp, f"out.{codec if codec != 'h264' else 'mp4'}")
+        # Write the input bytes to the source file
+        with open(src, "wb") as f:
+            f.write(data)
+        # Build ffmpeg command
+        cmd = [
+            "ffmpeg",
+            "-y",                # overwrite output without asking
+            "-i", src,
+            "-c:v", codec,
+            "-crf", str(crf),
+            "-preset", "medium",
+            dst,
+        ]
+        _run(cmd)
+        # Read the processed video
+        with open(dst, "rb") as f:
+            out = f.read()
+    # Determine appropriate MIME type (default to mp4)
+    media_type = "video/mp4" if dst.lower().endswith('.mp4') else "application/octet-stream"
+    return out, media_type
+
+
+from .ai_helper import run_image_enhance, run_super_resolve, run_audio_extract
+from .premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
 # Each takes (data, filename, **options) and returns (payload, media_type).
 JOB_KINDS = {
     "ocr": lambda data, filename, **o: run_ocr(
@@ -307,4 +362,9 @@ JOB_KINDS = {
     "compress-pdf": lambda data, filename, **o: run_compress_pdf(data, o.get("level", "strong")),
     "pdfa": lambda data, filename, **o: run_pdfa(data),
     "remove-bg": lambda data, filename, **o: run_remove_bg(data),
+    "video-process": lambda data, filename, **o: run_video_process(data, filename, o.get("codec", "h264"), o.get("quality", "23")),
+    "merge-pdf": lambda data, filename, **o: run_merge_pdf(o.get("files", [])),
+    "split-pdf": lambda data, filename, **o: run_split_pdf(data),
+    "rotate-pdf": lambda data, filename, **o: run_rotate_pdf(data, o.get("angle", 0)),
+    "watermark-pdf": lambda data, filename, **o: run_watermark_pdf(data, o.get("watermark", b"")),
 }

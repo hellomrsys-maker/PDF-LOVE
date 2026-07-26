@@ -51,10 +51,28 @@ async def process_job(ctx, kind: str, filename: str, options: dict):
     redis = ctx["redis"]
     job_id = ctx["job_id"]
 
+    # Try to fetch in‑memory upload first.
     data = await redis.get(f"dockbench:upload:{job_id}")
-    await redis.delete(f"dockbench:upload:{job_id}")
-    if data is None:
-        raise RuntimeError("Upload expired before the job started — resubmit.")
+    if data is not None:
+        # In‑memory payload – delete the key and continue.
+        await redis.delete(f"dockbench:upload:{job_id}")
+    else:
+        # Fallback to a temporary file path (large upload).
+        path_key = f"dockbench:upload_path:{job_id}"
+        upload_path = await redis.get(path_key)
+        if not upload_path:
+            raise RuntimeError("Upload expired before the job started — resubmit.")
+        # Delete the path reference from Redis.
+        await redis.delete(path_key)
+        upload_path = upload_path.decode() if isinstance(upload_path, bytes) else upload_path
+        # Read the file contents into memory for the engine.
+        with open(upload_path, "rb") as f:
+            data = f.read()
+        # Remove the temporary file now that it has been consumed.
+        try:
+            os.remove(upload_path)
+        except OSError:
+            pass
 
     if kind not in engines.JOB_KINDS:
         raise RuntimeError(f"Unknown job kind: {kind}")

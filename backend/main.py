@@ -56,6 +56,8 @@ from slowapi.errors import RateLimitExceeded
 import engines
 import native_ops
 from engines import EngineError
+from typing import List
+from .premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
 
 # ---------------------------------------------------------------------
 # Logging: human-readable by default, JSON lines with LOG_JSON=1.
@@ -152,6 +154,16 @@ async def request_id_and_timing(request: Request, call_next):
 MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", "50"))
 REDIS_URL = os.environ.get("REDIS_URL", "")
 
+# New configuration for large files (in MB). Default is 100 GB = 102400 MB.
+LARGE_FILE_THRESHOLD_MB = int(os.environ.get("LARGE_FILE_THRESHOLD_MB", "102400"))
+UPLOAD_TMP_DIR = os.environ.get("UPLOAD_TMP_DIR", "/tmp/uploads")
+RESULT_TMP_DIR = os.environ.get("RESULT_TMP_DIR", "/tmp/results")
+
+# Ensure temporary directories exist
+import os as _os
+_os.makedirs(UPLOAD_TMP_DIR, exist_ok=True)
+_os.makedirs(RESULT_TMP_DIR, exist_ok=True)
+
 
 def _check_size(data: bytes):
     if len(data) > MAX_FILE_MB * 1024 * 1024:
@@ -212,16 +224,23 @@ async def submit_job(request: Request, kind: str, file: UploadFile = File(...)):
         raise HTTPException(404, f"Unknown job kind '{kind}'. Valid: {sorted(engines.JOB_KINDS)}")
     pool = await _pool()
     data = await file.read()
-    _check_size(data)
-
+    # Large file handling – bypass the small‑file size cap and store on disk.
+    job_id = uuid.uuid4().hex
+    upload_ttl = int(os.environ.get("JOB_RESULT_TTL", "900"))
+    if len(data) > LARGE_FILE_THRESHOLD_MB * 1024 * 1024:
+        # Store the upload as a temporary file on the fast SSD.
+        upload_path = os.path.join(UPLOAD_TMP_DIR, f"{job_id}.bin")
+        with open(upload_path, "wb") as f:
+            f.write(data)
+        await pool.set(f"dockbench:upload_path:{job_id}", upload_path, ex=upload_ttl)
+    else:
+        # Regular small file – keep the existing in‑memory flow and enforce the cap.
+        _check_size(data)
+        await pool.set(f"dockbench:upload:{job_id}", data, ex=upload_ttl)
     # Any extra multipart fields (language, target, level, ...) become
     # engine options — same names as the synchronous endpoints.
     form = await request.form()
     options = {k: v for k, v in form.items() if k != "file" and isinstance(v, str)}
-
-    job_id = uuid.uuid4().hex
-    upload_ttl = int(os.environ.get("JOB_RESULT_TTL", "900"))
-    await pool.set(f"dockbench:upload:{job_id}", data, ex=upload_ttl)
     await pool.enqueue_job("process_job", kind, file.filename or "input",
                            options, _job_id=job_id)
     return JSONResponse({"job_id": job_id, "status": "queued"})
@@ -315,6 +334,8 @@ async def convert(request: Request, file: UploadFile = File(...), target: str = 
 async def compress_pdf(request: Request, file: UploadFile = File(...), level: str = Form("strong")):
     data = await file.read()
     _check_size(data)
+    level = level.lower()
+    logging.info("Compress endpoint called with level=%s, size=%d bytes", level, len(data))
     payload, media_type = _engine(engines.run_compress_pdf, data, level)
     headers = {"X-Compression": "already-optimal" if payload is data else f"{len(data)}->{len(payload)}"}
     return Response(content=payload, media_type=media_type, headers=headers)
@@ -328,6 +349,113 @@ async def pdfa(request: Request, file: UploadFile = File(...)):
     payload, media_type = _engine(engines.run_pdfa, data)
     return Response(content=payload, media_type=media_type)
 
+    # ---------------------------------------------------------------------
+    # Video processing endpoint – uses FFmpeg
+    @app.post("/video-process")
+    @limiter.limit("10/minute")
+    async def video_process(request: Request, file: UploadFile = File(...), codec: str = Form("h264"), quality: str = Form("23")):
+        """Process a video file with FFmpeg.
+
+        * ``codec`` – video codec (e.g., ``h264`` or ``vp9``).
+        * ``quality`` – CRF value (0‑51, lower = higher quality)."""
+        data = await file.read()
+        _check_size(data)
+        payload, media_type = _engine(engines.run_video_process, data, file.filename or "input", codec, quality)
+        return Response(content=payload, media_type=media_type)
+
+
+# ---------------------------------------------------------------------
+# Premium PDF endpoints
+@app.post("/merge-pdf")
+@limiter.limit("10/minute")
+async def merge_pdf(request: Request, files: List[UploadFile] = File(...)):
+    """Merge multiple PDF files into a single PDF.
+    Supports very large inputs by streaming them from disk."""
+    import tempfile, os
+    from fastapi.responses import StreamingResponse
+    from .premium_pdf import run_merge_pdf_files
+
+    input_paths = []
+    for f in files:
+        data = await f.read()
+        # Write each upload to a temporary file (required for the C engine)
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".pdf", prefix="upload_")
+        os.close(tmp_fd)
+        with open(tmp_path, "wb") as out:
+            out.write(data)
+        input_paths.append(tmp_path)
+
+    # Perform the merge using the streaming implementation
+    output_path, media_type = run_merge_pdf_files(input_paths)
+
+    # Clean up the temporary input files
+    for p in input_paths:
+        try:
+            os.remove(p)
+        except OSError:
+            pass
+
+    def iterfile():
+        with open(output_path, "rb") as f:
+            while chunk := f.read(8192):
+                yield chunk
+        try:
+            os.remove(output_path)
+        except OSError:
+            pass
+
+    return StreamingResponse(iterfile(), media_type=media_type)
+
+@app.post("/split-pdf")
+@limiter.limit("10/minute")
+async def split_pdf(request: Request, file: UploadFile = File(...)):
+    """Split a PDF into individual pages and return a ZIP archive."""
+    data = await file.read()
+    _check_size(data)
+    payload, media_type = _engine(run_split_pdf, data)
+    return Response(content=payload, media_type=media_type)
+
+@app.post("/rotate-pdf")
+@limiter.limit("10/minute")
+async def rotate_pdf(request: Request, file: UploadFile = File(...), angle: int = Form(0)):
+    """Rotate all pages of a PDF by the given angle (multiple of 90)."""
+    data = await file.read()
+    _check_size(data)
+    payload, media_type = _engine(run_rotate_pdf, data, angle)
+    return Response(content=payload, media_type=media_type)
+
+@app.post("/watermark-pdf")
+@limiter.limit("10/minute")
+async def watermark_pdf(request: Request, file: UploadFile = File(...), watermark: UploadFile = File(...)):
+    """Apply a PDF watermark to each page of the input PDF."""
+    data = await file.read()
+    wm_data = await watermark.read()
+    _check_size(data)
+    _check_size(wm_data)
+    payload, media_type = _engine(run_watermark_pdf, data, wm_data)
+    return Response(content=payload, media_type=media_type)
+
+# ---------------------------------------------------------------------
+
+# Batch PDF processing endpoint (no size caps as requested)
+from backend.batch_pdf import run_batch_pdf
+
+@app.post("/batch-pdf")
+@limiter.limit("10/minute")
+async def batch_pdf(request: Request, job: str = Form(...), files: List[UploadFile] = File(...), angle: int = Form(0)):
+    """Process multiple PDF jobs in one request.
+    `job` can be: merge, split, rotate, watermark.
+    For rotate, provide `angle`. For watermark, upload two files: base PDF and watermark PDF.
+    """
+    # Read all uploaded files
+    data_list = []
+    for f in files:
+        data = await f.read()
+        _check_size(data)
+        data_list.append(data)
+    # Dispatch to the appropriate helper
+    payload, media_type = run_batch_pdf(job, data_list, angle=angle)
+    return Response(content=payload, media_type=media_type)
 
 # ---------------------------------------------------------------------
 # Summarize / Chat — local LLM via Ollama (self-hosted, no API key, no

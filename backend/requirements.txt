@@ -4,7 +4,7 @@ gunicorn==23.0.0
 python-multipart==0.0.9
 Pillow==10.4.0
 pytesseract==0.3.13
-PyMuPDF==1.24.10
+# PyMuPDF==1.24.10
 rembg==2.0.59
 onnxruntime==1.19.2
 httpx==0.27.2
