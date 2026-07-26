@@ -47,12 +47,13 @@ import os
 import time
 import uuid
 
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
+import apikeys
 import engines
 import native_ops
 from errors import EngineError
@@ -115,7 +116,17 @@ def client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-limiter = Limiter(key_func=client_ip, default_limits=["60/minute"])
+def rate_limit_key(request: Request) -> str:
+    """Bucket business customers by their API key subject rather than by IP.
+
+    An API customer calling from a fleet of machines is one customer and
+    should get one quota; conversely several customers behind one NAT should
+    not share a bucket. Unkeyed traffic still falls back to the IP."""
+    sub = apikeys.subject_from_request(request.headers)
+    return f"key:{sub}" if sub else f"ip:{client_ip(request)}"
+
+
+limiter = Limiter(key_func=rate_limit_key, default_limits=["60/minute"])
 app = FastAPI(title="Dockbench API", version="0.3.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -212,6 +223,30 @@ def _engine(fn, *args, **kwargs):
         raise HTTPException(e.status, e.detail)
 
 
+async def require_api_key(request: Request) -> dict:
+    """Gate the processing endpoints on a valid business API key.
+
+    A no-op unless REQUIRE_API_KEY=1, which only our hosted deployment sets.
+    A self-hosted backend and the desktop app's bundled engine stay open —
+    they belong to the person running them, and gating those would be
+    charging someone for their own hardware.
+    """
+    if not apikeys.enabled():
+        return {"sub": "anonymous", "tier": "self-hosted"}
+
+    auth = request.headers.get("authorization") or ""
+    if not auth.lower().startswith("bearer "):
+        raise HTTPException(
+            401,
+            "This endpoint requires a business API key. Send it as "
+            "'Authorization: Bearer dkb_live_...'. See /company/for-business.html.",
+        )
+    try:
+        return apikeys.verify(auth[7:].strip())
+    except apikeys.ApiKeyError as e:
+        raise HTTPException(e.status, e.detail)
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -258,7 +293,7 @@ async def _pool():
     return _arq_pool
 
 
-@app.post("/jobs/{kind}")
+@app.post("/jobs/{kind}", dependencies=[Depends(require_api_key)])
 @limiter.limit("20/minute")
 async def submit_job(request: Request, kind: str, file: UploadFile = File(...)):
     if kind not in engines.JOB_KINDS:
@@ -341,7 +376,7 @@ async def job_result(request: Request, job_id: str):
 # Synchronous endpoints — same engines, processed inline. Fine for dev
 # and small deployments; the frontend prefers /jobs when available.
 # ---------------------------------------------------------------------
-@app.post("/ocr")
+@app.post("/ocr", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def ocr(
     request: Request,
@@ -359,7 +394,7 @@ async def ocr(
     return Response(content=payload, media_type=media_type)
 
 
-@app.post("/remove-bg")
+@app.post("/remove-bg", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def remove_bg(request: Request, file: UploadFile = File(...)):
     data = await file.read()
@@ -368,7 +403,7 @@ async def remove_bg(request: Request, file: UploadFile = File(...)):
     return Response(content=payload, media_type=media_type)
 
 
-@app.post("/convert")
+@app.post("/convert", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def convert(request: Request, file: UploadFile = File(...), target: str = Form(...)):
     data = await file.read()
@@ -377,7 +412,7 @@ async def convert(request: Request, file: UploadFile = File(...), target: str = 
     return Response(content=payload, media_type=media_type)
 
 
-@app.post("/compress-pdf")
+@app.post("/compress-pdf", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def compress_pdf(request: Request, file: UploadFile = File(...), level: str = Form("strong")):
     data = await file.read()
@@ -389,7 +424,7 @@ async def compress_pdf(request: Request, file: UploadFile = File(...), level: st
     return Response(content=payload, media_type=media_type, headers=headers)
 
 
-@app.post("/pdfa")
+@app.post("/pdfa", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def pdfa(request: Request, file: UploadFile = File(...)):
     data = await file.read()
@@ -400,7 +435,7 @@ async def pdfa(request: Request, file: UploadFile = File(...)):
 
 # ---------------------------------------------------------------------
 # Video processing endpoint – uses FFmpeg
-@app.post("/video-process")
+@app.post("/video-process", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def video_process(request: Request, file: UploadFile = File(...), codec: str = Form("h264"), quality: str = Form("23")):
     """Process a video file with FFmpeg.
@@ -415,7 +450,7 @@ async def video_process(request: Request, file: UploadFile = File(...), codec: s
 
 # ---------------------------------------------------------------------
 # Premium PDF endpoints
-@app.post("/merge-pdf")
+@app.post("/merge-pdf", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def merge_pdf(request: Request, files: List[UploadFile] = File(...)):
     """Merge multiple PDF files into a single PDF.
@@ -455,7 +490,7 @@ async def merge_pdf(request: Request, files: List[UploadFile] = File(...)):
 
     return StreamingResponse(iterfile(), media_type=media_type)
 
-@app.post("/split-pdf")
+@app.post("/split-pdf", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def split_pdf(request: Request, file: UploadFile = File(...)):
     """Split a PDF into individual pages and return a ZIP archive."""
@@ -464,7 +499,7 @@ async def split_pdf(request: Request, file: UploadFile = File(...)):
     payload, media_type = _engine(run_split_pdf, data)
     return Response(content=payload, media_type=media_type)
 
-@app.post("/rotate-pdf")
+@app.post("/rotate-pdf", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def rotate_pdf(request: Request, file: UploadFile = File(...), angle: int = Form(0)):
     """Rotate all pages of a PDF by the given angle (multiple of 90)."""
@@ -473,7 +508,7 @@ async def rotate_pdf(request: Request, file: UploadFile = File(...), angle: int 
     payload, media_type = _engine(run_rotate_pdf, data, angle)
     return Response(content=payload, media_type=media_type)
 
-@app.post("/watermark-pdf")
+@app.post("/watermark-pdf", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def watermark_pdf(request: Request, file: UploadFile = File(...), watermark: UploadFile = File(...)):
     """Apply a PDF watermark to each page of the input PDF."""
@@ -487,7 +522,7 @@ async def watermark_pdf(request: Request, file: UploadFile = File(...), watermar
 # ---------------------------------------------------------------------
 
 # Batch PDF processing endpoint
-@app.post("/batch-pdf")
+@app.post("/batch-pdf", dependencies=[Depends(require_api_key)])
 @limiter.limit("10/minute")
 async def batch_pdf(request: Request, job: str = Form(...), files: List[UploadFile] = File(...), angle: int = Form(0)):
     """Process multiple PDF jobs in one request.
@@ -530,7 +565,7 @@ async def _ollama_generate(prompt: str) -> str:
         )
 
 
-@app.post("/summarize")
+@app.post("/summarize", dependencies=[Depends(require_api_key)])
 @limiter.limit("20/minute")
 async def summarize(request: Request, text: str = Form(...), max_words: int = Form(150)):
     max_words = max(20, min(int(max_words), 1000))
@@ -541,7 +576,7 @@ async def summarize(request: Request, text: str = Form(...), max_words: int = Fo
     return JSONResponse({"summary": summary})
 
 
-@app.post("/chat")
+@app.post("/chat", dependencies=[Depends(require_api_key)])
 @limiter.limit("20/minute")
 async def chat(request: Request, question: str = Form(...), context: str = Form(...)):
     """Chat-with-your-document. The frontend extracts the text on-device and

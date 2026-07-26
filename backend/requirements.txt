@@ -19,6 +19,9 @@ openpyxl==3.1.5
 arq==0.26.1
 redis==5.2.1
 prometheus-fastapi-instrumentator==7.0.0
+# ECDSA P-256 verification for business API keys (apikeys.py). Same signing
+# identity as licensing/ — keys are verified offline, no licence server.
+cryptography==43.0.1
 
 # Notes:
 # - pytesseract is a Python wrapper; the actual Tesseract engine must be
