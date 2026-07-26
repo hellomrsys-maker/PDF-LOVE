@@ -459,6 +459,12 @@ const AD_CONFIG = {
   rewarded: {
     enabled: false,     // flip true once scriptUrl below is real
     scriptUrl: null,    // your ad network's rewarded-video loader <script src>
+    // Recommended: a web-native rewarded-video network (e.g. AppLixir),
+    // not a mobile-app SDK (AdMob) or Google's "AdSense for Video" — that
+    // one requires 2M+ monthly video impressions and 40%+ video content,
+    // which a tool site like this will never hit. Rewarded video runs
+    // $4-15 CPM on the web vs $0.50-2 for standard display, so this is
+    // the higher-value slot of the two — worth prioritizing over banner.
   },
   result: {
     enabled: false,     // passive slot at the bottom of a tool panel, shown
