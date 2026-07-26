@@ -5,3 +5,10 @@ __pycache__/
 
 # Offline license signing key — secret, never commit. See licensing/README.md.
 licensing/private-key.json
+
+# wrangler (Cloudflare) local files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example

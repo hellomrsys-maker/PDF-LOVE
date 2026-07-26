@@ -1,0 +1,30 @@
+# Cloudflare Workers/Pages static-asset headers — the equivalent of the
+# security headers already applied by frontend/nginx.conf for the
+# Docker/self-hosted deployment path. Cloudflare's static-asset serving
+# never reads nginx.conf, so without this file this deployment would
+# silently lose the CSP, X-Frame-Options, etc. Keep the two files' CSP
+# value in sync if you edit one.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(self), display-capture=(self), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; font-src 'self' data:; connect-src 'self' data: blob: https://api.frankfurter.dev https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'
+
+# App shell: never cache, so updates reach users promptly (the service
+# worker handles offline caching instead) — same rule as nginx.conf.
+/index.html
+  Cache-Control: no-cache
+
+/manifest.json
+  Cache-Control: no-cache
+
+/sw.js
+  Cache-Control: no-cache
+
+# Version-pinned static assets: cache aggressively.
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
