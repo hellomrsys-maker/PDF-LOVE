@@ -23,14 +23,12 @@ import native_ops
 import logging
 from typing import List, Tuple
 import pikepdf
-from .connectivity import is_online
 
 
-class EngineError(Exception):
-    def __init__(self, status: int, detail: str):
-        super().__init__(detail)
-        self.status = status
-        self.detail = detail
+# Re-exported so existing callers can keep doing `from engines import
+# EngineError`. It is defined in errors.py so the sibling engine modules can
+# import it without creating a cycle back through this file.
+from errors import EngineError  # noqa: F401
 
 
 def which(binary: str):
@@ -348,8 +346,8 @@ def run_video_process(data: bytes, filename: str, codec: str = "h264", quality: 
     return out, media_type
 
 
-from .ai_helper import run_image_enhance, run_super_resolve, run_audio_extract
-from .premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
+from ai_helper import run_image_enhance, run_super_resolve, run_audio_extract
+from premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
 # Each takes (data, filename, **options) and returns (payload, media_type).
 JOB_KINDS = {
     "ocr": lambda data, filename, **o: run_ocr(
@@ -363,8 +361,11 @@ JOB_KINDS = {
     "pdfa": lambda data, filename, **o: run_pdfa(data),
     "remove-bg": lambda data, filename, **o: run_remove_bg(data),
     "video-process": lambda data, filename, **o: run_video_process(data, filename, o.get("codec", "h264"), o.get("quality", "23")),
-    "merge-pdf": lambda data, filename, **o: run_merge_pdf(o.get("files", [])),
+    # NOTE: merge and watermark are deliberately absent. Queued jobs carry
+    # exactly one upload, and options arrive as multipart form *strings* —
+    # there is nowhere for a second PDF to come from. Both are available
+    # synchronously via POST /merge-pdf and POST /watermark-pdf, which take
+    # real multi-file uploads.
     "split-pdf": lambda data, filename, **o: run_split_pdf(data),
-    "rotate-pdf": lambda data, filename, **o: run_rotate_pdf(data, o.get("angle", 0)),
-    "watermark-pdf": lambda data, filename, **o: run_watermark_pdf(data, o.get("watermark", b"")),
+    "rotate-pdf": lambda data, filename, **o: run_rotate_pdf(data, int(o.get("angle", 0))),
 }

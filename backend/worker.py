@@ -57,7 +57,10 @@ async def process_job(ctx, kind: str, filename: str, options: dict):
         # In‑memory payload – delete the key and continue.
         await redis.delete(f"dockbench:upload:{job_id}")
     else:
-        # Fallback to a temporary file path (large upload).
+        # Fallback: a large upload spooled to the shared volume by the API.
+        # This only works because UPLOAD_SPOOL_DIR is a volume mounted into
+        # both containers — /tmp is a private tmpfs per container and a path
+        # written there by the API would not exist here.
         path_key = f"dockbench:upload_path:{job_id}"
         upload_path = await redis.get(path_key)
         if not upload_path:
@@ -65,6 +68,11 @@ async def process_job(ctx, kind: str, filename: str, options: dict):
         # Delete the path reference from Redis.
         await redis.delete(path_key)
         upload_path = upload_path.decode() if isinstance(upload_path, bytes) else upload_path
+        if not os.path.isfile(upload_path):
+            raise RuntimeError(
+                "Spooled upload not visible to the worker — check that "
+                "UPLOAD_SPOOL_DIR is a shared volume on both containers."
+            )
         # Read the file contents into memory for the engine.
         with open(upload_path, "rb") as f:
             data = f.read()

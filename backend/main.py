@@ -55,9 +55,10 @@ from slowapi.errors import RateLimitExceeded
 
 import engines
 import native_ops
-from engines import EngineError
+from errors import EngineError
 from typing import List
-from .premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
+from premium_pdf import run_split_pdf, run_rotate_pdf, run_watermark_pdf
+from batch_pdf import run_batch_pdf
 
 # ---------------------------------------------------------------------
 # Logging: human-readable by default, JSON lines with LOG_JSON=1.
@@ -154,20 +155,53 @@ async def request_id_and_timing(request: Request, call_next):
 MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", "50"))
 REDIS_URL = os.environ.get("REDIS_URL", "")
 
-# New configuration for large files (in MB). Default is 100 GB = 102400 MB.
-LARGE_FILE_THRESHOLD_MB = int(os.environ.get("LARGE_FILE_THRESHOLD_MB", "102400"))
-UPLOAD_TMP_DIR = os.environ.get("UPLOAD_TMP_DIR", "/tmp/uploads")
-RESULT_TMP_DIR = os.environ.get("RESULT_TMP_DIR", "/tmp/results")
+# Uploads above this size are spooled to a *shared* directory instead of
+# going through Redis. It must be a volume mounted into both the API and the
+# worker containers — the worker reads the file back by path, and each
+# container otherwise has its own private tmpfs at /tmp (see the
+# `upload_spool` volume in docker-compose.yml).
+LARGE_FILE_THRESHOLD_MB = int(os.environ.get("LARGE_FILE_THRESHOLD_MB", str(MAX_FILE_MB)))
+UPLOAD_SPOOL_DIR = os.environ.get("UPLOAD_SPOOL_DIR", "/spool/uploads")
 
-# Ensure temporary directories exist
-import os as _os
-_os.makedirs(UPLOAD_TMP_DIR, exist_ok=True)
-_os.makedirs(RESULT_TMP_DIR, exist_ok=True)
+# Hard ceiling for the spooled path, so "large" never means "unbounded".
+MAX_SPOOL_MB = int(os.environ.get("MAX_SPOOL_MB", "2048"))
+
+os.makedirs(UPLOAD_SPOOL_DIR, exist_ok=True)
+
+_CHUNK = 1024 * 1024
 
 
 def _check_size(data: bytes):
     if len(data) > MAX_FILE_MB * 1024 * 1024:
         raise HTTPException(413, f"File exceeds {MAX_FILE_MB}MB limit.")
+
+
+async def _spool_upload(file: UploadFile, dest_path: str) -> int:
+    """Stream an upload to disk one chunk at a time, enforcing MAX_SPOOL_MB.
+
+    Deliberately never `.read()`s the whole upload into memory first — doing
+    that is what allowed a single request to exhaust the container's RAM
+    before any size check could run.
+    """
+    limit = MAX_SPOOL_MB * 1024 * 1024
+    total = 0
+    try:
+        with open(dest_path, "wb") as out:
+            while True:
+                chunk = await file.read(_CHUNK)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > limit:
+                    raise HTTPException(413, f"File exceeds {MAX_SPOOL_MB}MB limit.")
+                out.write(chunk)
+    except BaseException:
+        try:
+            os.remove(dest_path)
+        except OSError:
+            pass
+        raise
+    return total
 
 
 def _engine(fn, *args, **kwargs):
@@ -223,20 +257,27 @@ async def submit_job(request: Request, kind: str, file: UploadFile = File(...)):
     if kind not in engines.JOB_KINDS:
         raise HTTPException(404, f"Unknown job kind '{kind}'. Valid: {sorted(engines.JOB_KINDS)}")
     pool = await _pool()
-    data = await file.read()
-    # Large file handling – bypass the small‑file size cap and store on disk.
     job_id = uuid.uuid4().hex
     upload_ttl = int(os.environ.get("JOB_RESULT_TTL", "900"))
-    if len(data) > LARGE_FILE_THRESHOLD_MB * 1024 * 1024:
-        # Store the upload as a temporary file on the fast SSD.
-        upload_path = os.path.join(UPLOAD_TMP_DIR, f"{job_id}.bin")
-        with open(upload_path, "wb") as f:
-            f.write(data)
+
+    # Always spool to disk first, in bounded chunks. Small uploads then move
+    # into Redis (cheap, self-expiring) and the file is dropped; large ones
+    # stay on the shared spool volume and the worker reads them by path.
+    upload_path = os.path.join(UPLOAD_SPOOL_DIR, f"{job_id}.bin")
+    size = await _spool_upload(file, upload_path)
+
+    if size > LARGE_FILE_THRESHOLD_MB * 1024 * 1024:
         await pool.set(f"dockbench:upload_path:{job_id}", upload_path, ex=upload_ttl)
     else:
-        # Regular small file – keep the existing in‑memory flow and enforce the cap.
-        _check_size(data)
-        await pool.set(f"dockbench:upload:{job_id}", data, ex=upload_ttl)
+        try:
+            with open(upload_path, "rb") as f:
+                await pool.set(f"dockbench:upload:{job_id}", f.read(), ex=upload_ttl)
+        finally:
+            try:
+                os.remove(upload_path)
+            except OSError:
+                pass
+
     # Any extra multipart fields (language, target, level, ...) become
     # engine options — same names as the synchronous endpoints.
     form = await request.form()
@@ -349,19 +390,20 @@ async def pdfa(request: Request, file: UploadFile = File(...)):
     payload, media_type = _engine(engines.run_pdfa, data)
     return Response(content=payload, media_type=media_type)
 
-    # ---------------------------------------------------------------------
-    # Video processing endpoint – uses FFmpeg
-    @app.post("/video-process")
-    @limiter.limit("10/minute")
-    async def video_process(request: Request, file: UploadFile = File(...), codec: str = Form("h264"), quality: str = Form("23")):
-        """Process a video file with FFmpeg.
 
-        * ``codec`` – video codec (e.g., ``h264`` or ``vp9``).
-        * ``quality`` – CRF value (0‑51, lower = higher quality)."""
-        data = await file.read()
-        _check_size(data)
-        payload, media_type = _engine(engines.run_video_process, data, file.filename or "input", codec, quality)
-        return Response(content=payload, media_type=media_type)
+# ---------------------------------------------------------------------
+# Video processing endpoint – uses FFmpeg
+@app.post("/video-process")
+@limiter.limit("10/minute")
+async def video_process(request: Request, file: UploadFile = File(...), codec: str = Form("h264"), quality: str = Form("23")):
+    """Process a video file with FFmpeg.
+
+    * ``codec`` – video codec (e.g., ``h264`` or ``vp9``).
+    * ``quality`` – CRF value (0‑51, lower = higher quality)."""
+    data = await file.read()
+    _check_size(data)
+    payload, media_type = _engine(engines.run_video_process, data, file.filename or "input", codec, quality)
+    return Response(content=payload, media_type=media_type)
 
 
 # ---------------------------------------------------------------------
@@ -373,7 +415,7 @@ async def merge_pdf(request: Request, files: List[UploadFile] = File(...)):
     Supports very large inputs by streaming them from disk."""
     import tempfile, os
     from fastapi.responses import StreamingResponse
-    from .premium_pdf import run_merge_pdf_files
+    from premium_pdf import run_merge_pdf_files
 
     input_paths = []
     for f in files:
@@ -437,9 +479,7 @@ async def watermark_pdf(request: Request, file: UploadFile = File(...), watermar
 
 # ---------------------------------------------------------------------
 
-# Batch PDF processing endpoint (no size caps as requested)
-from backend.batch_pdf import run_batch_pdf
-
+# Batch PDF processing endpoint
 @app.post("/batch-pdf")
 @limiter.limit("10/minute")
 async def batch_pdf(request: Request, job: str = Form(...), files: List[UploadFile] = File(...), angle: int = Form(0)):
@@ -453,8 +493,9 @@ async def batch_pdf(request: Request, job: str = Form(...), files: List[UploadFi
         data = await f.read()
         _check_size(data)
         data_list.append(data)
-    # Dispatch to the appropriate helper
-    payload, media_type = run_batch_pdf(job, data_list, angle=angle)
+    # Dispatch to the appropriate helper. Routed through _engine so an
+    # EngineError becomes its intended 4xx instead of an opaque 500.
+    payload, media_type = _engine(run_batch_pdf, job, data_list, angle=angle)
     return Response(content=payload, media_type=media_type)
 
 # ---------------------------------------------------------------------

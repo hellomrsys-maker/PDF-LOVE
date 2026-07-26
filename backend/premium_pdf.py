@@ -16,20 +16,40 @@ try:
 except Exception:
     from PyPDF2 import PdfReader, PdfWriter
     _USE_PIKEPDF = False
-from .connectivity import is_online
-from .engines import EngineError
+from errors import EngineError
 
-def _ensure_online():
-    """Raise EngineError if offline for premium PDF features."""
-    if not is_online():
-        raise EngineError(503, "Online connectivity required for premium PDF features.")
+
+def run_merge_pdf(files: List[bytes]) -> Tuple[bytes, str]:
+    """Merge PDFs held in memory. Returns (pdf_bytes, "application/pdf").
+
+    This is the bytes-in/bytes-out variant used by the batch endpoint and by
+    callers that already hold the uploads. `run_merge_pdf_files` below is the
+    streaming, path-based variant for very large inputs.
+    """
+    if not files:
+        raise EngineError(422, "No PDFs provided for merge.")
+
+    out = pikepdf.Pdf.new()
+    try:
+        for raw in files:
+            try:
+                src = pikepdf.open(io.BytesIO(raw))
+            except Exception as e:
+                raise EngineError(422, f"Not a readable PDF: {e}")
+            with src:
+                out.pages.extend(src.pages)
+        buf = io.BytesIO()
+        out.save(buf)
+        return buf.getvalue(), "application/pdf"
+    finally:
+        out.close()
+
 
 def run_merge_pdf_files(input_paths: List[str]) -> Tuple[str, str]:
     """Merge PDFs located at the given file system paths using the qpdf CLI.
     Returns a tuple of (output_path, "application/pdf").
     This implementation streams PDFs from disk and avoids loading them into memory.
     """
-    _ensure_online()
     if not input_paths:
         raise EngineError(422, "No PDFs provided for merge.")
 
@@ -37,16 +57,31 @@ def run_merge_pdf_files(input_paths: List[str]) -> Tuple[str, str]:
     tmp_fd, tmp_path = tempfile.mkstemp(suffix=".pdf", prefix="merged_")
     os.close(tmp_fd)
 
-    # Build the qpdf command: qpdf --empty --pages file1.pdf file2.pdf ... -- output.pdf
-    cmd = ["qpdf", "--empty", "--pages"] + input_paths + ["--", tmp_path]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        # Clean up temp file
+    def _fail(msg):
         try:
             os.remove(tmp_path)
         except OSError:
             pass
-        raise EngineError(500, f"qpdf merge failed: {result.stderr.strip()}")
+        raise EngineError(500, msg)
+
+    if _qpdf_available():
+        # qpdf --empty --pages file1.pdf file2.pdf ... -- output.pdf
+        cmd = ["qpdf", "--empty", "--pages"] + input_paths + ["--", tmp_path]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            _fail(f"qpdf merge failed: {result.stderr.strip()}")
+    else:
+        # Same pure-Python fallback the rest of this module uses, so the
+        # endpoint still works on a box without the qpdf CLI installed.
+        try:
+            out = pikepdf.Pdf.new()
+            with out:
+                for p in input_paths:
+                    with pikepdf.open(p) as src:
+                        out.pages.extend(src.pages)
+                out.save(tmp_path)
+        except Exception as e:
+            _fail(f"merge failed: {e}")
 
     return tmp_path, "application/pdf"
 
@@ -55,7 +90,6 @@ def run_split_pdf(data: bytes) -> Tuple[bytes, str]:
     """Split a PDF into individual pages and zip them.
     Returns (zip_bytes, "application/zip").
     """
-    _ensure_online()
     # Write PDF data to a temporary file to enable streaming processing
     in_fd, in_path = tempfile.mkstemp(suffix=".pdf", prefix="split_input_")
     os.close(in_fd)
@@ -115,22 +149,27 @@ def run_rotate_pdf(data: bytes, angle: int = 0) -> Tuple[bytes, str]:
     """Rotate all pages of a PDF by the given angle (in degrees).
     Angle must be a multiple of 90.
     """
-    _ensure_online()
     if angle % 90 != 0:
         raise EngineError(422, "Angle must be a multiple of 90 degrees.")
-    src = pikepdf.open(io.BytesIO(data))
-    for page in src.pages:
-        page.Rotate = (page.Rotate + angle) % 360
-    out = io.BytesIO()
-    src.save(out)
-    src.close()
+    try:
+        src = pikepdf.open(io.BytesIO(data))
+    except Exception as e:
+        raise EngineError(422, f"Not a readable PDF: {e}")
+    with src:
+        for page in src.pages:
+            # /Rotate is optional and absent on most real-world pages —
+            # reading it as an attribute raises AttributeError rather than
+            # defaulting to 0, which broke rotation for nearly every input.
+            current = int(page.obj.get("/Rotate", 0))
+            page.obj["/Rotate"] = (current + angle) % 360
+        out = io.BytesIO()
+        src.save(out)
     return out.getvalue(), "application/pdf"
 
 def run_watermark_pdf(data: bytes, watermark: bytes) -> Tuple[bytes, str]:
     """Apply a PDF watermark (as a PDF) onto each page of the input PDF.
     Returns (watermarked_pdf_bytes, "application/pdf").
     """
-    _ensure_online()
     base = pikepdf.open(io.BytesIO(data))
     wm = pikepdf.open(io.BytesIO(watermark))
     if len(wm.pages) == 0:
@@ -148,7 +187,6 @@ def run_split_pdf_range(data: bytes, start_page: int, end_page: int) -> Tuple[by
     """Split a PDF and return only pages start_page‑end_page (inclusive) as a zip.
     Handles very large PDFs by streaming to temporary files and using qpdf if available.
     """
-    _ensure_online()
     if start_page < 1 or end_page < start_page:
         raise EngineError(422, "Invalid page range specified.")
 

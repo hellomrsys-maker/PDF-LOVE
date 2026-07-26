@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-calc-nogui \
     fonts-liberation \
     gcc \
+    ffmpeg \
+    qpdf \
     libgl1 \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
@@ -28,11 +30,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY native/ native/
 RUN gcc -O3 -shared -fPIC -o native/imgproc.so native/imgproc.c
 
-COPY native_ops.py engines.py worker.py main.py ./
+# Every backend module, not a hand-maintained subset — omitting one here is
+# how the image ends up unable to import its own entrypoint.
+COPY *.py ./
 
 # Run as a non-root user; HOME is writable for engine caches (LibreOffice
 # profiles go to per-request temp dirs, rembg models to ~/.u2net).
 RUN useradd --create-home --uid 10001 app
+
+# Shared spool for large uploads; mounted as a volume in compose so the
+# worker container can read what the API wrote (see UPLOAD_SPOOL_DIR).
+RUN mkdir -p /spool/uploads && chown -R app:app /spool
+
 USER app
 ENV HOME=/home/app
 
