@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Dockbench</title>
+<meta name="description" content="What Dockbench is, how it works, and why files never leave your device.">
+<link rel="canonical" href="https://dockbench.app/company/about.html">
+<link href="../vendor/fonts/fonts.css" rel="stylesheet">
+<link href="company.css" rel="stylesheet">
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="../index.html"><span class="dot"></span>Dockbench</a></div></header>
+<main><div class="wrap">
+
+  <h1>About Dockbench</h1>
+  <p class="lede">104 tools for PDFs, images and video. Ninety-seven of them
+  never send your file anywhere — they run inside your browser, on your own
+  hardware.</p>
+
+  <h2>The idea</h2>
+  <p>Most online file tools work the same way: you upload your document to
+  someone else's server, they process it, you download the result. That model
+  has an obvious problem. Your contract, your passport scan, your medical
+  record — it all sits on a machine you don't control, under a retention policy
+  you have to take on faith.</p>
+  <p>Dockbench inverts that. The browser you're already running is a capable
+  computer. PDF parsing, image processing, OCR, even AES-256 encryption all run
+  perfectly well on it. So we compiled the real engines to WebAssembly and ship
+  them with the app. Your file is read from disk, processed in memory, and
+  written straight back to your downloads folder. No request is made because
+  there is nothing to send.</p>
+
+  <h2>You can verify this yourself</h2>
+  <p>Open your browser's developer tools, switch to the Network tab, and use
+  any on-device tool. No request fires. That's the whole claim, and it's
+  checkable in about fifteen seconds — which is the point. Trust that can be
+  verified isn't really trust, it's just arithmetic.</p>
+
+  <h2>What that buys you</h2>
+  <ul>
+    <li><strong>No daily limits.</strong> There's no per-task cost to us, so
+    there's no meter. Merge two hundred PDFs if you want to.</li>
+    <li><strong>No account.</strong> There's nothing to log into because
+    there's no server-side state to attach to you.</li>
+    <li><strong>Works offline.</strong> After the first visit the app is
+    cached, including the OCR engine and the encryption engine. Airplane mode
+    is fine.</li>
+    <li><strong>Large files stay fast.</strong> Nothing is bottlenecked on your
+    upload speed, because nothing is uploaded.</li>
+  </ul>
+
+  <h2>The honest exceptions</h2>
+  <p>Seven of the 104 tools genuinely need a server, because they depend on
+  engines too large to ship to a browser — LibreOffice for full-fidelity Office
+  conversion, Ghostscript for deep compression, and a local LLM for
+  chat-with-document. These tools only appear when a backend is actually
+  reachable, and they're clearly labelled <em>server-assisted</em> in the
+  interface. You can run that backend yourself; it's open-source and
+  documented. The upcoming desktop app bundles it, so even those seven run on
+  your own machine.</p>
+  <p>One more: the currency converter fetches live exchange rates. Rates come
+  from somewhere by definition. No file or personal data is involved.</p>
+
+  <h2>Open source</h2>
+  <p>Every dependency in the stack is free and open-source. There is no paid
+  vendor API anywhere in it. You can read the code, audit the privacy claims,
+  self-host the backend, or fork the whole thing.</p>
+
+  <p><a class="cta" href="../index.html">Open the tools</a>
+     <a class="cta secondary" href="for-business.html">For business</a></p>
+</div></main>
+<footer class="site-footer"><div class="wrap">
+  <nav>
+    <a href="../index.html">Tools</a>
+    <a href="../guides/index.html">Guides</a>
+    <a href="about.html">About</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="for-business.html">For business</a>
+    <a href="contact.html">Contact</a>
+    <a href="security.html">Security</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="refund.html">Refunds</a>
+  </nav>
+  <p class="fine">Dockbench — PDF, image and video tools that run on your own device.<br>
+  &copy; <span id="yr">2026</span> [COMPANY LEGAL NAME]. All rights reserved.</p>
+</div></footer>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>

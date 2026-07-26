@@ -254,6 +254,9 @@
   .runlog .ok{color:var(--ok);}
 
   footer{border-top:1px solid var(--line);margin-top:80px;padding:32px 0 60px;color:var(--ink-soft);font-size:0.85rem;}
+  .footer-nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
+  .footer-nav a{color:var(--ink-soft);text-decoration:none;}
+  .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
 
   .note{background:var(--paper);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;font-size:0.8rem;color:var(--ink-soft);margin:12px 0;}
   .canvas-wrap{position:relative;border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:60vh;margin:10px 0;background:#eee;}
@@ -445,6 +448,17 @@
     Dockbench never checks for one automatically — <button class="small-btn" id="check-backend-btn" style="margin-left:4px;">Have a self-hosted backend? Check for it →</button>
     <span id="check-backend-status" style="margin-left:8px;font-size:0.85rem;"></span>
     <br><button class="small-btn" id="license-btn" style="margin-top:8px;">Have a license key? Manage it →</button>
+    <nav class="footer-nav">
+      <a href="company/about.html">About</a>
+      <a href="company/pricing.html">Pricing</a>
+      <a href="company/for-business.html">For business</a>
+      <a href="guides/index.html">Guides</a>
+      <a href="company/contact.html">Contact</a>
+      <a href="company/security.html">Security</a>
+      <a href="company/privacy.html">Privacy</a>
+      <a href="company/terms.html">Terms</a>
+      <a href="company/refund.html">Refunds</a>
+    </nav>
   </div>
 </footer>
 

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For business — Dockbench</title>
+<meta name="description" content="API access, volume licensing and air-gapped deployments of Dockbench.">
+<link rel="canonical" href="https://dockbench.app/company/for-business.html">
+<link href="../vendor/fonts/fonts.css" rel="stylesheet">
+<link href="company.css" rel="stylesheet">
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="../index.html"><span class="dot"></span>Dockbench</a></div></header>
+<main><div class="wrap">
+
+  <h1>Dockbench for business</h1>
+  <p class="lede">The same engines behind the free app, available as an HTTP
+  API you can call from your own systems — or as a deployment that runs
+  entirely inside your network.</p>
+
+  <div class="placeholder">
+  <strong>Before publishing:</strong> replace every <code>[BRACKETED]</code>
+  value on this page with your real details. Search the whole
+  <code>frontend/company/</code> folder for <code>[</code> to find them all.
+  App stores and payment processors reject listings whose legal pages carry
+  placeholder text.
+</div>
+
+  <h2>The API</h2>
+  <p>A REST API over the server-side engines: OCR to searchable PDF,
+  full-fidelity Office conversion via LibreOffice, deep compression and PDF/A
+  archival via Ghostscript, and background removal. Authentication is a bearer
+  API key. Interactive documentation is served at <code>/docs</code> on any
+  running instance.</p>
+  <p>The API is the paid surface. The on-device app stays free and unlimited
+  for everyone, with no key — that isn't a trial we plan to close.</p>
+
+  <h3>Endpoints</h3>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Endpoint</th><th>Does</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /ocr</code></td><td>Scan → text, or a searchable PDF</td></tr>
+      <tr><td><code>POST /convert</code></td><td>Office ↔ PDF, full fidelity</td></tr>
+      <tr><td><code>POST /compress-pdf</code></td><td>Ghostscript compression</td></tr>
+      <tr><td><code>POST /pdfa</code></td><td>ISO 19005 PDF/A-2b archival</td></tr>
+      <tr><td><code>POST /remove-bg</code></td><td>Image → transparent PNG</td></tr>
+      <tr><td><code>POST /merge-pdf</code>, <code>/split-pdf</code>, <code>/rotate-pdf</code>, <code>/watermark-pdf</code></td><td>Page operations</td></tr>
+      <tr><td><code>POST /jobs/{kind}</code></td><td>Queue a long job; poll for the result</td></tr>
+      <tr><td><code>GET /capabilities</code></td><td>Which engines this instance has</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Air-gapped and offline deployments</h2>
+  <p>For environments with no internet at all — secure facilities, some
+  libraries and schools, field equipment — Dockbench runs from a signed licence
+  key that is verified entirely on-device using the Web Crypto API. No
+  activation call, no phone-home, no licence server, ever. One key can cover
+  every machine at a site.</p>
+
+  <h2>Self-hosting</h2>
+  <p>The backend is open-source and ships as a Docker image. <code>docker
+  compose up -d</code> gives you the API, a job queue and a worker pool you can
+  scale independently. Your documents never leave your infrastructure, which is
+  usually the entire reason procurement is involved in the first place.</p>
+
+  <h2>What we'll want to know</h2>
+  <p>To quote accurately: rough monthly volume, which engines you need, whether
+  it's cloud or on-premise, and any compliance regime you're working under.</p>
+
+  <p><a class="cta" href="contact.html">Contact sales</a>
+     <a class="cta secondary" href="pricing.html">See pricing</a></p>
+</div></main>
+<footer class="site-footer"><div class="wrap">
+  <nav>
+    <a href="../index.html">Tools</a>
+    <a href="../guides/index.html">Guides</a>
+    <a href="about.html">About</a>
+    <a href="pricing.html">Pricing</a>
+    <a href="for-business.html">For business</a>
+    <a href="contact.html">Contact</a>
+    <a href="security.html">Security</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="refund.html">Refunds</a>
+  </nav>
+  <p class="fine">Dockbench — PDF, image and video tools that run on your own device.<br>
+  &copy; <span id="yr">2026</span> [COMPANY LEGAL NAME]. All rights reserved.</p>
+</div></footer>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>

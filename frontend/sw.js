@@ -7,6 +7,18 @@ const SHELL_PATHS = ['/', '/index.html', '/manifest.json'];
 
 const APP_SHELL = [
   './', './index.html', './manifest.json',
+  // Company pages — precached so About/Pricing/Privacy/Terms stay reachable
+  // in an installed, offline app (app stores expect the legal pages to work).
+  './company/company.css',
+  './company/index.html',
+  './company/about.html',
+  './company/contact.html',
+  './company/pricing.html',
+  './company/for-business.html',
+  './company/security.html',
+  './company/privacy.html',
+  './company/terms.html',
+  './company/refund.html',
   // Installable-app icons referenced by manifest.json.
   './icons/icon-48.png',
   './icons/icon-72.png',
