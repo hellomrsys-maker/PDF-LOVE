@@ -1,0 +1,630 @@
+{
+  "_doc": [
+    "What 'working' means for each tool, used by scripts/functional-suite.js.",
+    "",
+    "Defaults are applied by the driver: a tool taking application/pdf gets",
+    "text.pdf, an image tool gets photo.jpg, and the assertion is that a",
+    "non-empty file of the right type came back. Entries here override that",
+    "with the semantics that actually matter — that redaction removes the",
+    "text rather than covering it, that the EXIF stripper really drops GPS,",
+    "that encryption rejects a wrong password.",
+    "",
+    "mode: 'download' (default) captures the file the tool produces.",
+    "      'live' reads the panel's DOM output for tools that have no",
+    "      download button (Base64, Unit Converter, and similar).",
+    "      'skip' with a reason for tools that cannot run headless.",
+    "",
+    "assert: name of a checker in scripts/validate-output.py.",
+    "input:  fixture filename, or a list. A list against two separate",
+    "        single-file inputs is spread one fixture per input.",
+    "fill:   [[selector, value], ...] applied after the file, before the action.",
+    "click_first: selectors clicked before input — mode tabs and the like.",
+    "action: selector of the button to press, when the last primary button",
+    "        is not the one meant (Encode vs Decode).",
+    "gestures: [{type:'draw'|'drag'|'tap', target, ...}] for tools that need",
+    "        a signature stroke, a redaction rectangle, or a placement tap.",
+    "        Fractions are relative to the target's bounding box."
+  ],
+  "Merge PDF": {
+    "input": [
+      "text.pdf",
+      "text-2.pdf"
+    ],
+    "assert": "pdf_pages",
+    "expect": 5
+  },
+  "Split PDF": {
+    "input": "text.pdf",
+    "assert": "pdf_pages",
+    "expect": 3,
+    "note": "defaults to extracting a page range; the per-page zip is a separate tab, covered by 'Split PDF (one file per page)'"
+  },
+  "Images to PDF": {
+    "input": [
+      "photo.jpg",
+      "photo.png"
+    ],
+    "assert": "pdf_pages",
+    "expect": 2
+  },
+  "PDF to JPG": {
+    "input": "text.pdf",
+    "assert": "zip_of_images",
+    "expect": 3
+  },
+  "Rotate PDF": {
+    "input": "text.pdf",
+    "assert": "pdf_rotated",
+    "expect": 90
+  },
+  "Organize PDF": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Crop PDF": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Make PDF Smaller": {
+    "input": "scanned.pdf",
+    "assert": "pdf_not_larger"
+  },
+  "Repair PDF": {
+    "input": "corrupt.pdf",
+    "assert": "pdf_pages",
+    "expect": 3,
+    "note": "a broken xref must come back with every page intact"
+  },
+  "OCR — Make Scans Searchable": {
+    "input": "scanned.pdf",
+    "assert": "contains_ocr_phrase",
+    "timeout": 180000,
+    "note": "must recognise the words rendered into the fixture"
+  },
+  "Scan Document": {
+    "mode": "skip",
+    "reason": "needs a camera or an interactive corner drag; covered by scripts/scanner-test.js"
+  },
+  "Compare PDF": {
+    "input": [
+      "text.pdf",
+      "text-2.pdf"
+    ],
+    "mode": "live",
+    "assert": "panel_not_empty",
+    "note": "renders a visual diff in the panel rather than producing a download"
+  },
+  "Remove Duplicate/Blank Pages": {
+    "input": "many-pages.pdf",
+    "assert": "valid_pdf"
+  },
+  "Extract Images": {
+    "input": "scanned.pdf",
+    "assert": "zip_of_images",
+    "expect": 2
+  },
+  "Edit Metadata": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Page Numbering & Document ID": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Add Header & Footer": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Put Multiple Pages on One Sheet": {
+    "input": "text.pdf",
+    "assert": "pdf_fewer_pages",
+    "expect": 3
+  },
+  "Insert / Replace Page": {
+    "input": [
+      "text.pdf",
+      "text-2.pdf"
+    ],
+    "assert": "valid_pdf"
+  },
+  "Split by Bookmark": {
+    "input": "bookmarked.pdf",
+    "assert": "zip_of_pdfs",
+    "note": "needs a PDF that actually has an outline, or the tool correctly does nothing"
+  },
+  "Split by File Size": {
+    "input": "many-pages.pdf",
+    "assert": "zip_of_pdfs"
+  },
+  "Bookmarks / TOC": {
+    "input": "text.pdf",
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Search & Redact": {
+    "input": "text.pdf",
+    "assert": "ssn_removed",
+    "note": "the SSN must be gone from the text layer, not merely covered"
+  },
+  "Flatten PDF": {
+    "input": "form.pdf",
+    "assert": "no_form_fields"
+  },
+  "Sanitize PDF": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Grayscale PDF": {
+    "input": "scanned.pdf",
+    "assert": "valid_pdf"
+  },
+  "PDF to Word": {
+    "input": "text.pdf",
+    "assert": "valid_docx"
+  },
+  "PDF to Markdown": {
+    "input": "text.pdf",
+    "assert": "contains_ocr_phrase"
+  },
+  "Markdown to PDF": {
+    "mode": "text",
+    "fill_text": "# Title\n\nThe quick brown fox jumps over the lazy dog\n\n- one\n- two",
+    "assert": "valid_pdf"
+  },
+  "PDF to Text": {
+    "input": "text.pdf",
+    "assert": "contains_ocr_phrase"
+  },
+  "Word to PDF": {
+    "input": "document.docx",
+    "assert": "valid_pdf"
+  },
+  "HTML / Text to PDF": {
+    "mode": "text",
+    "fill_text": "<h1>Fixture</h1><p>The quick brown fox jumps over the lazy dog</p>",
+    "assert": "valid_pdf"
+  },
+  "Read PDF Aloud": {
+    "mode": "skip",
+    "reason": "speech synthesis is unavailable headless"
+  },
+  "Table to CSV": {
+    "input": "table.pdf",
+    "assert": "csv_has_rows",
+    "expect": 2
+  },
+  "PDF to PowerPoint": {
+    "mode": "skip",
+    "reason": "server-assisted (see BUG-001) — needs a backend"
+  },
+  "PDF to Excel": {
+    "mode": "skip",
+    "reason": "server-assisted (see BUG-001) — needs a backend"
+  },
+  "PowerPoint to PDF": {
+    "input": "presentation.pptx",
+    "assert": "valid_pdf"
+  },
+  "Excel to PDF": {
+    "input": "spreadsheet.xlsx",
+    "assert": "valid_pdf"
+  },
+  "PDF to PDF/A": {
+    "mode": "skip",
+    "reason": "server-assisted (see BUG-001) — needs a backend"
+  },
+  "PDF Editor": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Highlight Important Text": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Add Watermark": {
+    "input": "text.pdf",
+    "assert": "valid_pdf"
+  },
+  "Redact / Remove Watermark": {
+    "input": "text.pdf",
+    "assert": "valid_pdf",
+    "gestures": [
+      {
+        "type": "drag",
+        "target": "#panel-body canvas",
+        "from": [
+          0.15,
+          0.15
+        ],
+        "to": [
+          0.75,
+          0.35
+        ]
+      }
+    ]
+  },
+  "Sign PDF": {
+    "input": "text.pdf",
+    "assert": "valid_pdf",
+    "gestures": [
+      {
+        "type": "draw",
+        "target": "#panel-body canvas.sig-pad"
+      },
+      {
+        "type": "tap",
+        "target": "#panel-body .page-canvas, #panel-body canvas:not(.sig-pad)",
+        "at": [
+          0.5,
+          0.5
+        ]
+      }
+    ]
+  },
+  "PDF Forms": {
+    "input": "form.pdf",
+    "assert": "valid_pdf"
+  },
+  "Digital Stamp": {
+    "input": "text.pdf",
+    "assert": "valid_pdf",
+    "gestures": [
+      {
+        "type": "tap",
+        "target": "#panel-body canvas",
+        "at": [
+          0.5,
+          0.5
+        ]
+      }
+    ]
+  },
+  "Protect PDF": {
+    "input": "text.pdf",
+    "assert": "pdf_encrypted",
+    "timeout": 120000,
+    "fill": [
+      [
+        "#pp-pass",
+        "hunter2"
+      ]
+    ],
+    "note": "must be genuinely AES-256 and reject a wrong password"
+  },
+  "Unlock PDF": {
+    "input": "encrypted.pdf",
+    "assert": "pdf_not_encrypted",
+    "timeout": 120000,
+    "fill": [
+      [
+        "#up-pass",
+        "correct-horse"
+      ]
+    ]
+  },
+  "Make Image Smaller": {
+    "input": "large.jpg",
+    "assert": "image_smaller"
+  },
+  "Resize Image": {
+    "input": "photo.jpg",
+    "assert": "image_resized",
+    "expect": 320,
+    "fill": [
+      [
+        "#rw",
+        "320"
+      ]
+    ],
+    "note": "the width/height fields prefill from the source, so a resize with no new value is legitimately a no-op"
+  },
+  "Remove Background": {
+    "mode": "skip",
+    "reason": "downloads a ~44 MB model; covered separately"
+  },
+  "Remove Photo Metadata (EXIF)": {
+    "input": "photo-with-exif.jpg",
+    "assert": "exif_stripped",
+    "note": "GPS must actually be gone from the output"
+  },
+  "Convert Image Format": {
+    "input": "photo.jpg",
+    "assert": "valid_image"
+  },
+  "Rotate / Flip Image": {
+    "input": "photo.jpg",
+    "assert": "valid_image"
+  },
+  "Favicon Generator": {
+    "input": "photo.png",
+    "assert": "zip_not_empty"
+  },
+  "Passport & ID Photo Maker": {
+    "input": "photo.jpg",
+    "assert": "valid_image"
+  },
+  "Batch Resize / Shrink Many Photos": {
+    "input": [
+      "photo.jpg",
+      "photo.png"
+    ],
+    "assert": "zip_not_empty"
+  },
+  "ID Card Designer": {
+    "mode": "text",
+    "assert": "any_output"
+  },
+  "Business Card Designer": {
+    "mode": "text",
+    "assert": "any_output"
+  },
+  "Batch ID Card Maker": {
+    "mode": "download",
+    "assert": "any_output",
+    "fill": [
+      [
+        "#panel-body textarea",
+        "Ada Lovelace,Engineering,E-1001\nAlan Turing,Research,E-1002"
+      ]
+    ]
+  },
+  "Certificate / Award Maker": {
+    "mode": "text",
+    "assert": "any_output"
+  },
+  "Invoice Generator": {
+    "mode": "download",
+    "assert": "valid_pdf",
+    "fill": [
+      [
+        "#panel-body .inv-desc",
+        "Consulting"
+      ],
+      [
+        "#panel-body .inv-qty",
+        "2"
+      ],
+      [
+        "#panel-body .inv-price",
+        "150"
+      ],
+      [
+        "#inv-from",
+        "Acme Co."
+      ],
+      [
+        "#inv-to",
+        "Client Ltd"
+      ]
+    ]
+  },
+  "Images to Slideshow Video": {
+    "input": [
+      "photo.jpg",
+      "photo.png"
+    ],
+    "assert": "valid_video",
+    "timeout": 180000,
+    "fill": [
+      [
+        "#ss-secs",
+        "1"
+      ]
+    ]
+  },
+  "Video to GIF": {
+    "input": "clip.webm",
+    "assert": "valid_gif",
+    "timeout": 180000
+  },
+  "Trim Video": {
+    "input": "clip.webm",
+    "assert": "valid_video",
+    "timeout": 180000,
+    "fill": [
+      [
+        "#tv-start",
+        "0"
+      ],
+      [
+        "#tv-end",
+        "2"
+      ]
+    ]
+  },
+  "Screen Recorder": {
+    "mode": "skip",
+    "reason": "needs getDisplayMedia and a user gesture"
+  },
+  "Extract Audio from Video": {
+    "input": "clip.webm",
+    "assert": "valid_audio",
+    "timeout": 180000
+  },
+  "Word & Character Counter": {
+    "mode": "live",
+    "fill_text": "one two three four five",
+    "assert": "panel_contains",
+    "expect": "5"
+  },
+  "Change Text Case": {
+    "mode": "live",
+    "fill_text": "hello world",
+    "assert": "panel_not_empty"
+  },
+  "Compare Two Texts": {
+    "mode": "live",
+    "fill_text": "alpha",
+    "assert": "panel_not_empty"
+  },
+  "Remove Duplicate Lines": {
+    "mode": "live",
+    "fill_text": "a\nb\na\nc",
+    "assert": "panel_not_empty"
+  },
+  "Placeholder Text Generator": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Ask Dockbench": {
+    "mode": "live",
+    "fill_text": "make this pdf smaller",
+    "assert": "panel_not_empty"
+  },
+  "QR Code Generator": {
+    "mode": "live",
+    "fill_text": "https://dockbench.app",
+    "assert": "canvas_or_img"
+  },
+  "QR Code Reader": {
+    "mode": "skip",
+    "reason": "needs a QR image fixture produced by the generator first"
+  },
+  "Password Generator": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Unit Converter": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "JSON Formatter & Checker": {
+    "mode": "live",
+    "fill_text": "{\"a\":1,\"b\":[2,3]}",
+    "assert": "panel_not_empty"
+  },
+  "Base64 Encode / Decode": {
+    "mode": "live",
+    "fill_text": "hello",
+    "assert": "panel_contains",
+    "expect": "aGVsbG8",
+    "action": "#b64-encode"
+  },
+  "Hash Generator": {
+    "mode": "live",
+    "fill_text": "abc",
+    "assert": "panel_contains",
+    "expect": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    "note": "the known SHA-256 of 'abc' — proves it is really hashing"
+  },
+  "Date & Timestamp Converter": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "URL Encode / Decode": {
+    "mode": "live",
+    "fill_text": "a b&c",
+    "assert": "panel_contains",
+    "expect": "a%20b",
+    "action": "#ue-encode"
+  },
+  "Age Calculator": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "BMI Calculator": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Color Converter & Palette": {
+    "mode": "live",
+    "fill_text": "#C1683A",
+    "assert": "panel_not_empty"
+  },
+  "CSV ↔ JSON Converter": {
+    "mode": "live",
+    "fill_text": "a,b\n1,2",
+    "assert": "panel_not_empty"
+  },
+  "Stopwatch & Countdown Timer": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Random Number, Dice & Coin": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Barcode Generator": {
+    "mode": "live",
+    "fill_text": "123456789012",
+    "assert": "canvas_or_img"
+  },
+  "Pattern (Regex) Tester": {
+    "mode": "live",
+    "fill_text": "abc",
+    "assert": "panel_not_empty"
+  },
+  "Loan / EMI Calculator": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Simple vs. Compound Interest": {
+    "mode": "live",
+    "assert": "panel_not_empty"
+  },
+  "Currency Converter": {
+    "mode": "skip",
+    "reason": "the one tool that needs a live third-party API"
+  },
+  "AI Summarize (On Your Device)": {
+    "mode": "skip",
+    "reason": "downloads a model on first use"
+  },
+  "Translate Text (On Your Device)": {
+    "mode": "skip",
+    "reason": "downloads a model on first use"
+  },
+  "Voice to Text (On Your Device)": {
+    "mode": "skip",
+    "reason": "needs a microphone"
+  },
+  "Describe a Photo / Alt-Text (On Your Device)": {
+    "mode": "skip",
+    "reason": "downloads a model on first use"
+  },
+  "OCR (server)": {
+    "mode": "skip",
+    "reason": "server-assisted"
+  },
+  "Word/Office to PDF (full fidelity)": {
+    "mode": "skip",
+    "reason": "server-assisted"
+  },
+  "PowerPoint to PDF (full fidelity)": {
+    "mode": "skip",
+    "reason": "server-assisted"
+  },
+  "Excel to PDF (full fidelity)": {
+    "mode": "skip",
+    "reason": "server-assisted"
+  },
+  "PDF to Word (layout-aware)": {
+    "mode": "skip",
+    "reason": "server-assisted"
+  },
+  "Remove Background (server)": {
+    "mode": "skip",
+    "reason": "server-assisted"
+  },
+  "Chat with PDF": {
+    "mode": "skip",
+    "reason": "server-assisted"
+  },
+  "Split PDF (one file per page)": {
+    "tool": "Split PDF",
+    "input": "text.pdf",
+    "click_first": [
+      "#panel-body .tab-btn[data-mode='each']"
+    ],
+    "assert": "zip_of_pdfs",
+    "expect": 3
+  },
+  "Repair PDF (beyond recovery)": {
+    "tool": "Repair PDF",
+    "input": "truncated.pdf",
+    "mode": "live",
+    "assert": "panel_contains",
+    "expect": "damaged past recovery",
+    "note": "the trailer and catalog are gone; the tool must say so rather than claim success"
+  }
+}

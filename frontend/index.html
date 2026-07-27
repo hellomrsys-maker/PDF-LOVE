@@ -6559,10 +6559,58 @@ function toolLocalRemoveBG(){
 
 // Best video container this browser can record. MP4 where supported
 // (Safari, newer Chrome), WebM everywhere else — labeled honestly in the UI.
+const VIDEO_MIMES = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
 function bestVideoMime(){
-  const candidates = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
-  for(const c of candidates){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c; }
+  for(const c of VIDEO_MIMES){ if(window.MediaRecorder && MediaRecorder.isTypeSupported(c)) return c; }
   return '';
+}
+
+/* isTypeSupported() is a claim about the container, not a promise that this
+   particular stream can be encoded into it. Chromium reports video/mp4 as
+   supported and then fails with EncodingError the instant you record a
+   <video> element's captureStream into it — which is how Trim Video came to
+   hand people a working "✓ Done" and a zero-byte file.
+
+   So: start recording, and if the recorder errors, move to the next
+   container and try again. Resolves with {recorder, mime} once one has
+   actually started without erroring. */
+function startRecorder(stream, options={}){
+  const mimes = VIDEO_MIMES.filter(m => MediaRecorder.isTypeSupported(m));
+  if(!mimes.length) return Promise.reject(new Error('This browser cannot record video (MediaRecorder unsupported).'));
+
+  const attempt = (i)=> new Promise((resolve, reject)=>{
+    if(i >= mimes.length){
+      reject(new Error('none of this browser\'s video formats could encode this stream'));
+      return;
+    }
+    const mime = mimes[i];
+    let rec;
+    try{ rec = new MediaRecorder(stream, {...options, mimeType: mime}); }
+    catch(e){ resolve(attempt(i+1)); return; }
+
+    let settled = false;
+    const chunks = [];
+    const give_up = ()=>{
+      if(settled) return;
+      settled = true;
+      try{ rec.stop(); }catch(_){}
+      resolve(attempt(i+1));               // this container cannot do it
+    };
+    // The only proof a container works is a non-empty chunk coming out of
+    // it. Checking recorder.state is not enough: it reads "recording" right
+    // up until the encoder gives up, which is how a broken combination used
+    // to sail through and produce an empty file.
+    rec.ondataavailable = e => {
+      if(!e.data.size) return;
+      chunks.push(e.data);
+      if(!settled){ settled = true; clearTimeout(timer); resolve({recorder: rec, mime, chunks}); }
+    };
+    rec.onerror = give_up;
+    const timer = setTimeout(give_up, 2000);
+    rec.start(200);
+  });
+
+  return attempt(0);
 }
 function mimeExt(mime){ return mime.startsWith('video/mp4') ? 'mp4' : 'webm'; }
 
@@ -6577,6 +6625,28 @@ function loadVideoFile(file){
 }
 function seekVideo(v, t){
   return new Promise(res=>{ v.onseeked = ()=>res(); v.currentTime = Math.min(t, Math.max(0, v.duration - 0.001)); });
+}
+
+/* play() resolves when playback *begins*, which is before any frame has
+   actually been presented. Attaching a MediaRecorder at that moment gets
+   EncodingError from every container Chromium offers — the tracks are live
+   but nothing has flowed through them yet. Wait for a real frame first. */
+function awaitVideoFrame(v, timeout=1500){
+  return new Promise(res=>{
+    let done = false;
+    const finish = ()=>{ if(!done){ done = true; res(); } };
+    if(typeof v.requestVideoFrameCallback === 'function'){
+      v.requestVideoFrameCallback(()=>finish());
+    }
+    // Fallback for browsers without rVFC, and a backstop if no frame ever
+    // arrives so a decode problem surfaces as a recording error rather than
+    // a hang.
+    const t0 = v.currentTime;
+    const poll = setInterval(()=>{
+      if(done || v.currentTime > t0){ clearInterval(poll); finish(); }
+    }, 50);
+    setTimeout(()=>{ clearInterval(poll); finish(); }, timeout);
+  });
 }
 
 function toolSlideshowVideo(){
@@ -6770,11 +6840,17 @@ function toolTrimVideo(){
       await seekVideo(video, start);
       video.muted = false; video.volume = 0; // decode audio without playing it out loud
       const stream = video.captureStream ? video.captureStream() : video.mozCaptureStream();
-      const rec = new MediaRecorder(stream, {mimeType:mime, videoBitsPerSecond: 8_000_000});
-      const chunks=[]; rec.ondataavailable = e=>{ if(e.data.size) chunks.push(e.data); };
-      const done = new Promise(res=>{ rec.onstop = res; });
-      rec.start(200);
+      // Playback has to be running, and a frame actually presented, before
+      // the recorder starts. Attaching an encoder to an element capture that
+      // has not yet produced a frame makes Chromium raise EncodingError on
+      // every container it offers.
       await video.play();
+      await awaitVideoFrame(video);
+      // Not every container this browser advertises can actually encode an
+      // element capture; startRecorder finds one that can.
+      const {recorder: rec, mime: usedMime, chunks} = await startRecorder(
+        stream, {videoBitsPerSecond: 8_000_000});
+      const done = new Promise(res=>{ rec.onstop = res; });
       await new Promise(resolve=>{
         const tick = ()=>{
           if(video.currentTime >= end || video.ended){ resolve(); return; }
@@ -6787,12 +6863,12 @@ function toolTrimVideo(){
       rec.stop();
       await done;
       video.volume = 1;
-      const blob = new Blob(chunks, {type:mime});
+      const blob = new Blob(chunks, {type:usedMime});
       // A zero-length recording used to be handed to the user as a "✓ Done"
       // download. Fail loudly instead: an empty file is not a result.
       if(!blob.size) throw new Error('the recorder captured no frames — the video may be in a format this browser cannot play back for re-encoding');
-      download(blob, file.name.replace(/\.[^.]+$/,'')+'-trimmed.'+mimeExt(mime));
-      log.innerHTML = `<span class="ok">✓ Done — ${(end-start).toFixed(1)}s clip, ${fmtBytes(blob.size)}. Made entirely on your device.</span>`;
+      download(blob, file.name.replace(/\.[^.]+$/,'')+'-trimmed.'+mimeExt(usedMime));
+      log.innerHTML = `<span class="ok">✓ Done — ${(end-start).toFixed(1)}s clip, ${fmtBytes(blob.size)} ${mimeExt(usedMime).toUpperCase()}. Made entirely on your device.</span>`;
     }catch(e){
       log.textContent = 'Could not trim: '+e.message;
     }finally{ btn.disabled=false; }
