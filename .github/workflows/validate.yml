@@ -319,6 +319,12 @@ jobs:
             exit 1
           fi
           echo "  refuses to start when enforcement is on but no key is configured."
+      - name: Streaming capacity — memory must not track file size
+        # This is what makes 100 GB documents possible. If someone
+        # reintroduces an in-memory path, peak RSS starts scaling with the
+        # document and this fails. Scale is modest so it fits a runner's
+        # disk; the property being asserted is the same at any size.
+        run: python3 scripts/capacity_test.py --scale 3 --pages-per-image 10
 
   frontend-functional:
     # Drives the real app in a real browser. The static checks above all

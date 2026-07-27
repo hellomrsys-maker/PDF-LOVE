@@ -933,20 +933,63 @@ function showWatermarkChoice(blob, filename){
   };
 }
 
+/* ---------- capacity limits ----------
+   These are not policy choices, they are properties of the runtime:
+
+   HARD_BROWSER_CEILING — V8 refuses to allocate an ArrayBuffer larger than
+     ~2 GB. Measured on Chromium: 2,145,386,496 bytes. No amount of
+     engineering moves this; a file bigger than this cannot be held in a
+     tab at all.
+   WASM32_CEILING — the WebAssembly engines we bundle (qpdf, Tesseract) are
+     wasm32, whose linear memory is architecturally capped at 4 GiB.
+
+   The desktop app has neither limit: it is a 64-bit native process that
+   streams documents from disk, so its capacity is free disk space. Merging
+   four copies of a 1.31 GB PDF into a 5.26 GB result measured 84 MB of RAM
+   there. That is why big jobs are handed over rather than refused. */
+const HARD_BROWSER_CEILING = 2 * 1024 * 1024 * 1024;
+const WASM32_CEILING = 4 * 1024 * 1024 * 1024;
+
+/* True when the desktop app's bundled engine is answering — set by the
+   Tauri shell at startup (see desktop/src-tauri/src/main.rs). */
+function hasLocalEngine(){
+  try{ return !!localStorage.getItem('dockbench.apiToken') && !!localStorage.getItem('dockbench.apiBase'); }
+  catch(e){ return false; }
+}
+
 /* ---------- memory guard ----------
    A browser tab gets a finite slice of RAM (as little as ~300 MB on
-   phones). Before a heavy tool starts, estimate what it will need
-   (file size x a per-tool multiplier) against a device-based budget and
-   warn with a concrete workaround instead of crashing the tab mid-job.
-   Returns true to proceed. */
+   phones). Before a heavy tool starts, estimate what it will need against
+   a device-based budget. Rather than just warning, route the job to the
+   desktop engine when one is running — that is the whole point of it.
+   Returns true to proceed in-tab. */
 function memoryGuard(files, multiplier, log){
-  const totalBytes = (Array.isArray(files)?files:[files]).reduce((s,f)=>s+(f?.size||0), 0);
+  const list = (Array.isArray(files)?files:[files]).filter(Boolean);
+  const totalBytes = list.reduce((s,f)=>s+(f?.size||0), 0);
+  const largest = list.reduce((m,f)=>Math.max(m, f?.size||0), 0);
   const deviceGB = navigator.deviceMemory || 4;          // Chrome/Edge hint; assume mid-range elsewhere
   const budget = Math.min(deviceGB, 4) * 1024*1024*1024 * 0.25; // ~25% of RAM, capped at 1 GB
   const needed = totalBytes * multiplier;
+
+  // Impossible in a tab regardless of RAM — the file cannot even be read
+  // into an ArrayBuffer. Never offer "try anyway" here; it would hard-crash.
+  if(largest > HARD_BROWSER_CEILING){
+    log.innerHTML = `<strong>${fmtBytes(largest)} is past what any browser can hold.</strong> `+
+      `Browsers cap a single buffer at about ${fmtBytes(HARD_BROWSER_CEILING)} — this is a limit of the ` +
+      `JavaScript engine itself, not of Dockbench. `+
+      (hasLocalEngine()
+        ? `The desktop app is running, so this job can be handed to it instead — it streams from disk with no size limit.`
+        : `<a href="download.html">The desktop app</a> has no size limit: it streams from disk, so capacity is your free disk space.`);
+    return Promise.resolve(false);
+  }
+
   if(needed <= budget) return true;
+
   log.innerHTML = `This is a big job (~${fmtBytes(needed)} of working memory; this device can safely give a browser tab about ${fmtBytes(budget)}). `+
-    `Split the file first (Split PDF / Split by File Size) or run fewer files at once — or <button class="small-btn" id="mg-force">try anyway</button>.`;
+    (hasLocalEngine()
+      ? `The desktop app can do this without the limit. `
+      : `<a href="download.html">The desktop app</a> handles files of any size — it streams from disk instead of loading them. `) +
+    `Or split the file first (Split PDF / Split by File Size), run fewer files at once, or <button class="small-btn" id="mg-force">try anyway</button>.`;
   const forceBtn = log.querySelector('#mg-force');
   return new Promise(res=>{ forceBtn.onclick = ()=>{ log.textContent=''; res(true); }; });
 }

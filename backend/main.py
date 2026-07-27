@@ -163,7 +163,16 @@ async def request_id_and_timing(request: Request, call_next):
     return response
 
 
-MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", "50"))
+# Running inside the desktop app? Then this is the user's own machine and
+# their own disk — an upload cap would be us rationing their hardware.
+# Capacity is bounded by free space, which /local/capabilities reports.
+LOCAL_MODE = os.environ.get("DOCKBENCH_LOCAL") == "1"
+
+_UNCAPPED = 1 << 40  # 1 TiB — a stand-in for "no limit" that keeps the
+                     # arithmetic below simple and still guards against
+                     # a genuinely absurd request.
+
+MAX_FILE_MB = int(os.environ.get("MAX_FILE_MB", str(_UNCAPPED) if LOCAL_MODE else "50"))
 REDIS_URL = os.environ.get("REDIS_URL", "")
 
 # Uploads above this size are spooled to a *shared* directory instead of
@@ -175,7 +184,7 @@ LARGE_FILE_THRESHOLD_MB = int(os.environ.get("LARGE_FILE_THRESHOLD_MB", str(MAX_
 UPLOAD_SPOOL_DIR = os.environ.get("UPLOAD_SPOOL_DIR", "/spool/uploads")
 
 # Hard ceiling for the spooled path, so "large" never means "unbounded".
-MAX_SPOOL_MB = int(os.environ.get("MAX_SPOOL_MB", "2048"))
+MAX_SPOOL_MB = int(os.environ.get("MAX_SPOOL_MB", str(_UNCAPPED) if LOCAL_MODE else "2048"))
 
 os.makedirs(UPLOAD_SPOOL_DIR, exist_ok=True)
 
@@ -266,6 +275,11 @@ def capabilities():
         # is a working fallback. Lets a deployment be checked, not assumed.
         "imgproc_backend": native_ops.native_backend(),
         "pdf_backend": premium_pdf.pdf_backend(),
+        # Path-based, memory-bounded operations: what makes 100 GB documents
+        # possible. False means this deployment falls back to holding the
+        # whole document, and is limited by RAM.
+        "streaming": premium_pdf.streaming_available(),
+        "local": LOCAL_MODE,
         "ocr": engines.which("tesseract") is not None,
         "ghostscript": engines.which("gs") is not None,
         "libreoffice": engines.which("soffice") is not None,

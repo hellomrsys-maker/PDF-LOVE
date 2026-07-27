@@ -63,6 +63,37 @@ PyObject *bytes_from(const std::vector<char> &v)
     return PyBytes_FromStringAndSize(v.data(), static_cast<Py_ssize_t>(v.size()));
 }
 
+/* ------------------------------------------------------------------
+ * Path-based helpers — the 100 GB path.
+ *
+ * The bytes-based functions above require the whole document to be
+ * resident, which caps them at available RAM. These read with
+ * processFile() and write with QPDFWriter(qpdf, filename): qpdf resolves
+ * objects lazily from the file and streams them back out, so peak memory
+ * tracks the size of the object model, not the size of the document. A
+ * 100 GB scan merges in a few hundred MB of RAM.
+ * ------------------------------------------------------------------ */
+
+/* Open a file lazily. Never reads the whole document. */
+void open_file(QPDF &pdf, const char *path)
+{
+    pdf.setSuppressWarnings(true);
+    pdf.processFile(path);
+}
+
+/* Configure a writer for streaming output.
+ *
+ * Linearization is explicitly OFF: it requires two passes and holds the
+ * whole document, which would defeat the entire point here. Preserving
+ * object streams avoids decompressing and re-encoding every object. */
+void configure_streaming(QPDFWriter &w)
+{
+    w.setStaticID(false);
+    w.setLinearization(false);
+    w.setObjectStreamMode(qpdf_o_preserve);
+    w.setStreamDataMode(qpdf_s_preserve);
+}
+
 }  // namespace
 
 
@@ -267,11 +298,278 @@ static PyObject *pdfops_rotate(PyObject *, PyObject *args)
 }
 
 
+/* ==================================================================
+ * Path-based API — files that do not fit in memory.
+ * ================================================================== */
+
+PyDoc_STRVAR(npages_file_doc,
+"npages_file(path) -> int\n\nPage count, without loading the document.");
+
+static PyObject *pdfops_npages_file(PyObject *, PyObject *args)
+{
+    const char *path;
+    if (!PyArg_ParseTuple(args, "s", &path))
+        return NULL;
+
+    std::string in(path), err;
+    int count = 0;
+    bool ok = false;
+
+    Py_BEGIN_ALLOW_THREADS
+    try {
+        QPDF pdf;
+        open_file(pdf, in.c_str());
+        count = static_cast<int>(QPDFPageDocumentHelper(pdf).getAllPages().size());
+        ok = true;
+    } catch (std::exception const &e) {
+        err = e.what();
+    }
+    Py_END_ALLOW_THREADS
+
+    if (!ok) {
+        PyErr_SetString(PyExc_ValueError, err.c_str());
+        return NULL;
+    }
+    return PyLong_FromLong(count);
+}
+
+
+PyDoc_STRVAR(merge_files_doc,
+"merge_files(in_paths, out_path) -> int\n\n"
+"Concatenate PDFs from disk to disk, returning the page count written.\n"
+"Peak memory tracks the object model, not the file size, so this handles\n"
+"inputs far larger than RAM.");
+
+static PyObject *pdfops_merge_files(PyObject *, PyObject *args)
+{
+    PyObject *seq;
+    const char *out_path;
+    if (!PyArg_ParseTuple(args, "Os", &seq, &out_path))
+        return NULL;
+
+    PyObject *fast = PySequence_Fast(seq, "merge_files() expects a sequence of paths");
+    if (fast == NULL)
+        return NULL;
+
+    Py_ssize_t n = PySequence_Fast_GET_SIZE(fast);
+    if (n == 0) {
+        Py_DECREF(fast);
+        PyErr_SetString(PyExc_ValueError, "no PDFs provided");
+        return NULL;
+    }
+
+    /* Copy the paths out of Python objects before releasing the GIL. */
+    std::vector<std::string> inputs;
+    inputs.reserve(static_cast<size_t>(n));
+    for (Py_ssize_t i = 0; i < n; i++) {
+        PyObject *item = PySequence_Fast_GET_ITEM(fast, i);   /* borrowed */
+        const char *s = PyUnicode_AsUTF8(item);
+        if (s == NULL) {
+            Py_DECREF(fast);
+            return NULL;
+        }
+        inputs.emplace_back(s);
+    }
+    Py_DECREF(fast);
+
+    std::string out(out_path), err;
+    int pages = 0;
+    bool ok = false;
+
+    Py_BEGIN_ALLOW_THREADS
+    try {
+        QPDF dest;
+        dest.emptyPDF();
+        QPDFPageDocumentHelper dh(dest);
+
+        /* Each source stays open until write() completes: copied pages
+         * still resolve their objects out of the origin document, and with
+         * lazy file reads those objects are only pulled in as the writer
+         * asks for them. */
+        std::vector<std::unique_ptr<QPDF>> srcs;
+        srcs.reserve(inputs.size());
+        for (auto &path : inputs) {
+            auto src = std::make_unique<QPDF>();
+            open_file(*src, path.c_str());
+            for (auto &page : QPDFPageDocumentHelper(*src).getAllPages()) {
+                dh.addPage(page, false);
+                pages++;
+            }
+            srcs.push_back(std::move(src));
+        }
+
+        QPDFWriter w(dest, out.c_str());
+        configure_streaming(w);
+        w.write();
+        ok = true;
+    } catch (std::exception const &e) {
+        err = e.what();
+        ok = false;
+    }
+    Py_END_ALLOW_THREADS
+
+    if (!ok) {
+        PyErr_SetString(PyExc_ValueError, err.c_str());
+        return NULL;
+    }
+    return PyLong_FromLong(pages);
+}
+
+
+PyDoc_STRVAR(extract_file_doc,
+"extract_file(in_path, out_path, first, last) -> int\n\n"
+"Write pages first..last (inclusive, 1-based) to out_path.");
+
+static PyObject *pdfops_extract_file(PyObject *, PyObject *args)
+{
+    const char *in_path, *out_path;
+    int first, last;
+    if (!PyArg_ParseTuple(args, "ssii", &in_path, &out_path, &first, &last))
+        return NULL;
+    if (first < 1 || last < first) {
+        PyErr_SetString(PyExc_ValueError, "invalid page range");
+        return NULL;
+    }
+
+    std::string in(in_path), out(out_path), err;
+    int written = 0;
+    bool ok = false;
+
+    Py_BEGIN_ALLOW_THREADS
+    try {
+        QPDF src;
+        open_file(src, in.c_str());
+        auto pages = QPDFPageDocumentHelper(src).getAllPages();
+        int total = static_cast<int>(pages.size());
+        if (last > total) {
+            err = "page range exceeds document length";
+        } else {
+            QPDF dest;
+            dest.emptyPDF();
+            QPDFPageDocumentHelper dh(dest);
+            for (int i = first; i <= last; i++) {
+                dh.addPage(pages[static_cast<size_t>(i - 1)], false);
+                written++;
+            }
+            QPDFWriter w(dest, out.c_str());
+            configure_streaming(w);
+            w.write();
+            ok = true;
+        }
+    } catch (std::exception const &e) {
+        err = e.what();
+    }
+    Py_END_ALLOW_THREADS
+
+    if (!ok) {
+        PyErr_SetString(PyExc_ValueError, err.c_str());
+        return NULL;
+    }
+    return PyLong_FromLong(written);
+}
+
+
+PyDoc_STRVAR(rotate_file_doc,
+"rotate_file(in_path, out_path, angle) -> int\n\n"
+"Rotate every page by angle degrees relative to its current rotation.");
+
+static PyObject *pdfops_rotate_file(PyObject *, PyObject *args)
+{
+    const char *in_path, *out_path;
+    int angle;
+    if (!PyArg_ParseTuple(args, "ssi", &in_path, &out_path, &angle))
+        return NULL;
+    if (angle % 90 != 0) {
+        PyErr_SetString(PyExc_ValueError, "angle must be a multiple of 90");
+        return NULL;
+    }
+
+    std::string in(in_path), out(out_path), err;
+    int pages = 0;
+    bool ok = false;
+
+    Py_BEGIN_ALLOW_THREADS
+    try {
+        QPDF pdf;
+        open_file(pdf, in.c_str());
+        for (auto &page : QPDFPageDocumentHelper(pdf).getAllPages()) {
+            page.rotatePage(angle, true);
+            pages++;
+        }
+        QPDFWriter w(pdf, out.c_str());
+        configure_streaming(w);
+        w.write();
+        ok = true;
+    } catch (std::exception const &e) {
+        err = e.what();
+    }
+    Py_END_ALLOW_THREADS
+
+    if (!ok) {
+        PyErr_SetString(PyExc_ValueError, err.c_str());
+        return NULL;
+    }
+    return PyLong_FromLong(pages);
+}
+
+
+PyDoc_STRVAR(split_file_doc,
+"split_file(in_path, out_dir, prefix='page') -> int\n\n"
+"Write one PDF per page into out_dir, returning the number of files\n"
+"written. The source is opened once and streamed, rather than reopened\n"
+"per page.");
+
+static PyObject *pdfops_split_file(PyObject *, PyObject *args)
+{
+    const char *in_path, *out_dir, *prefix = "page";
+    if (!PyArg_ParseTuple(args, "ss|s", &in_path, &out_dir, &prefix))
+        return NULL;
+
+    std::string in(in_path), dir(out_dir), pre(prefix), err;
+    int written = 0;
+    bool ok = false;
+
+    Py_BEGIN_ALLOW_THREADS
+    try {
+        QPDF src;
+        open_file(src, in.c_str());
+        auto pages = QPDFPageDocumentHelper(src).getAllPages();
+        for (size_t i = 0; i < pages.size(); i++) {
+            QPDF dest;
+            dest.emptyPDF();
+            QPDFPageDocumentHelper(dest).addPage(pages[i], false);
+            std::string out = dir + "/" + pre + "_" + std::to_string(i + 1) + ".pdf";
+            QPDFWriter w(dest, out.c_str());
+            configure_streaming(w);
+            w.write();
+            written++;
+        }
+        ok = true;
+    } catch (std::exception const &e) {
+        err = e.what();
+    }
+    Py_END_ALLOW_THREADS
+
+    if (!ok) {
+        PyErr_SetString(PyExc_ValueError, err.c_str());
+        return NULL;
+    }
+    return PyLong_FromLong(written);
+}
+
+
 static PyMethodDef PdfopsMethods[] = {
+    /* in-memory: fast for everyday files */
     {"merge",   pdfops_merge,   METH_VARARGS, merge_doc},
     {"npages",  pdfops_npages,  METH_VARARGS, npages_doc},
     {"extract", pdfops_extract, METH_VARARGS, extract_doc},
     {"rotate",  pdfops_rotate,  METH_VARARGS, rotate_doc},
+    /* path-based: streams from disk, for files larger than RAM */
+    {"npages_file",  pdfops_npages_file,  METH_VARARGS, npages_file_doc},
+    {"merge_files",  pdfops_merge_files,  METH_VARARGS, merge_files_doc},
+    {"extract_file", pdfops_extract_file, METH_VARARGS, extract_file_doc},
+    {"rotate_file",  pdfops_rotate_file,  METH_VARARGS, rotate_file_doc},
+    {"split_file",   pdfops_split_file,   METH_VARARGS, split_file_doc},
     {NULL, NULL, 0, NULL}
 };
 

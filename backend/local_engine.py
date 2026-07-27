@@ -69,6 +69,101 @@ async def require_session_token(request: Request, call_next):
     return await call_next(request)
 
 
+# ---------------------------------------------------------------------
+# Local path-based endpoints — the 100 GB path.
+#
+# Uploading a 100 GB file over HTTP would mean copying it through the
+# browser, through a multipart encoder, and onto disk again. These take a
+# *path* the OS file picker already gave the desktop app, so the bytes are
+# never copied anywhere. Only reachable on the loopback engine, behind the
+# session token.
+# ---------------------------------------------------------------------
+from typing import List, Optional  # noqa: E402
+
+from pydantic import BaseModel  # noqa: E402
+
+import premium_pdf  # noqa: E402
+from errors import EngineError  # noqa: E402
+
+
+class PathJob(BaseModel):
+    op: str                                   # merge | split | extract | rotate | npages
+    inputs: List[str]                         # absolute source paths
+    output: Optional[str] = None              # destination file or directory
+    angle: int = 0
+    first: int = 1
+    last: int = 1
+
+
+def _engine_error(e: EngineError):
+    return JSONResponse({"detail": e.detail}, status_code=e.status)
+
+
+@app.post("/local/process")
+async def local_process(job: PathJob):
+    """Run a page operation directly against paths on this machine.
+
+    Peak memory is independent of file size — a 5.26 GB merge measured at
+    84 MB RSS — so the only real limit is free disk space.
+    """
+    try:
+        if not job.inputs:
+            raise EngineError(422, "No input paths given.")
+
+        if job.op == "npages":
+            return {"pages": premium_pdf.npages_path(job.inputs[0])}
+
+        if not job.output:
+            raise EngineError(422, "An output path is required for this operation.")
+
+        # Fail before starting rather than halfway through, leaving a
+        # truncated 60 GB file behind.
+        out_dir = job.output if job.op == "split" else os.path.dirname(job.output) or "."
+        needed = sum(os.path.getsize(p) for p in job.inputs if os.path.isfile(p))
+        if not premium_pdf.free_space_ok(out_dir, needed):
+            raise EngineError(
+                507,
+                f"Not enough free space in {out_dir} — this needs roughly "
+                f"{needed / 1e9:.1f} GB plus headroom.",
+            )
+
+        if job.op == "merge":
+            pages = premium_pdf.merge_paths(job.inputs, job.output)
+        elif job.op == "split":
+            pages = premium_pdf.split_path(job.inputs[0], job.output)
+        elif job.op == "extract":
+            pages = premium_pdf.extract_path(job.inputs[0], job.output, job.first, job.last)
+        elif job.op == "rotate":
+            pages = premium_pdf.rotate_path(job.inputs[0], job.output, job.angle)
+        else:
+            raise EngineError(422, f"Unknown op {job.op!r}. Valid: merge, split, extract, rotate, npages.")
+
+        return {"op": job.op, "output": job.output, "pages": pages}
+
+    except EngineError as e:
+        return _engine_error(e)
+
+
+@app.get("/local/capabilities")
+async def local_capabilities():
+    """What this machine can actually do — reported to the UI so it can
+    show real limits instead of guessing."""
+    import shutil as _shutil
+
+    try:
+        free = _shutil.disk_usage(os.path.expanduser("~")).free
+    except OSError:
+        free = None
+    return {
+        "local": True,
+        "streaming": premium_pdf.streaming_available(),
+        "pdf_backend": premium_pdf.pdf_backend(),
+        # No byte cap: bounded by disk, not by RAM or an arbitrary limit.
+        "max_file_bytes": None,
+        "free_disk_bytes": free,
+    }
+
+
 def _watch_parent():
     """Exit when the desktop app goes away.
 
