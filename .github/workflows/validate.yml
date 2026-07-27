@@ -464,6 +464,29 @@ jobs:
           print(f'merge -> {len(m.pages)} pages, rotate -> {rots}. Both correct.')
           PY
 
+      - name: Every tool, driven with real files and its output inspected
+        # The step above proves a panel opens; this proves the tool works.
+        # Each one is given a real fixture, driven to its output, and the
+        # output opened and checked — that Search & Redact removed the SSN
+        # from the text layer rather than covering it, that Protect PDF
+        # rejects a wrong password, that the EXIF stripper dropped GPS.
+        run: |
+          pip install --quiet pikepdf pillow reportlab piexif python-docx openpyxl python-pptx
+          python3 scripts/make-fixtures.py
+          node scripts/make-media-fixture.js
+          PYTHON=python3 node scripts/functional-suite.js
+      - name: Published tool counts match the app
+        # The docs claimed 97 on-device tools while the app shipped 94,
+        # because three server-assisted converters sat in an always-visible
+        # row. Nothing checked it, so the claim drifted and stayed wrong.
+        run: node scripts/check-tool-counts.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: functional-results
+          path: test-results/functional.json
+          if-no-files-found: ignore
+
       - name: The minified build still works
         # frontend/dist is what ships inside the desktop app and the APK. A
         # minifier that produces parseable-but-broken output would ship a
