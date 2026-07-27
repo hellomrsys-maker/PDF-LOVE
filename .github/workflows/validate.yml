@@ -394,8 +394,12 @@ jobs:
             async function run(tool, files, label) {
               await page.evaluate(() => window.closePanel && window.closePanel());
               await page.locator(`.tool-card[data-tool="${tool}"]`).first().click();
-              await page.waitForTimeout(300);
-              await page.locator('#panel-body input[type=file]').first().setInputFiles(files);
+              // Wait for the input to actually exist rather than sleeping a
+              // fixed interval — a loaded runner is slower than a laptop and
+              // a bare waitForTimeout here flakes.
+              const input = page.locator('#panel-body input[type=file]').first();
+              await input.waitFor({ state: 'attached', timeout: 15000 });
+              await input.setInputFiles(files, { timeout: 30000 });
               await page.waitForTimeout(400);
               const dl = page.waitForEvent('download', { timeout: 40000 });
               await page.locator('#panel-body button', { hasText: label }).first().click();

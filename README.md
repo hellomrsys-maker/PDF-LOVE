@@ -2,18 +2,31 @@
 
 A 104-tool PDF, image & video workbench where **everything — OCR, AI
 background removal, compression, conversion — runs on the user's own
-device**. The only server you need is any static file host to deliver the
-app; a self-hosted backend remains available as a purely optional extra
-(it only appears in the UI when one is actually running). Every dependency in this project is
-free and open-source — there is no paid API anywhere in the stack, and
-after the first page load the core app runs **fully offline**.
+device**. Every dependency is free and open-source, there is no paid API
+anywhere in the stack, and after the first page load the app runs **fully
+offline**.
+
+Three ways to run it, in increasing order of what stays local:
+
+| | Where tools run | What you need |
+|---|---|---|
+| **Double-click `index.html`** | 97 of 104 on-device | nothing at all |
+| **Any static host** (Netlify, Pages, S3) | 97 of 104 on-device | a file host |
+| **[Desktop app](desktop/README.md)** | **all 104 on-device** | the installer |
+
+The desktop app bundles the engine, so the seven tools that need real
+engines (Tesseract, LibreOffice, Ghostscript) run on the user's own machine
+too. A self-hosted backend remains available for teams who want a shared
+one, and the HTTP API is offered to business customers — but neither is
+required for anything.
 
 ## Why it beats the alternatives
 
 | | Dockbench | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
 |---|---|---|---|
-| Files stay on-device | ✅ 97 of 104 tools (incl. OCR & AI cut-out) | ❌ every tool uploads | ❌ every tool goes to the server |
+| Files stay on-device | ✅ 97 of 104 in-browser, **104 of 104 in the desktop app** | ❌ every tool uploads | ❌ every tool goes to the server |
 | Works by double-clicking the HTML file | ✅ no server needed at all | ❌ | ❌ |
+| Native installer | ✅ Windows / macOS / Linux, engine included | ❌ web only | ❌ Docker only |
 | Video tools (GIF, trim, slideshow, screen rec.) | ✅ on-device | partial, cloud | ❌ |
 | Works offline (PWA) | ✅ core app + encryption | ❌ | ❌ needs the server |
 | Daily limits / subscription | none | 1-2 free tasks/day, then $4-10/mo | none |
@@ -28,7 +41,10 @@ The design principle: **keep the high-frequency tools 100% local** for the
 trust story and zero hosting cost, and reserve the server for jobs where
 real engines (Tesseract, LibreOffice, Ghostscript) are the difference
 between a toy and a tool — while keeping that server yours, free, and
-open-source.
+open-source, or skipping it entirely by installing the desktop app.
+
+You can verify the on-device claim in about fifteen seconds: devtools →
+Network tab → use any on-device tool → no request fires.
 
 ## Structure
 
@@ -36,16 +52,30 @@ open-source.
 ├── frontend/
 │   ├── index.html        ← the entire client-side app (104 tools)
 │   ├── vendor/           ← all JS/WASM libraries, self-hosted (no CDN needed)
+│   ├── company/          ← about, pricing, contact, security, legal pages
+│   ├── guides/           ← 7 plain-language SEO help pages
 │   ├── manifest.json, sw.js  ← installable PWA, offline-capable
 │   ├── nginx.conf        ← production static hosting + /api/ reverse proxy
 │   └── Dockerfile        ← nginx-based image
-├── backend/               ← optional, for the server-assisted tools
+├── backend/               ← the engine: server-assisted tools
 │   ├── main.py           ← FastAPI app (see endpoints below)
-│   ├── native/imgproc.c  ← C scan-cleanup kernel (compiled in Docker)
-│   ├── native_ops.py     ← ctypes bridge with pure-Python fallback
+│   ├── engines.py        ← engine logic, framework-free
+│   ├── premium_pdf.py    ← page ops, on the fused C engine
+│   ├── apikeys.py        ← business-tier API keys, verified offline
+│   ├── local_engine.py   ← entrypoint when bundled in the desktop app
+│   ├── native/imgproc.c        ← C scan-cleanup kernel (pure, portable)
+│   ├── native/imgprocmodule.c  ← its CPython extension wrapper
+│   ├── native/pdfops.cpp       ← libqpdf linked in-process
+│   ├── setup.py          ← builds both extensions
 │   └── Dockerfile        ← gunicorn + Tesseract + Ghostscript + LibreOffice
-├── docker-compose.yml    ← frontend + backend + local LLM (Ollama)
-└── .github/workflows/validate.yml  ← CI: syntax, wiring, C kernel tests
+├── desktop/               ← Tauri app bundling the engine (all 104 local)
+├── licensing/             ← offline licence + API key minting
+├── docker-compose.yml    ← frontend + backend + queue + local LLM (Ollama)
+└── .github/workflows/
+    ├── validate.yml      ← CI: syntax, wiring, extension/fallback equivalence,
+    │                       API-key gating, real browser functional test
+    ├── desktop.yml       ← builds Windows/macOS/Linux installers
+    └── release.yml       ← container images + offline bundle
 ```
 
 ## 1. Frontend — no setup, no build step, no CDN
@@ -129,7 +159,37 @@ memory, and triggers a browser download — the bytes never touch a network
 request. Verify it yourself: devtools → Network tab → use any tool → no
 request fires.
 
-## 2. Backend — optional, self-hosted, C-accelerated
+## 2. Desktop app — every tool on your own hardware
+
+`desktop/` is a Tauri app that **bundles the engine**, so all 104 tools run
+locally, including the seven the browser can't do alone (OCR, full-fidelity
+Office conversion, Ghostscript compression, PDF/A, background removal,
+chat). No server, no account, no upload.
+
+```
+Tauri shell (~10 MB)
+├── webview → frontend/index.html      the same app, not a fork
+└── sidecar → dockbench-engine         PyInstaller-frozen backend + the
+                                       fused C extensions above
+```
+
+The engine binds `127.0.0.1` on an OS-assigned port, mints a random session
+token, and prints `DOCKBENCH_READY <port> <token>`. The shell writes those
+into the page's `localStorage` — the same two keys you'd set by hand to aim
+the web app at a self-hosted backend. `/capabilities` then answers and the
+server tools appear.
+
+It is loopback-only, token-gated (so no other local process can drive it),
+and dies with the app. The updater's check for a signed manifest is the
+**only** routine network request the desktop app makes.
+
+```bash
+cd desktop && npm install && npm run build
+```
+
+Full detail, including the pre-ship checklist: **[desktop/README.md](desktop/README.md)**.
+
+## 3. Backend — self-hosted, C-accelerated
 
 The server-assisted tools use real engines, all C/C++ under a Python
 orchestration layer — "C for the hot path, Python for the glue":
@@ -145,11 +205,34 @@ orchestration layer — "C for the hot path, Python for the glue":
 | Background removal | rembg + onnxruntime (C++) | Apache-2.0 |
 | Summarize / Chat with PDF | Ollama running Llama 3.2 locally | Llama license (free for this use) |
 
-### The native C kernel
+### C and Python as one process
 
-`backend/native/imgproc.c` is this project's own scan-cleanup kernel,
-compiled with `-O3` in the Docker build and driven from Python via ctypes
-(`native_ops.py`). It preprocesses every scanned page before OCR —
+The engine does not talk to C across a bridge. Both hot paths are **CPython
+extension modules** — C compiled into the interpreter's own address space,
+no ctypes marshalling and no subprocess:
+
+| Module | Replaces | Why |
+|---|---|---|
+| `dockbench_imgproc` | ctypes calls into `imgproc.so` | one boundary crossing for the whole pipeline instead of three; GIL released during the pixel work |
+| `dockbench_pdf` | shelling out to the `qpdf` CLI | **6.2× faster** on a 200-page split (0.29s vs 1.79s) — 201 `fork`+`exec` calls and a filesystem round trip per page, gone |
+
+`native/imgproc.c` deliberately includes no Python headers, so the
+algorithm stays portable and independently testable under
+`-Wall -Wextra -Werror`; `native/imgprocmodule.c` is the only file that
+speaks the CPython ABI.
+
+Both are **optional**. If the extensions aren't built — no compiler, no
+`libqpdf-dev` — `native_ops.py` falls back to Pillow and `premium_pdf.py`
+to pikepdf. Same features, slower. CI asserts the two paths agree.
+`GET /capabilities` reports `imgproc_backend` and `pdf_backend` so you can
+check what a deployment actually resolved to rather than assuming.
+
+Build them with `cd backend && python setup.py build_ext --inplace`; the
+Dockerfile does it automatically.
+
+### The scan-cleanup kernel
+
+`backend/native/imgproc.c` preprocesses every scanned page before OCR —
 grayscale → percentile contrast stretch → inverted-scan detection → Otsu
 binarization — in exactly **two passes over the pixels**; everything in
 between is computed on a 256-bin histogram and folded into a single
@@ -225,16 +308,58 @@ directory deleted the moment the response is built. Rate limits
   and `/capabilities` will report accordingly.
 - Extra OCR languages: add e.g. `tesseract-ocr-deu` to the Dockerfile.
 
+## Business API
+
+The HTTP API is the paid surface; the on-device app is free and unlimited
+forever, with no key. Set `REQUIRE_API_KEY=1` (plus a verifying key) and
+the processing endpoints require `Authorization: Bearer dkb_live_...`.
+`/health` and `/capabilities` stay open for monitoring and discovery.
+
+**A self-hosted backend is never gated** — it's your server. Neither is the
+desktop app's bundled engine. Enforcement is opt-in, so nothing changes for
+anyone running their own instance.
+
+```bash
+node licensing/mint-api-key.js --sub=acme-corp --expires=2027-12-31
+```
+
+Keys are ECDSA P-256 signatures over their own payload, using the same
+signing identity as the offline licence system. Verification is in-process
+against a public key: **no database lookup and no licence server on the
+request path**, so it works air-gapped and costs microseconds. Rate limits
+bucket by the key's subject rather than by IP.
+
+Full reference: **[deploy/API.md](deploy/API.md)**.
+
 ## CI
 
-`.github/workflows/validate.yml` runs on every push: JS syntax of the
-whole inline app, every tool card resolving to a real function, no
-duplicate tool names, all 14 vendor assets present and precached by the
-service worker (including a freshness check that the base64 WASM copy
-matches the real binary), Python syntax, a real import of the backend app, a
-`-Wall -Wextra -Werror` compile of the C kernel, and an end-to-end
-binarization test of both the C path and the Pillow fallback (including
-inverted-scan correction).
+`.github/workflows/validate.yml` runs on every push:
+
+**Frontend** — JS syntax of the whole inline app; every tool card resolving
+to a real function; no duplicate tool names; all 21 vendor assets present
+and precached; the base64 WASM copy matching the real binary; every service
+worker precache entry existing on disk; every internal link across all 18
+pages resolving; manifest icons and screenshots matching their declared
+sizes.
+
+**Backend** — `py_compile` of every module; each module imported in its own
+process (so a module that only works because another was imported first is
+caught); both `main` and `worker` entrypoints; a `-Werror` compile of the C
+kernel; a build of both fused extensions plus an equivalence test proving
+the extension and its pure-Python fallback agree on merge/rotate/split/
+range/watermark and that bad input raises 4xx rather than 500; API keys
+minted with the real script and checked against expired, tampered, forged
+and garbage variants.
+
+**Functional** — a headless-Chromium job that opens all 104 tools and runs
+real PDFs through Merge and Rotate, asserting the downloaded output is a
+valid 5-page PDF and a 3-page PDF rotated 90°. Every static check above
+once passed on a build whose backend could not start; this is the job that
+exercises the product.
+
+`desktop.yml` builds the Windows/macOS/Linux installers and asserts the
+bundled engine starts loopback-only, rejects untokened requests, exits with
+its parent, and is serving the fused extensions rather than the fallbacks.
 
 ## Offline licensing (for deployments with no internet at all)
 
@@ -268,6 +393,7 @@ policy reflecting what the app actually does and doesn't collect.
 ## Roadmap (not yet built)
 
 - PaddleOCR as a swap-in for better table/multilingual accuracy
-- Batch/queue support on the backend for bulk processing
 - A visual pipeline builder (chain tools like "split → OCR → compress")
 - WebGPU acceleration for the on-device AI models as browser support lands
+- Fusing Tesseract and Ghostscript into extension modules too, removing the
+  last subprocess calls (bigger build surface; measured gain unproven)
