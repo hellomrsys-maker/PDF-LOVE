@@ -26,16 +26,40 @@
   promise about someone's conduct. "Your file is never transmitted" is a
   property of the system that you can check for yourself.</p>
 
-  <h2>Where it doesn't apply</h2>
+  <h2>Every request the app can make</h2>
+  <p>This is the complete list, and it is enforced: a CI check fails the
+  build if any host appears in the code that is not declared here. Adding
+  one has to be a deliberate, reviewed act, so this table cannot quietly go
+  out of date.</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Request</th><th>When</th><th>What it carries</th></tr></thead>
+    <tbody>
+      <tr><td>Ad network</td><td>Only if ads are enabled <em>and</em> you are online</td><td>Whatever that network collects — see its own policy. Off by default.</td></tr>
+      <tr><td>Desktop update check</td><td>Desktop app launch</td><td>A version string out; a signed manifest back. No telemetry.</td></tr>
+      <tr><td>Exchange rates</td><td>Only when you open Currency Converter</td><td>Nothing but the request itself.</td></tr>
+      <tr><td>AI model download</td><td>First use of an on-device AI tool</td><td>Nothing. Cached afterwards, then fully offline.</td></tr>
+      <tr><td>Server-assisted tools</td><td>Only if you use one of the 7, and only with a backend configured</td><td>The file you explicitly submitted, to a backend you or we run.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p><strong>Dockbench itself sends nothing.</strong> There is no analytics,
+  no telemetry, and no "which platform is this user on" ping — not even for
+  advertising. An ad network already sees the platform, user agent and IP
+  when it serves an ad, so there is nothing for us to add and no reason to
+  weaken the claim.</p>
+
+  <h2>Where the on-device guarantee doesn't apply</h2>
   <p>Honesty matters more than a clean claim:</p>
   <ul>
     <li><strong>Server-assisted tools</strong> (7 of 104) do transmit the file
     you submit. They appear only when a backend is reachable and are labelled
     in the UI. That backend logs no file contents or filenames, and deletes
-    per-request temporary files as soon as the response is built.</li>
-    <li><strong>Currency converter</strong> requests live rates from a
-    third-party provider. No file or personal data is sent; as with any network
-    request, your IP is visible to that provider.</li>
+    per-request temporary files as soon as the response is built. In the
+    desktop app that "backend" is on your own machine, bound to loopback.</li>
+    <li><strong>Currency converter</strong> requests live rates. No file or
+    personal data is sent; as with any network request, your IP is visible to
+    that provider.</li>
     <li><strong>On-device AI models</strong> download once from a public model
     host, then run offline from cache.</li>
   </ul>

@@ -124,6 +124,12 @@ jobs:
           if(missing.length){ console.error('Precached but missing on disk:', missing); process.exit(1); }
           console.log(entries.length, 'precache entries all exist on disk.');
           "
+      - name: Network surface — no undeclared outbound host
+        # The "nothing is uploaded" claim decays silently: someone adds a
+        # font, an analytics snippet, a CDN icon set, and nothing visibly
+        # breaks — the claim just stops being true. This makes adding a host
+        # a deliberate, reviewed act.
+        run: node scripts/check-network-surface.js
       - name: SEO pages are regenerable and genuinely distinct
         # Regenerating must be a no-op: if it is not, the committed pages
         # have drifted from the generator (or from the app's tool list, which
