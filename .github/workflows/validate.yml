@@ -458,6 +458,71 @@ jobs:
           print(f'merge -> {len(m.pages)} pages, rotate -> {rots}. Both correct.')
           PY
 
+      - name: The minified build still works
+        # frontend/dist is what ships inside the desktop app and the APK. A
+        # minifier that produces parseable-but-broken output would ship a
+        # dead app to every installed user while the website stayed fine, so
+        # this runs the same functional checks against dist.
+        run: |
+          node build.mjs
+          node --check <(node -e "
+            const fs=require('fs');
+            process.stdout.write(fs.readFileSync('frontend/dist/index.html','utf8')
+              .match(/<script>([\s\S]*?)<\/script>/)[1]);
+          ") && echo "  minified inline script parses"
+          node --check frontend/dist/sw.js
+          node -e "
+            const fs=require('fs');
+            const h=fs.readFileSync('frontend/dist/index.html','utf8');
+            [...h.matchAll(/application\/ld\+json\">([\s\S]*?)<\/script>/g)]
+              .forEach(m => JSON.parse(m[1]));
+            console.log('  JSON-LD survived minification');
+          "
+          cd frontend/dist && python3 -m http.server 5601 &
+          sleep 3
+          node - <<'JS'
+          const { chromium } = require('playwright');
+          (async () => {
+            const b = await chromium.launch();
+            const ctx = await b.newContext({ acceptDownloads: true });
+            const p = await ctx.newPage();
+            const errs = [];
+            p.on('pageerror', e => errs.push(String(e.message)));
+            await p.goto('http://localhost:5601/index.html', { waitUntil: 'networkidle' });
+            await p.waitForTimeout(1200);
+            if (errs.length) { console.error('minified build errors:', errs); process.exit(1); }
+
+            const n = (await p.$$eval('.tool-card', e =>
+              [...new Set(e.map(x => x.getAttribute('data-tool')).filter(Boolean))])).length;
+            if (n < 104) { console.error('minified build rendered', n, 'tools'); process.exit(1); }
+
+            // Real work, not just rendering.
+            await p.locator('.tool-card[data-tool="Merge PDF"]').first().click();
+            const input = p.locator('#panel-body input[type=file]').first();
+            await input.waitFor({ state: 'attached', timeout: 15000 });
+            await input.setInputFiles(['/tmp/a.pdf', '/tmp/b.pdf'], { timeout: 30000 });
+            await p.waitForTimeout(500);
+            const dl = p.waitForEvent('download', { timeout: 40000 });
+            await p.locator('#panel-body button', { hasText: /merge/i }).first().click();
+            await (await dl).saveAs('/tmp/dist-merged.pdf');
+
+            // ?tool= deep links are how every SEO page enters the app.
+            await p.goto('http://localhost:5601/index.html?tool=Merge%20PDF', { waitUntil: 'networkidle' });
+            await p.waitForTimeout(700);
+            const title = await p.evaluate(() => document.querySelector('#panel h2')?.textContent);
+            if (title !== 'Merge PDF') { console.error('deep link broken in dist:', title); process.exit(1); }
+
+            console.log(`  minified build: ${n} tools, merge produced output, deep links work`);
+            await b.close();
+          })();
+          JS
+          python3 -c "
+          import pikepdf
+          p = pikepdf.open('/tmp/dist-merged.pdf')
+          assert len(p.pages) == 5, f'minified build produced {len(p.pages)} pages'
+          print('  minified build merge -> 5 pages, correct')
+          "
+
   compose-config:
     runs-on: ubuntu-latest
     steps:

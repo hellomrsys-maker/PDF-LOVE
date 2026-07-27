@@ -4,10 +4,11 @@
   "private": true,
   "description": "Desktop shell for Dockbench. The UI is ../frontend, unmodified.",
   "scripts": {
+    "web": "node ../build.mjs",
     "engine": "python3 build-engine.py",
     "tauri": "tauri",
-    "dev": "npm run engine && tauri dev",
-    "build": "npm run engine && tauri build"
+    "dev": "npm run web && npm run engine && tauri dev",
+    "build": "npm run web && npm run engine && tauri build"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0"

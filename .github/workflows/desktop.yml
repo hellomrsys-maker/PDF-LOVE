@@ -73,6 +73,11 @@ jobs:
           pip install -r backend/requirements.txt
           pip install pyinstaller setuptools
 
+      - name: Build the minified web bundle
+        # Tauri's frontendDist points at frontend/dist, so this must run
+        # before the app build or the bundle would be empty.
+        run: node build.mjs
+
       - name: Build the engine sidecar
         run: python desktop/build-engine.py
 
