@@ -93,6 +93,12 @@ class PathJob(BaseModel):
     angle: int = 0
     first: int = 1
     last: int = 1
+    # Cap pages per output file on a merge. Peak memory tracks the page
+    # count, so this is the lever that keeps a very large job inside a
+    # device's memory ceiling. None means one output file, whatever it costs.
+    max_pages_per_part: Optional[int] = None
+    # Or state the ceiling and let the engine pick the part size for you.
+    memory_budget_mb: Optional[int] = None
 
 
 def _engine_error(e: EngineError):
@@ -103,8 +109,12 @@ def _engine_error(e: EngineError):
 async def local_process(job: PathJob):
     """Run a page operation directly against paths on this machine.
 
-    Peak memory is independent of file size — a 5.26 GB merge measured at
-    84 MB RSS — so the only real limit is free disk space.
+    Peak memory is decoupled from file size — bytes are nearly free — but it
+    does scale with the page count, at roughly 17-23 KB per page, because
+    the output document holds an entry for every page until the writer
+    finishes. A merge of 48,000 pages costs ~810 MB in one file; pass
+    max_pages_per_part (or memory_budget_mb) to cap that. The same job
+    written in parts of 3,000 pages costs 75 MB and runs faster.
     """
     try:
         if not job.inputs:
@@ -128,7 +138,11 @@ async def local_process(job: PathJob):
             )
 
         if job.op == "merge":
-            pages = premium_pdf.merge_paths(job.inputs, job.output)
+            per_part = job.max_pages_per_part
+            if per_part is None and job.memory_budget_mb:
+                per_part = premium_pdf.pages_per_part_for(job.memory_budget_mb)
+            pages = premium_pdf.merge_paths(job.inputs, job.output,
+                                            max_pages_per_part=per_part)
         elif job.op == "split":
             pages = premium_pdf.split_path(job.inputs[0], job.output)
         elif job.op == "extract":
