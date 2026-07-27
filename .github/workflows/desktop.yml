@@ -133,6 +133,67 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
+      - name: Install the built app and run it, including with no network
+        # Everything above tests components. This tests the artifact a user
+        # actually downloads: unpack the AppImage, launch it under a virtual
+        # display, and drive a real merge through the engine it ships with —
+        # first normally, then inside a network namespace with no routes at
+        # all, because "works without a connection" is the product's central
+        # claim and nothing was checking it.
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APPIMAGE=$(find desktop/src-tauri/target/${{ matrix.target }}/release/bundle \
+                       -name '*.AppImage' | head -1)
+          test -n "$APPIMAGE" || { echo "no AppImage was built"; exit 1; }
+          chmod +x "$APPIMAGE"
+
+          # FUSE is unavailable on the runner, so unpack rather than mount.
+          # This also proves the bundle contains what we think it does.
+          ( cd "$(dirname "$APPIMAGE")" && "./$(basename "$APPIMAGE")" --appimage-extract >/dev/null )
+          SQUASH="$(dirname "$APPIMAGE")/squashfs-root"
+          test -d "$SQUASH" || { echo "AppImage did not extract"; exit 1; }
+
+          ENGINE=$(find "$SQUASH" -name 'dockbench-engine*' -type f | head -1)
+          test -n "$ENGINE" || { echo "installed app ships no engine sidecar"; exit 1; }
+          chmod +x "$ENGINE"
+          echo "installed engine: ${ENGINE#$SQUASH}"
+
+          cp scripts/installed-app-test.py /tmp/installed-app-test.py
+          python3 -m pip install --quiet pikepdf
+
+          echo "::group::with network"
+          python3 /tmp/installed-app-test.py "$ENGINE"
+          echo "::endgroup::"
+
+          echo "::group::with no network at all"
+          # An empty network namespace: no default route, no DNS, nothing but
+          # the loopback the test brings up itself. The script refuses to
+          # report an offline pass unless it first confirms DNS is dead, so a
+          # namespace that failed to isolate cannot masquerade as a success.
+          # If any tool needed a server, this is where it fails.
+          unshare -rn python3 /tmp/installed-app-test.py "$ENGINE" --offline
+          echo "::endgroup::"
+
+          # Finally, launch the real GUI under a virtual display and confirm
+          # the window comes up and stays up rather than exiting on start.
+          sudo apt-get install -y --no-install-recommends xvfb x11-utils >/dev/null
+          xvfb-run -a --server-args="-screen 0 1280x900x24" \
+            "$SQUASH/AppRun" >/tmp/gui.log 2>&1 &
+          GUI=$!
+          sleep 25
+          if ! kill -0 "$GUI" 2>/dev/null; then
+            echo "the app exited on startup:"; cat /tmp/gui.log; exit 1
+          fi
+          echo "GUI stayed up for 25s"
+          kill "$GUI" 2>/dev/null || true
+          sleep 3
+          if pgrep -f 'dockbench-engine' >/dev/null; then
+            echo "engine outlived the app it belongs to"; pkill -f dockbench-engine; exit 1
+          fi
+          echo "engine exited with the app, leaving nothing on loopback"
+
       - uses: actions/upload-artifact@v4
         with:
           name: dockbench-${{ matrix.target }}

@@ -1,0 +1,88 @@
+name: Production
+
+# Test the deployed site, not just the repository. Everything else in CI
+# checks the source; this checks what a visitor actually receives.
+#
+# The host is resolved in this order:
+#   1. the PRODUCTION_URL repository variable, if set
+#   2. the canonical origin declared in frontend/index.html
+# and if neither resolves in DNS the job says so and stops, rather than
+# reporting a green tick for tests that never ran.
+
+on:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Origin to test (overrides everything else)'
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Work out which host to test
+        id: target
+        run: |
+          set -uo pipefail
+          URL="${{ github.event.inputs.url }}"
+          [ -z "$URL" ] && URL="${{ vars.PRODUCTION_URL }}"
+          if [ -z "$URL" ]; then
+            # Fall back to what the site declares about itself.
+            URL=$(grep -oP '(?<=rel="canonical" href=")https?://[^/"]+' \
+                    frontend/index.html | head -1 || true)
+            echo "no PRODUCTION_URL set; using the canonical origin: ${URL:-none}"
+          fi
+          if [ -z "$URL" ]; then
+            echo "::error::No production URL could be determined. Set the PRODUCTION_URL repository variable."
+            exit 1
+          fi
+          HOST=$(echo "$URL" | sed -E 's#https?://##' | cut -d/ -f1)
+          if ! getent hosts "$HOST" >/dev/null; then
+            echo "::error::$HOST does not resolve. The site is not reachable at $URL — set the PRODUCTION_URL repository variable to the host it is actually served from."
+            exit 1
+          fi
+          echo "url=${URL%/}" >> "$GITHUB_OUTPUT"
+          echo "testing $URL"
+
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: What the server actually sends
+        run: node scripts/production-check.js --url "${{ steps.target.outputs.url }}"
+
+      - name: Every URL in the sitemap resolves
+        run: node scripts/production-check.js --url "${{ steps.target.outputs.url }}" --sitemap
+
+      - name: The app works, and sends no file data, against production
+        run: |
+          python3 -m pip install --quiet pikepdf pillow reportlab
+          python3 scripts/make-fixtures.py
+          PYTHON=python3 node scripts/functional-suite.js \
+            --url "${{ steps.target.outputs.url }}" \
+            --only "Merge PDF"
+          node scripts/check-network-surface.js --url "${{ steps.target.outputs.url }}"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-results
+          path: test-results/
+          if-no-files-found: ignore

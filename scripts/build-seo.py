@@ -32,7 +32,14 @@ from datetime import date
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FRONTEND = os.path.join(ROOT, "frontend")
 OUT_DIR = os.path.join(FRONTEND, "tools")
-SITE = "https://dockbench.app"
+# The origin every canonical, og:url, and sitemap entry points at. A
+# canonical tag naming a host that does not resolve tells search engines the
+# real copy of the page lives somewhere unreachable, which is worse for
+# ranking than having no canonical at all — so this must match the host the
+# site is actually served from. Override when deploying elsewhere:
+#     SITE_ORIGIN=https://dockbench.example.workers.dev python scripts/build-seo.py
+# scripts/check-canonical.py verifies the configured host really answers.
+SITE = os.environ.get("SITE_ORIGIN", "https://dockbench.app").rstrip("/")
 TODAY = date.today().isoformat()
 
 

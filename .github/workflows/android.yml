@@ -89,6 +89,39 @@ jobs:
             echo "$(du -h "$f" | cut -f1)  $f"
           done
 
+      # An APK that builds is not an APK that works. Boot a real emulator,
+      # install it, and check the claims the bundled-assets architecture
+      # makes — chiefly that it runs with the network switched off, from a
+      # cold start, because the whole app is on the device.
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules >/dev/null
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install and test on an emulator, online then in airplane mode
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          # A snapshot would restore a warm state and hide exactly the
+          # cold-start behaviour being tested.
+          disable-animations: true
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: bash scripts/android-emulator-test.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dockbench-android-emulator-logs
+          path: |
+            /tmp/android-test/*.txt
+            /tmp/android-test/*.png
+          if-no-files-found: ignore
+
       - uses: actions/upload-artifact@v4
         with:
           name: dockbench-android
