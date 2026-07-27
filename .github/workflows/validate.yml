@@ -124,6 +124,21 @@ jobs:
           if(missing.length){ console.error('Precached but missing on disk:', missing); process.exit(1); }
           console.log(entries.length, 'precache entries all exist on disk.');
           "
+      - name: SEO pages are regenerable and genuinely distinct
+        # Regenerating must be a no-op: if it is not, the committed pages
+        # have drifted from the generator (or from the app's tool list, which
+        # the generator reads). The audit then fails on any duplicated title,
+        # description or canonical — duplication across generated pages is
+        # exactly the signal that gets a site penalised.
+        run: |
+          python3 -m pip install --quiet --upgrade pip
+          python3 scripts/build-seo.py
+          if ! git diff --quiet -- frontend/tools frontend/sitemap.xml frontend/robots.txt; then
+            echo "Generated SEO pages are out of date. Run: python scripts/build-seo.py"
+            git diff --stat -- frontend/tools frontend/sitemap.xml frontend/robots.txt
+            exit 1
+          fi
+          node scripts/seo-audit.js
       - name: Manifest icons and screenshots exist with the declared sizes
         run: |
           python3 -m pip install --quiet pillow

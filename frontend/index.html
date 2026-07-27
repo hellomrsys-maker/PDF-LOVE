@@ -3,8 +3,93 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dockbench — PDF &amp; Image tools that never leave your device</title>
+<title>Dockbench — 104 free PDF &amp; image tools, nothing uploaded</title>
+<meta name="description" content="104 free PDF, image and video tools that run in your browser — merge, split, compress, convert, OCR and sign. No upload, no account, no limit.">
+<link rel="canonical" href="https://dockbench.app/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 <link rel="manifest" href="manifest.json">
+
+<!-- Social preview. Without these a shared link renders as a bare URL,
+     which costs click-through on exactly the channels that drive early
+     traffic. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Dockbench">
+<meta property="og:title" content="104 free PDF &amp; image tools that never upload your files">
+<meta property="og:description" content="Merge, split, compress, convert, OCR and sign — all in your browser, on your own device. No account, no limits, works offline.">
+<meta property="og:url" content="https://dockbench.app/">
+<meta property="og:image" content="https://dockbench.app/icons/feature-graphic-1024x500.png">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="500">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="104 free PDF &amp; image tools that never upload your files">
+<meta name="twitter:description" content="Everything runs on your device. No account, no limits, works offline.">
+<meta name="twitter:image" content="https://dockbench.app/icons/feature-graphic-1024x500.png">
+
+<!-- Structured data. SoftwareApplication is what earns the rating/price
+     treatment in results; the FAQ answers the questions people actually
+     search alongside "free pdf tool". -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://dockbench.app/#app",
+      "name": "Dockbench",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web, Windows, macOS, Linux, Android",
+      "description": "104 PDF, image and video tools that process files entirely on your own device. No upload, no account, no daily limit.",
+      "url": "https://dockbench.app/",
+      "downloadUrl": "https://dockbench.app/download.html",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": [
+        "Merge PDF", "Split PDF", "Compress PDF", "PDF to Word", "Word to PDF",
+        "Images to PDF", "OCR scanned PDF", "Sign PDF", "Protect PDF with AES-256",
+        "Redact PDF", "Video to GIF", "Remove image background"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://dockbench.app/#website",
+      "url": "https://dockbench.app/",
+      "name": "Dockbench",
+      "publisher": { "@id": "https://dockbench.app/#org" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://dockbench.app/#org",
+      "name": "Dockbench",
+      "url": "https://dockbench.app/",
+      "logo": "https://dockbench.app/icons/icon-512.png"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Are my files uploaded anywhere?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. 97 of the 104 tools read your file, process it in your browser's memory, and hand the result straight back to your downloads folder. No network request carries the file. You can verify this yourself: open developer tools, switch to the Network tab, and use any tool — nothing fires." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a daily limit or a subscription?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Because your own device does the work, each use costs us nothing, so there is no meter. There is no account and no card." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does it work offline?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. After the first visit the whole app is cached, including the OCR engine and AES-256 encryption. The desktop and Android apps work offline from the moment they install." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the largest file it can handle?",
+          "acceptedAnswer": { "@type": "Answer", "text": "In a browser, about 2 GB — browsers cap a single buffer at roughly that size. The desktop app streams documents from disk instead of loading them, so it handles 100 GB files and 20,000-page merges, limited only by free disk space." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231F2420'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%234A7856'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#C1683A">
 <!-- Fonts are self-hosted in ./vendor/fonts (zero external requests,
@@ -7363,9 +7448,27 @@ document.getElementById('no-results-ask').onclick = ()=>{
   searchInput.value=''; applyView();
   toolAskDockbench(q);
 };
-(function openAssistFromQueryParam(){
-  const q = new URLSearchParams(location.search).get('ask');
-  if(q && q.trim()) toolAskDockbench(q.trim());
+(function openFromQueryParam(){
+  const params = new URLSearchParams(location.search);
+
+  const q = params.get('ask');
+  if(q && q.trim()){ toolAskDockbench(q.trim()); return; }
+
+  // ?tool=Merge%20PDF — the landing pages in /tools/ deep-link straight to
+  // the tool they describe, so a visitor arriving from search lands on the
+  // thing that solves their problem rather than on a grid to hunt through.
+  const t = params.get('tool');
+  if(t && t.trim()){
+    const entry = toolIndex[t.trim()];
+    if(entry){
+      openTool(entry.tool);
+    }else{
+      // Renamed or mistyped: fall back to search rather than doing nothing.
+      searchInput.value = t.trim();
+      applyView();
+      searchInput.scrollIntoView({block:'center'});
+    }
+  }
 })();
 
 // keyboard: Ctrl/Cmd+K focuses search, Escape closes the tool panel
