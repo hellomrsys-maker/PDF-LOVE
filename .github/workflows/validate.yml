@@ -333,7 +333,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: npm install -g playwright@1.56.1 && npx playwright install --with-deps chromium
+      # Installed into the workspace, not globally: a global install's
+      # location varies by runner image, and hardcoding it breaks the job.
+      - run: npm init -y && npm install playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
       - run: pip install pikepdf
       - name: Build test PDFs
         run: |
@@ -349,7 +352,7 @@ jobs:
           cd frontend && python3 -m http.server 5599 &
           sleep 3
           node - <<'JS'
-          const { chromium } = require('/usr/lib/node_modules/playwright');
+          const { chromium } = require('playwright');
           const fs = require('fs');
           (async () => {
             const browser = await chromium.launch();
