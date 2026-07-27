@@ -6,19 +6,27 @@ device**. Every dependency is free and open-source, there is no paid API
 anywhere in the stack, and after the first page load the app runs **fully
 offline**.
 
-Three ways to run it, in increasing order of what stays local:
+Four ways to run it, in increasing order of what stays local:
 
-| | Where tools run | What you need |
-|---|---|---|
-| **Double-click `index.html`** | 97 of 104 on-device | nothing at all |
-| **Any static host** (Netlify, Pages, S3) | 97 of 104 on-device | a file host |
-| **[Desktop app](desktop/README.md)** | **all 104 on-device** | the installer |
+| | Where tools run | Largest file | What you need |
+|---|---|---|---|
+| **Double-click `index.html`** | 97 of 104 on-device | ~2 GB | nothing at all |
+| **Any static host** (Netlify, Pages, S3) | 97 of 104 on-device | ~2 GB | a file host |
+| **[Android app](android/README.md)** | 97 of 104 on-device | ~2 GB | the APK |
+| **[Desktop app](desktop/README.md)** | **all 104 on-device** | **disk space** | the installer |
 
 The desktop app bundles the engine, so the seven tools that need real
 engines (Tesseract, LibreOffice, Ghostscript) run on the user's own machine
-too. A self-hosted backend remains available for teams who want a shared
-one, and the HTTP API is offered to business customers — but neither is
-required for anything.
+too — and it streams documents from disk rather than loading them, so a
+100 GB PDF is fine. The ~2 GB figure elsewhere is not our choice: browsers
+cap a single buffer at about that, and the Android app is a WebView.
+
+The Android app bundles the whole application inside the APK, so it works
+offline from the moment it installs and never loads the site.
+
+A self-hosted backend remains available for teams who want a shared one, and
+the HTTP API is offered to business customers — but neither is required for
+anything.
 
 ## Why it beats the alternatives
 
@@ -53,7 +61,8 @@ Network tab → use any on-device tool → no request fires.
 │   ├── index.html        ← the entire client-side app (104 tools)
 │   ├── vendor/           ← all JS/WASM libraries, self-hosted (no CDN needed)
 │   ├── company/          ← about, pricing, contact, security, legal pages
-│   ├── guides/           ← 7 plain-language SEO help pages
+│   ├── guides/           ← plain-language SEO help pages
+│   ├── download.html     ← desktop installers + Android APK
 │   ├── manifest.json, sw.js  ← installable PWA, offline-capable
 │   ├── nginx.conf        ← production static hosting + /api/ reverse proxy
 │   └── Dockerfile        ← nginx-based image
@@ -69,12 +78,15 @@ Network tab → use any on-device tool → no request fires.
 │   ├── setup.py          ← builds both extensions
 │   └── Dockerfile        ← gunicorn + Tesseract + Ghostscript + LibreOffice
 ├── desktop/               ← Tauri app bundling the engine (all 104 local)
+├── android/               ← WebView app; whole web app bundled in the APK
 ├── licensing/             ← offline licence + API key minting
+├── scripts/               ← capacity test, asset staging, download manifest
 ├── docker-compose.yml    ← frontend + backend + queue + local LLM (Ollama)
 └── .github/workflows/
     ├── validate.yml      ← CI: syntax, wiring, extension/fallback equivalence,
-    │                       API-key gating, real browser functional test
+    │                       API-key gating, streaming capacity, browser test
     ├── desktop.yml       ← builds Windows/macOS/Linux installers
+    ├── android.yml       ← builds the signed APK + AAB
     └── release.yml       ← container images + offline bundle
 ```
 
@@ -383,9 +395,9 @@ etc.), each ending in a link that deep-links straight into the assistant
 with the question pre-filled (`index.html?ask=...`). `frontend/icons/` has
 a full PWA/TWA icon set (including maskable variants), a Play Store feature
 graphic, and real screenshots of the running app — all generated from the
-actual app, not mockups. `twa/twa-manifest.json` plus
-`frontend/.well-known/assetlinks.json` are a starting scaffold for
-packaging the existing PWA as a Trusted Web Activity; **`deploy/PLAY_STORE.md`**
+actual app, not mockups. `android/` is a complete Android project that
+bundles the whole app into the APK — not a Trusted Web Activity, so it
+works offline from the moment it installs; **`deploy/PLAY_STORE.md`**
 has the full step-by-step (Bubblewrap, signing, Play Console submission,
 draft listing copy) and **`deploy/PRIVACY_POLICY.md`** is a ready-to-host
 policy reflecting what the app actually does and doesn't collect.

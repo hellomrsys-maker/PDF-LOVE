@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Download Dockbench — Desktop app &amp; Android APK</title>
+<meta name="description" content="Download Dockbench for Windows, macOS, Linux or Android. All 104 tools run on your own device, offline, with no file size limit — 100 GB PDFs and 20,000-page merges included.">
+<link rel="canonical" href="https://dockbench.app/download.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Download Dockbench — every tool on your own device">
+<meta property="og:description" content="Windows, macOS, Linux and Android. Works offline, no account, no file size limit.">
+<meta property="og:url" content="https://dockbench.app/download.html">
+<meta property="og:image" content="https://dockbench.app/icons/feature-graphic-1024x500.png">
+<meta name="twitter:card" content="summary_large_image">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="company/company.css" rel="stylesheet">
+<style>
+  .platforms{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin:0 0 30px;}
+  .plat{
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:12px;
+    padding:22px;display:flex;flex-direction:column;
+  }
+  .plat.recommended{border-color:var(--copper);border-width:2px;}
+  .plat .badge{
+    font-family:'IBM Plex Mono',monospace;font-size:0.7rem;text-transform:uppercase;
+    letter-spacing:0.06em;color:var(--copper-deep);margin-bottom:8px;min-height:1em;
+  }
+  .plat h2{font-family:'Fraunces',serif;font-size:1.2rem;margin:0 0 4px;}
+  .plat .sub{color:var(--ink-soft);font-size:0.88rem;margin:0 0 14px;}
+  .plat ul{padding-left:18px;margin:0 0 16px;font-size:0.9rem;flex:1;}
+  .plat li{margin-bottom:6px;}
+  .dl-btn{
+    display:block;text-align:center;background:var(--copper);color:#fff;text-decoration:none;
+    font-weight:600;padding:12px 16px;border-radius:9px;margin-bottom:8px;
+  }
+  .dl-btn:hover{background:var(--copper-deep);}
+  .dl-btn.alt{background:transparent;color:var(--copper-deep);border:1px solid var(--line);}
+  .dl-btn.alt:hover{background:var(--paper);}
+  .dl-meta{font-size:0.78rem;color:var(--ink-soft);text-align:center;margin:0;}
+  .other-links{font-size:0.85rem;color:var(--ink-soft);margin-top:10px;}
+  .other-links a{color:var(--copper-deep);}
+  .capacity{
+    background:var(--paper-raised);border:1px solid var(--line);border-left:3px solid var(--copper);
+    border-radius:10px;padding:18px 22px;margin:0 0 30px;
+  }
+  .capacity table{margin:12px 0 0;font-size:0.9rem;}
+  .capacity td:first-child{color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="brand" href="index.html"><span class="dot"></span>Dockbench</a></div></header>
+<main><div class="wrap">
+
+  <h1>Download Dockbench</h1>
+  <p class="lede">The same 104 tools, installed on your machine. Everything
+  runs locally — including the seven that need real engines — so there is no
+  upload, no account, and no file size limit.</p>
+
+  <div class="capacity">
+    <strong>Why install it rather than use the website?</strong>
+    <p style="margin:8px 0 0;">The browser version is genuinely good, but a
+    browser tab cannot hold a file larger than about 2&nbsp;GB — that is a
+    hard limit of the JavaScript engine, not something any web tool can work
+    around. The installed app streams documents from disk instead, so its
+    capacity is your free disk space.</p>
+    <div class="table-scroll">
+    <table>
+      <tr><td>Largest file</td><td><strong>In browser:</strong> ~2 GB ceiling &nbsp;·&nbsp; <strong>Installed:</strong> limited only by disk</td></tr>
+      <tr><td>Merging</td><td>Measured: 20,000 pages in 2.3 s; a 5.26 GB result built using 84 MB of RAM</td></tr>
+      <tr><td>OCR, Office conversion, deep compression</td><td><strong>In browser:</strong> needs a server &nbsp;·&nbsp; <strong>Installed:</strong> runs locally</td></tr>
+      <tr><td>Works offline</td><td>Both. The installed app never needs a connection at all.</td></tr>
+    </table>
+    </div>
+  </div>
+
+  <div class="platforms" id="platforms">
+    <!-- Desktop -->
+    <div class="plat" id="plat-desktop">
+      <div class="badge" id="badge-desktop"></div>
+      <h2>Desktop</h2>
+      <p class="sub" id="desktop-sub">Windows, macOS and Linux</p>
+      <ul>
+        <li>All 104 tools, including OCR and Office conversion</li>
+        <li>No file size limit — 100 GB PDFs, 20,000-page merges</li>
+        <li>Fully offline; no account</li>
+        <li>Updates check a signed manifest and nothing else</li>
+      </ul>
+      <a class="dl-btn" id="dl-desktop-primary" href="#" data-fallback="https://github.com/hellomrsys-maker/Dockbench/releases/latest">Download for Desktop</a>
+      <p class="dl-meta" id="dl-desktop-meta">Choose your platform</p>
+      <div class="other-links" id="desktop-others"></div>
+    </div>
+
+    <!-- Android -->
+    <div class="plat" id="plat-android">
+      <div class="badge" id="badge-android"></div>
+      <h2>Android</h2>
+      <p class="sub">Phone and tablet</p>
+      <ul>
+        <li>Camera document scanner with automatic edge detection</li>
+        <li>On-device OCR — scans become searchable PDFs</li>
+        <li>Works offline after the first launch</li>
+        <li>No account, no upload, no daily limit</li>
+      </ul>
+      <a class="dl-btn" id="dl-play" href="#" data-fallback="https://play.google.com/store/apps/details?id=app.dockbench.twa">Get it on Google Play</a>
+      <a class="dl-btn alt" id="dl-apk" href="#" data-fallback="https://github.com/hellomrsys-maker/Dockbench/releases/latest">Download APK directly</a>
+      <p class="dl-meta" id="dl-apk-meta">Sideloading requires allowing installs from this source</p>
+    </div>
+
+    <!-- Browser -->
+    <div class="plat" id="plat-web">
+      <div class="badge"></div>
+      <h2>Use it in the browser</h2>
+      <p class="sub">Nothing to install</p>
+      <ul>
+        <li>97 of 104 tools, all on-device</li>
+        <li>Install as a web app for offline use</li>
+        <li>Files under ~2 GB</li>
+        <li>Same privacy: nothing is uploaded</li>
+      </ul>
+      <a class="dl-btn alt" href="index.html">Open Dockbench</a>
+      <p class="dl-meta">Works in any modern browser</p>
+    </div>
+  </div>
+
+  <h2>Verifying your download</h2>
+  <p>Every release publishes SHA-256 checksums alongside the installers. On
+  macOS and Windows the installers are code-signed; your OS will show the
+  publisher before installing. If a download is unsigned or the checksum does
+  not match, do not run it — get it from
+  <a href="https://github.com/hellomrsys-maker/Dockbench/releases">the official releases page</a>.</p>
+
+  <h2>What the app sends</h2>
+  <p>Nothing about your files, ever — not their contents, not their names,
+  not the fact that you opened one. The installed app makes exactly one kind
+  of routine request: an update check that sends a version string and
+  receives a signed manifest. Everything else is local. See the
+  <a href="company/security.html">security page</a> for the full list.</p>
+
+  <h2>System requirements</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Platform</th><th>Minimum</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Windows</td><td>Windows 10 (64-bit)</td><td>WebView2 — included in Windows 11, installed automatically on 10</td></tr>
+      <tr><td>macOS</td><td>macOS 11 Big Sur</td><td>Universal: Apple Silicon and Intel builds</td></tr>
+      <tr><td>Linux</td><td>glibc 2.31+</td><td>AppImage runs anywhere; .deb for Debian/Ubuntu</td></tr>
+      <tr><td>Android</td><td>Android 5.0 (API 21)</td><td>Camera permission only if you use the scanner</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+</div></main>
+
+<footer class="site-footer"><div class="wrap">
+  <nav>
+    <a href="index.html">Tools</a>
+    <a href="guides/index.html">Guides</a>
+    <a href="company/about.html">About</a>
+    <a href="company/pricing.html">Pricing</a>
+    <a href="company/for-business.html">For business</a>
+    <a href="company/contact.html">Contact</a>
+    <a href="company/security.html">Security</a>
+    <a href="company/privacy.html">Privacy</a>
+    <a href="company/terms.html">Terms</a>
+    <a href="company/refund.html">Refunds</a>
+  </nav>
+  <p class="fine">Dockbench — PDF, image and video tools that run on your own device.<br>
+  &copy; <span id="yr">2026</span> [COMPANY LEGAL NAME]. All rights reserved.</p>
+</div></footer>
+
+<script src="downloads.js"></script>
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* Lead with the visitor's own platform, but never hide the others — the
+   whole point of this page is that both a desktop installer and an APK
+   exist. RELEASES is generated at build time (see scripts/build-downloads.py)
+   so this page still works with no network. */
+(function(){
+  const R = (typeof window.DOCKBENCH_RELEASES === 'object' && window.DOCKBENCH_RELEASES) || {};
+  const ua = navigator.userAgent;
+  const plat = navigator.userAgentData?.platform || navigator.platform || '';
+
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Mac/.test(plat) && navigator.maxTouchPoints > 1);
+  const isMac = !isIOS && /Mac/i.test(plat);
+  const isWin = /Win/i.test(plat);
+  const isLinux = !isAndroid && /Linux/i.test(plat);
+  const isAppleSilicon = isMac && (navigator.userAgentData?.architecture === 'arm'
+    || /Apple/.test(navigator.gpu?.name || '') === false && navigator.maxTouchPoints === 0 && /arm/i.test(plat));
+
+  function setLink(id, key, label, meta){
+    const el = document.getElementById(id);
+    if(!el) return;
+    const rel = R[key];
+    el.href = (rel && rel.url) || el.dataset.fallback;
+    if(label) el.textContent = label;
+    if(meta && rel && rel.size){
+      const m = document.getElementById(meta);
+      if(m) m.textContent = `${rel.version || ''} · ${(rel.size/1048576).toFixed(0)} MB${rel.sha256 ? ' · SHA-256 published' : ''}`.trim();
+    }
+  }
+
+  // --- desktop ---
+  let key = 'linux_appimage', label = 'Download for Linux (AppImage)';
+  if(isWin){ key='windows_msi'; label='Download for Windows'; }
+  else if(isMac){ key = isAppleSilicon ? 'macos_arm' : 'macos_x64';
+                  label = 'Download for macOS'; }
+  setLink('dl-desktop-primary', key, label, 'dl-desktop-meta');
+
+  const dsub = document.getElementById('desktop-sub');
+  if(isWin) dsub.textContent = 'Detected Windows';
+  else if(isMac) dsub.textContent = 'Detected macOS';
+  else if(isLinux) dsub.textContent = 'Detected Linux';
+
+  // Always list every other desktop build — detection is a convenience,
+  // not a restriction.
+  const all = [
+    ['windows_msi','Windows (.msi)'], ['windows_exe','Windows (.exe)'],
+    ['macos_arm','macOS Apple Silicon'], ['macos_x64','macOS Intel'],
+    ['linux_appimage','Linux (.AppImage)'], ['linux_deb','Linux (.deb)'],
+  ].filter(([k]) => k !== key);
+  document.getElementById('desktop-others').innerHTML =
+    'Other builds: ' + all.map(([k,name]) =>
+      `<a href="${(R[k] && R[k].url) || 'https://github.com/hellomrsys-maker/Dockbench/releases/latest'}">${name}</a>`
+    ).join(' · ');
+
+  // --- android ---
+  setLink('dl-play', 'play', null, null);
+  setLink('dl-apk', 'android_apk', null, 'dl-apk-meta');
+
+  // --- highlight what suits this visitor, without hiding anything ---
+  if(isAndroid){
+    document.getElementById('plat-android').classList.add('recommended');
+    document.getElementById('badge-android').textContent = 'Recommended for your device';
+    document.getElementById('platforms').prepend(document.getElementById('plat-android'));
+  } else if(isIOS){
+    // No iOS build exists; say so rather than offering a download that isn't there.
+    const a = document.getElementById('plat-android');
+    a.querySelector('h2').textContent = 'Mobile';
+    a.querySelector('.sub').textContent = 'Android only for now';
+    document.getElementById('dl-play').style.display = 'none';
+    document.getElementById('dl-apk').style.display = 'none';
+    document.getElementById('dl-apk-meta').textContent =
+      'There is no iOS app yet. Open Dockbench in Safari and use Share → Add to Home Screen — every on-device tool works.';
+    document.getElementById('plat-web').classList.add('recommended');
+    document.getElementById('badge-web') && (document.getElementById('badge-web').textContent = 'Recommended');
+  } else {
+    document.getElementById('plat-desktop').classList.add('recommended');
+    document.getElementById('badge-desktop').textContent = 'Recommended for your device';
+  }
+})();
+</script>
+</body>
+</html>

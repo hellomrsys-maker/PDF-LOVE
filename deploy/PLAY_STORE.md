@@ -1,33 +1,48 @@
-# Dockbench on the Play Store (TWA)
+# Dockbench on the Play Store
 
-Dockbench is already an installable PWA (`frontend/manifest.json` +
-`frontend/sw.js`). A **Trusted Web Activity (TWA)** wraps that same PWA in a
-thin native Android shell — no app code to write or maintain, no
-Play-Store-specific fork of the app. Everything in this doc assumes the
-scaffold already in the repo (`twa/twa-manifest.json`,
-`frontend/.well-known/assetlinks.json`, `frontend/icons/`).
+The Android app is a **WebView app that bundles the entire web application
+inside the APK** (see `android/README.md`). It is not a Trusted Web
+Activity, and this is a deliberate change from the earlier scaffold.
+
+## Why not a TWA
+
+A TWA loads `https://dockbench.app` in Chrome. That means:
+
+- **First launch needs a network connection**, and every launch is a
+  request to our server — which contradicts the product's central promise
+  that everything runs on the user's own device.
+- It depends on Digital Asset Links verification against a live domain. If
+  that breaks, the user sees a browser address bar inside "the app".
+
+The current build serves the bundled assets through `WebViewAssetLoader`
+over an `https://appassets.androidplatform.net` origin. That keeps the page
+in a secure context — required for the camera, the service worker and
+WebCrypto — while making the app fully offline from the moment it installs
+and removing the need for `assetlinks.json` entirely.
+
+The old `twa/twa-manifest.json` and `frontend/.well-known/assetlinks.json`
+have been removed; both carried placeholder values and neither applies to
+this build.
 
 ## What's already done for you
 
-- `frontend/icons/` — full icon set (48–512px, plus maskable 192/512),
-  a 1024×500 feature graphic, a 512×512 Play Store icon, and 4 real
-  screenshots of the running app (hero, tool grid, the assistant mid-plan,
-  a tool panel) — all generated from the actual app, not mockups.
-- `frontend/manifest.json` — updated to reference the real PNG icons.
-- `frontend/sw.js` — precaches the new icons (cache bumped to `v5`).
-- `frontend/.well-known/assetlinks.json` — the Digital Asset Links file
-  Android checks to confirm you (not an impersonator) own both the app and
-  the domain. Ships with placeholders — see step 3.
-- `twa/twa-manifest.json` — a best-effort starting config in Bubblewrap's
-  format. **Bubblewrap's own `init` command (step 2) is the authoritative
-  way to generate this file** — treat the committed one as a reference/
-  starting point, not a guarantee of matching whatever Bubblewrap version
-  you install, since its schema has changed across releases.
+- `android/` — a complete Gradle project: manifest, activity, theme,
+  ProGuard rules, signing wired to CI secrets.
+- `.github/workflows/android.yml` — builds a signed APK and AAB on tag,
+  and a debug build on every PR touching Android or the frontend.
+- `scripts/build-android-assets.py` — stages `frontend/dist/` into the APK
+  and generates the launcher icon set from `frontend/icons/icon-512.png`.
+- `frontend/icons/` — full icon set (48–512px, plus maskable 192/512), a
+  1024×500 feature graphic, a 512×512 Play Store icon, and 4 real
+  screenshots of the running app — all generated from the actual app.
+- `frontend/download.html` — a public download page offering the APK
+  directly alongside the Play listing and the desktop installers.
 
 ## What only you can do (needs accounts/keys I have no access to)
 
-1. A real production domain serving `frontend/` over HTTPS (TWA requires
-   Digital Asset Links verification against a live domain — it cannot
+1. A Play Console account ($25 one-off). The app itself no longer requires
+   a live domain — it bundles its own assets — but a domain is still needed
+   for the privacy-policy URL Play demands. (Historically a TWA required
    point at `localhost` or a file). Every placeholder below uses
    `dockbench.app` — replace with your real domain everywhere.
 2. A Google Play Console developer account ($25 one-time fee,
@@ -63,31 +78,35 @@ truth, and diff them against the committed reference if anything looks off.
 ### 3. Build and get your signing key's fingerprint
 
 ```bash
-bubblewrap build
+# One-off: create a signing key and back it up somewhere safe.
+keytool -genkeypair -v -keystore dockbench.keystore \
+  -alias dockbench -keyalg RSA -keysize 4096 -validity 10000
+
+# Store it for CI (never commit the keystore itself):
+base64 -w0 dockbench.keystore    # -> secret ANDROID_KEYSTORE_BASE64
 ```
 
-This creates `android.keystore` (your signing key — **back this up**) and
-prints the app bundle path plus your key's SHA-256 fingerprint. Take that
-fingerprint and your final package ID (e.g. `app.dockbench.twa`), and
-update `frontend/.well-known/assetlinks.json` on your live domain:
+Set these repository secrets so `.github/workflows/android.yml` can sign:
 
-```json
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "app.dockbench.twa",
-    "sha256_cert_fingerprints": ["YOUR:ACTUAL:FINGERPRINT:HERE"]
-  }
-}]
-```
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | the base64 above |
+| `ANDROID_KEYSTORE_PASSWORD` | the store password |
+| `ANDROID_KEY_ALIAS` | `dockbench` |
+| `ANDROID_KEY_PASSWORD` | the key password |
 
-Verify it's live and correct:
+Then tag a release and CI produces a signed `.apk` and `.aab`. To build
+locally instead:
+
 ```bash
-curl https://yourdomain/.well-known/assetlinks.json
+python scripts/build-android-assets.py
+cd android && ./gradlew bundleRelease
 ```
-(Google also has a Statement List Generator/validator tool if you want a
-second check before submitting.)
+
+**No `assetlinks.json` step.** That file exists to prove domain ownership
+for a TWA; this build serves its own bundled assets and never loads the
+site, so there is nothing to verify. Losing the keystore means you can
+never update the app under the same listing — back it up.
 
 ### 4. Upload to Play Console
 

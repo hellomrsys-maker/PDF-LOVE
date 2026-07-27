@@ -1,0 +1,65 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'app.dockbench'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "app.dockbench"
+        minSdk 21              // Android 5.0 — WebViewAssetLoader's floor
+        targetSdk 34
+        versionCode 1          // bump for every Play upload
+        versionName "0.4.0"
+    }
+
+    signingConfigs {
+        release {
+            // Populated by CI from repository secrets. A local build without
+            // them produces an unsigned APK rather than failing.
+            def ks = System.getenv("ANDROID_KEYSTORE_PATH")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "dockbench"
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                            ?: System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // The web app is already minified by scripts/build-android-assets.py;
+            // this shrinks the (small) Java shell around it.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                          'proguard-rules.pro'
+            if (System.getenv("ANDROID_KEYSTORE_PATH")) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // The bundled web app is already compressed where it helps; leaving the
+    // WASM engines and fonts uncompressed lets the OS mmap them instead of
+    // inflating ~30 MB into RAM on every launch.
+    androidResources {
+        noCompress 'wasm', 'woff2', 'gz', 'traineddata'
+    }
+
+    packagingOptions {
+        resources { excludes += ['META-INF/*'] }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.activity:activity:1.9.2'
+}
