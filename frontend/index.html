@@ -578,10 +578,22 @@ if(IS_FILE){
 //   localStorage.setItem('dockbench.apiBase', 'https://my-server:8000')
 const API_BASE = localStorage.getItem('dockbench.apiBase')
   || (location.protocol.startsWith('http') ? '/api' : 'http://localhost:8000');
+
+// Bearer token for the backend, when one is needed. Two sources:
+//   - the desktop app, which starts a local engine on 127.0.0.1 and injects
+//     a random per-session token so no other process on the machine can
+//     drive it;
+//   - a business API key, for anyone calling a hosted deployment.
+// A self-hosted backend needs neither and this stays empty.
+function apiHeaders(){
+  const tok = localStorage.getItem('dockbench.apiToken');
+  return tok ? {'Authorization': 'Bearer ' + tok} : {};
+}
+
 let _apiCaps = null;
 async function apiCapabilities(){
   if(_apiCaps) return _apiCaps;
-  const r = await fetch(API_BASE + '/capabilities');
+  const r = await fetch(API_BASE + '/capabilities', {headers: apiHeaders()});
   if(!r.ok) throw new Error('backend replied HTTP '+r.status);
   _apiCaps = await r.json();
   return _apiCaps;
@@ -589,7 +601,7 @@ async function apiCapabilities(){
 async function apiUpload(endpoint, formFields, {expect='blob'}={}){
   const fd = new FormData();
   for(const [k,v] of Object.entries(formFields)) fd.append(k, v);
-  const r = await fetch(API_BASE + endpoint, {method:'POST', body:fd});
+  const r = await fetch(API_BASE + endpoint, {method:'POST', body:fd, headers: apiHeaders()});
   if(!r.ok){
     let msg = 'HTTP '+r.status;
     try{ const j = await r.json(); if(j.detail) msg = j.detail; }catch(e){}
@@ -621,7 +633,7 @@ async function apiProcess(endpoint, formFields, {expect='blob', onStatus}={}){
         if(Date.now()-t0 > 10*60*1000) throw new Error('Timed out waiting for the job.');
         if(onStatus) onStatus(st.status==='running' ? 'Processing on your server...' : 'Waiting in the queue...');
       }
-      const r = await fetch(`${API_BASE}/jobs/${job_id}/result`);
+      const r = await fetch(`${API_BASE}/jobs/${job_id}/result`, {headers: apiHeaders()});
       if(!r.ok) throw new Error('Could not fetch the finished result (HTTP '+r.status+').');
       return expect==='json' ? r.json() : r.blob();
     }catch(e){
@@ -633,7 +645,7 @@ async function apiProcess(endpoint, formFields, {expect='blob', onStatus}={}){
   return apiUpload(endpoint, formFields, {expect});
 }
 async function apiUpload_get(path){
-  const r = await fetch(API_BASE + path);
+  const r = await fetch(API_BASE + path, {headers: apiHeaders()});
   if(!r.ok){
     let msg = 'HTTP '+r.status;
     try{ const j = await r.json(); if(j.detail) msg = j.detail; }catch(e){}
@@ -7158,7 +7170,7 @@ if(IS_FILE){
     checkBackendStatus.textContent = 'Checking...';
     const ctrl = new AbortController();
     setTimeout(()=>ctrl.abort(), 3000);
-    fetch(API_BASE+'/capabilities', {signal:ctrl.signal})
+    fetch(API_BASE+'/capabilities', {signal:ctrl.signal, headers: apiHeaders()})
       .then(r=>{
         if(!r.ok) throw new Error('HTTP '+r.status);
         document.getElementById('backend-dot').classList.add('up');

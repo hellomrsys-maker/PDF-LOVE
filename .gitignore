@@ -17,3 +17,10 @@ licensing/private-key.json
 backend/*.so
 backend/native/*.so
 backend/build/
+
+# Desktop app build output
+desktop/binaries/
+desktop/build/
+desktop/node_modules/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/

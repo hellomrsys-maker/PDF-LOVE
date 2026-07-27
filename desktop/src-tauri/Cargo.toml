@@ -1,0 +1,25 @@
+[package]
+name = "dockbench-desktop"
+version = "0.4.0"
+description = "PDF, image and video tools that run on your own device."
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+# The shell is a thin wrapper; optimise it for size rather than speed. All
+# the real work happens in the bundled engine's compiled C extensions.
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,21 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Only what the shell actually needs: run the bundled engine, check for updates, and let the page ask for the engine's port and token.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "dockbench-engine",
+          "sidecar": true,
+          "args": false
+        }
+      ]
+    },
+    "updater:default"
+  ]
+}

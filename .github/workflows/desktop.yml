@@ -1,0 +1,151 @@
+name: Desktop
+
+# Builds the desktop app for Windows, macOS and Linux.
+#
+#   push to a v* tag -> installers attached to the GitHub release
+#   manual dispatch  -> installers as workflow artifacts
+#
+# Each runner builds its own engine: the sidecar embeds compiled C
+# extensions and a CPython runtime, so it cannot be cross-compiled.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+          - os: macos-14
+            target: aarch64-apple-darwin
+          - os: macos-13
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+
+      # Tauri's Linux build needs GTK/WebKit; the engine needs libqpdf for
+      # the dockbench_pdf extension.
+      - name: Linux system dependencies
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf \
+            libqpdf-dev
+
+      - name: macOS system dependencies
+        if: startsWith(matrix.os, 'macos')
+        run: brew install qpdf
+
+      - name: Windows system dependencies
+        if: startsWith(matrix.os, 'windows')
+        # dockbench_pdf needs libqpdf headers; without them setup.py skips
+        # that one extension and premium_pdf falls back to pikepdf, which
+        # still works. Do not fail the build over it.
+        run: vcpkg install qpdf:x64-windows || echo "qpdf unavailable; dockbench_pdf will be skipped"
+        shell: bash
+
+      - name: Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pyinstaller setuptools
+
+      - name: Build the engine sidecar
+        run: python desktop/build-engine.py
+
+      - name: Verify the engine runs and serves the fused extensions
+        # A sidecar that starts but has silently fallen back to the slow
+        # Python paths is a real regression, so assert what it resolved to.
+        shell: bash
+        run: |
+          python - <<'PY'
+          import glob, json, subprocess, sys, time, urllib.request, urllib.error
+          exe = glob.glob('desktop/binaries/dockbench-engine-*')
+          assert exe, 'no engine binary was produced'
+          p = subprocess.Popen([exe[0]], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, text=True)
+          line = p.stdout.readline().strip()
+          assert line.startswith('DOCKBENCH_READY'), (line, p.stderr.read()[:2000])
+          _, port, token = line.split()
+          time.sleep(3)
+
+          def get(path, tok=None):
+              r = urllib.request.Request(f'http://127.0.0.1:{port}{path}')
+              if tok: r.add_header('Authorization', 'Bearer ' + tok)
+              try:
+                  with urllib.request.urlopen(r, timeout=15) as resp:
+                      return resp.status, resp.read()
+              except urllib.error.HTTPError as e:
+                  return e.code, e.read()
+
+          assert get('/health')[0] == 200, 'health check failed'
+          assert get('/capabilities')[0] == 401, 'engine accepted an untokened request'
+          status, body = get('/capabilities', token)
+          assert status == 200, f'tokened request returned {status}'
+          caps = json.loads(body)
+          print('capabilities:', json.dumps(caps, indent=2))
+          assert caps['imgproc_backend'] == 'extension', \
+              f"image kernel fell back to {caps['imgproc_backend']}"
+          p.stdin.close()
+          time.sleep(2)
+          assert p.poll() is not None, 'engine did not exit with its parent'
+          print('Engine OK: loopback-only, token-gated, exits with parent.')
+          PY
+
+      - name: Install the Tauri CLI
+        working-directory: desktop
+        run: npm install
+
+      - name: Build the app
+        working-directory: desktop
+        run: npx tauri build --target ${{ matrix.target }}
+        env:
+          # Set these repository secrets to sign updates. Without them the
+          # app still builds; the updater just cannot verify a manifest.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dockbench-${{ matrix.target }}
+          path: |
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+          if-no-files-found: warn
+
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
