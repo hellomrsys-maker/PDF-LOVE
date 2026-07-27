@@ -44,6 +44,7 @@ const APP_SHELL = [
   './vendor/html2canvas.min.js',
   './vendor/qrcode.min.js',
   './vendor/jsqr.js',
+  './vendor/docscan.js',
   './vendor/jsbarcode.all.min.js',
   './vendor/qpdf.js',
   './vendor/qpdf.wasm',

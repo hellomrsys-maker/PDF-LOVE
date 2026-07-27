@@ -690,7 +690,17 @@ async function loadPdf(bytes){
 const overlay = document.getElementById('overlay');
 const panel = document.getElementById('panel');
 
-function closePanel(){ overlay.classList.remove('open'); panel.innerHTML=''; }
+/* Tools that hold a resource the browser will not release on its own — a
+   camera stream, a MediaRecorder, an animation loop — register a cleanup
+   here. Without it, closing the Scan panel would leave the camera light on.
+   Cleared on every close so hooks never accumulate across openings. */
+let panelCloseHooks = [];
+function closePanel(){
+  panelCloseHooks.forEach(fn=>{ try{ fn(); }catch(e){} });
+  panelCloseHooks = [];
+  overlay.classList.remove('open');
+  panel.innerHTML='';
+}
 window.closePanel = closePanel; // exposed globally: called via inline onclick="" in generated panel HTML
 overlay.addEventListener('click', e=>{ if(e.target===overlay) closePanel(); });
 
@@ -5635,6 +5645,136 @@ function toolScanToPDF(){
   dz.addEventListener('click', ()=>input.click());
   body.appendChild(dz);
 
+  /* Live camera scanning — the Lens-style path. Shown only where a camera
+     is actually reachable, so desktop users without one never see a button
+     that cannot work. */
+  const camBtn=document.createElement('button');
+  camBtn.className='primary-btn'; camBtn.textContent='📷 Scan with the camera';
+  camBtn.style.display='none';
+  body.appendChild(camBtn);
+  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+    camBtn.style.display='block';
+  }
+
+  const camWrap=document.createElement('div');
+  camWrap.style.cssText='position:relative;display:none;margin:14px 0;border-radius:10px;overflow:hidden;background:#000;';
+  body.appendChild(camWrap);
+  const camHint=document.createElement('div'); camHint.className='helper-line'; camHint.style.display='none';
+  body.appendChild(camHint);
+
+  let stream=null, rafId=null, lastQuad=null, steadyFrames=0, autoShot=true;
+
+  function stopCamera(){
+    if(rafId) cancelAnimationFrame(rafId), rafId=null;
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+    camWrap.style.display='none'; camHint.style.display='none'; camWrap.innerHTML='';
+    lastQuad=null; steadyFrames=0;
+  }
+  // Never leave the camera running when the panel closes.
+  panelCloseHooks.push(stopCamera);
+
+  camBtn.onclick = async ()=>{
+    if(!(await ensureDocScan())){
+      log.textContent = 'Edge detection could not load; you can still capture and set the corners by hand.';
+    }
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080} },
+        audio:false
+      });
+    }catch(e){
+      log.textContent = 'Could not open the camera ('+(e.name||e.message)+'). You can still choose a photo above.';
+      return;
+    }
+    dz.style.display='none'; camBtn.style.display='none';
+    camWrap.style.display='block'; camHint.style.display='block';
+    camHint.textContent='Point at the document. It shoots automatically when the frame holds still.';
+
+    const video=document.createElement('video');
+    video.autoplay=true; video.playsInline=true; video.muted=true;
+    video.style.cssText='width:100%;display:block;';
+    video.srcObject=stream;
+    camWrap.appendChild(video);
+
+    const overlay=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    overlay.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;';
+    const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    poly.setAttribute('fill','rgba(74,120,86,0.22)');
+    poly.setAttribute('stroke','#4A7856'); poly.setAttribute('stroke-width','3');
+    overlay.appendChild(poly); camWrap.appendChild(overlay);
+
+    const shootRow=document.createElement('div');
+    shootRow.style.cssText='position:absolute;left:0;right:0;bottom:10px;display:flex;gap:10px;justify-content:center;';
+    const shootBtn=document.createElement('button');
+    shootBtn.className='primary-btn'; shootBtn.textContent='Capture'; shootBtn.style.cssText='width:auto;margin:0;padding:10px 22px;';
+    const autoBtn=document.createElement('button');
+    autoBtn.className='small-btn'; autoBtn.textContent='Auto: on';
+    autoBtn.onclick=()=>{ autoShot=!autoShot; autoBtn.textContent='Auto: '+(autoShot?'on':'off'); };
+    const doneBtn=document.createElement('button');
+    doneBtn.className='small-btn'; doneBtn.textContent='Done';
+    doneBtn.onclick=()=>{ stopCamera(); dz.style.display=''; camBtn.style.display='block'; };
+    shootRow.append(shootBtn, autoBtn, doneBtn); camWrap.appendChild(shootRow);
+
+    // Detection runs on a small canvas; the capture uses the full frame.
+    const work=document.createElement('canvas');
+    const wctx=work.getContext('2d',{willReadFrequently:true});
+
+    await new Promise(r=>{ if(video.readyState>=2) r(); else video.onloadeddata=r; });
+    overlay.setAttribute('viewBox', `0 0 ${video.videoWidth} ${video.videoHeight}`);
+
+    function capture(){
+      const full=document.createElement('canvas');
+      full.width=video.videoWidth; full.height=video.videoHeight;
+      full.getContext('2d').drawImage(video,0,0);
+      stopCamera(); dz.style.display=''; camBtn.style.display='block';
+      const img=new Image();
+      img.onload=()=>{
+        currentPhoto=img;
+        setupEditor();
+        // setupEditor() re-detects on the captured still, which is higher
+        // resolution than the live preview frames and so slightly more
+        // accurate. The live quad has already served its purpose: telling
+        // us when to fire the shutter.
+        editHint.textContent='Captured — edges detected. Drag any dot to adjust.';
+      };
+      img.src=full.toDataURL('image/jpeg',0.92);
+    }
+    shootBtn.onclick=()=>capture();
+
+    let last=0;
+    function tick(ts){
+      rafId=requestAnimationFrame(tick);
+      if(ts-last < 100) return;      // ~10 fps is plenty and saves battery
+      last=ts;
+      if(!video.videoWidth) return;
+
+      const dw=320, dh=Math.round(video.videoHeight*(320/video.videoWidth));
+      work.width=dw; work.height=dh;
+      wctx.drawImage(video,0,0,dw,dh);
+      let res=null;
+      try{ res = DocScan.detect(wctx.getImageData(0,0,dw,dh)); }catch(e){}
+
+      if(!res){ poly.setAttribute('points',''); steadyFrames=0; lastQuad=null; return; }
+
+      const sx=video.videoWidth/dw, sy=video.videoHeight/dh;
+      const quad=res.corners.map(p=>({x:p.x*sx, y:p.y*sy}));
+      poly.setAttribute('points', quad.map(p=>`${p.x},${p.y}`).join(' '));
+
+      // Auto-shutter once the outline stops moving — the same behaviour as
+      // a phone's document mode, and it avoids motion blur.
+      if(DocScan.isStable(quad, lastQuad, Math.max(video.videoWidth,video.videoHeight)*0.02)){
+        steadyFrames++;
+        poly.setAttribute('stroke','#4A7856');
+        if(autoShot && steadyFrames>=5){ capture(); return; }
+      }else{
+        steadyFrames=0;
+        poly.setAttribute('stroke','#C1683A');
+      }
+      lastQuad=quad;
+    }
+    rafId=requestAnimationFrame(tick);
+  };
+
   const editWrap=document.createElement('div'); editWrap.style.cssText='position:relative;display:none;margin:14px 0;touch-action:none;user-select:none;'; body.appendChild(editWrap);
   const editHint=document.createElement('div'); editHint.className='helper-line'; editHint.style.display='none'; editHint.textContent='Drag the 4 corner dots so they sit exactly on the document\'s edges.'; body.appendChild(editHint);
 
@@ -5653,16 +5793,55 @@ function toolScanToPDF(){
   const buildBtn=document.createElement('button'); buildBtn.className='primary-btn'; buildBtn.textContent='Build PDF & Download'; buildBtn.disabled=true; body.appendChild(buildBtn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
-  input.addEventListener('change', ()=>{
+  input.addEventListener('change', async ()=>{
     const f = input.files[0];
     if(!f) return;
+    await ensureDocScan();
     const img = new Image();
     img.onload = ()=>{ currentPhoto = img; setupEditor(); };
     img.src = URL.createObjectURL(f);
   });
 
+  /* Auto-detect the page edges in a still photo, in display coordinates.
+     Falls back to a generous inset if nothing convincing is found — better
+     to hand the user a starting rectangle than an error. */
+  async function ensureDocScan(){
+    if(typeof DocScan !== 'undefined') return true;
+    // Our own module, so there is deliberately no CDN entry for it in
+    // VENDOR_FALLBACKS — it loads from vendor/ or the manual corner
+    // handles take over.
+    try{ await loadScript('vendor/docscan.js', {fallbackOnError:false}); return typeof DocScan !== 'undefined'; }
+    catch(e){ return false; }
+  }
+
+  function detectCorners(img, dispW, dispH){
+    const fallback = ()=>{
+      const inset = 0.08;
+      return [
+        {x:dispW*inset,     y:dispH*inset},
+        {x:dispW*(1-inset), y:dispH*inset},
+        {x:dispW*(1-inset), y:dispH*(1-inset)},
+        {x:dispW*inset,     y:dispH*(1-inset)},
+      ];
+    };
+    if(typeof DocScan === 'undefined') return fallback();
+    try{
+      // Detect on a modest working size; accuracy is in the algorithm, not
+      // the resolution, and this keeps a 12 MP phone photo instant.
+      const dw = 640, dh = Math.round(img.height * (640/img.width));
+      const c = document.createElement('canvas'); c.width=dw; c.height=dh;
+      const cx = c.getContext('2d', {willReadFrequently:true});
+      cx.drawImage(img, 0, 0, dw, dh);
+      const res = DocScan.detect(cx.getImageData(0,0,dw,dh));
+      if(!res) return fallback();
+      editHint.textContent = 'Edges detected automatically — drag any dot to adjust.';
+      return res.corners.map(p=>({x:p.x*(dispW/dw), y:p.y*(dispH/dh)}));
+    }catch(e){ return fallback(); }
+  }
+
   function setupEditor(){
     editWrap.style.display='block'; editHint.style.display='block'; filterRow.style.display='grid'; addPageBtn.style.display='block';
+    editHint.textContent = 'Drag the 4 corner dots so they sit exactly on the document\'s edges.';
     const maxW = 560;
     const scale = Math.min(1, maxW/currentPhoto.width);
     const dispW = currentPhoto.width*scale, dispH = currentPhoto.height*scale;
@@ -5678,13 +5857,9 @@ function toolScanToPDF(){
     svg.appendChild(poly);
     editWrap.appendChild(svg);
 
-    const inset = 0.08;
-    corners = [
-      {x:dispW*inset, y:dispH*inset},
-      {x:dispW*(1-inset), y:dispH*inset},
-      {x:dispW*(1-inset), y:dispH*(1-inset)},
-      {x:dispW*inset, y:dispH*(1-inset)},
-    ];
+    // Find the document's edges automatically. The manual handles below stay
+    // available either way — detection is a head start, not a decision.
+    corners = detectCorners(currentPhoto, dispW, dispH);
     const handles = corners.map((c,i)=>{
       const h=document.createElement('div');
       h.style.cssText = `position:absolute;width:26px;height:26px;margin:-13px;border-radius:50%;background:var(--copper);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);left:${c.x}px;top:${c.y}px;cursor:grab;touch-action:none;`;
