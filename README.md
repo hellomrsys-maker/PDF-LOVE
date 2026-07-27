@@ -10,9 +10,9 @@ Four ways to run it, in increasing order of what stays local:
 
 | | Where tools run | Largest file | What you need |
 |---|---|---|---|
-| **Double-click `index.html`** | 97 of 104 on-device | ~2 GB | nothing at all |
-| **Any static host** (Netlify, Pages, S3) | 97 of 104 on-device | ~2 GB | a file host |
-| **[Android app](android/README.md)** | 97 of 104 on-device | ~2 GB | the APK |
+| **Double-click `index.html`** | 94 of 104 on-device | ~2 GB | nothing at all |
+| **Any static host** (Netlify, Pages, S3) | 94 of 104 on-device | ~2 GB | a file host |
+| **[Android app](android/README.md)** | 94 of 104 on-device | ~2 GB | the APK |
 | **[Desktop app](desktop/README.md)** | **all 104 on-device** | **disk space** | the installer |
 
 The desktop app bundles the engine, so the seven tools that need real
@@ -32,7 +32,7 @@ anything.
 
 | | Dockbench | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
 |---|---|---|---|
-| Files stay on-device | ✅ 97 of 104 in-browser, **104 of 104 in the desktop app** | ❌ every tool uploads | ❌ every tool goes to the server |
+| Files stay on-device | ✅ 94 of 104 in-browser, **104 of 104 in the desktop app** | ❌ every tool uploads | ❌ every tool goes to the server |
 | Works by double-clicking the HTML file | ✅ no server needed at all | ❌ | ❌ |
 | Native installer | ✅ Windows / macOS / Linux, engine included | ❌ web only | ❌ Docker only |
 | Video tools (GIF, trim, slideshow, screen rec.) | ✅ on-device | partial, cloud | ❌ |

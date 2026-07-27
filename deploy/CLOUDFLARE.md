@@ -10,7 +10,7 @@ protections would silently be missing on this deployment.
 
 ## What works out of the box
 
-All ~97 on-device tools, the assistant, the SEO guides, the install button,
+All ~94 on-device tools, the assistant, the SEO guides, the install button,
 offline licensing — everything that doesn't need the optional backend.
 Static hosting is static hosting; nothing about Dockbench's on-device
 architecture cares which host serves the files.

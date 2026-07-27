@@ -7,7 +7,7 @@ server.
 
 ## Why this exists
 
-In the browser, 97 tools run on-device and 7 do not, because they depend on
+In the browser, 94 tools run on-device and 10 do not, because they depend on
 engines too large to ship to a page: Tesseract for OCR, LibreOffice for
 full-fidelity Office conversion, Ghostscript for deep compression. In the
 web app those tools are simply invisible unless a backend is reachable.

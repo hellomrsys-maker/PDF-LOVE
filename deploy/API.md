@@ -4,7 +4,7 @@ The HTTP API exposes the server-side engines — OCR, full-fidelity Office
 conversion, Ghostscript compression, PDF/A, background removal — for
 programmatic use.
 
-> **The on-device app is not this API.** The 97 on-device tools in
+> **The on-device app is not this API.** The 94 on-device tools in
 > `frontend/` run entirely in the browser and never call anything. They are
 > free, unlimited and unauthenticated, and this document does not apply to
 > them.

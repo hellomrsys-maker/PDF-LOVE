@@ -750,7 +750,13 @@ function apiErrorHelp(e){
  * otherwise execute JavaScript in this page's context) — essential for an
  * app whose whole job is opening untrusted files. */
 function getPdfDoc(data){
-  return pdfjsLib.getDocument({data, isEvalSupported:false}).promise;
+  // pdf.js transfers the buffer to its worker thread, which *detaches* it in
+  // this thread — the caller's ArrayBuffer becomes zero-length. Any tool that
+  // read a file once and then handed the same bytes to pdf-lib got "Could not
+  // read this PDF" on a perfectly good file. Hand pdf.js a copy so the
+  // caller keeps theirs.
+  const copy = data instanceof ArrayBuffer ? data.slice(0) : new Uint8Array(data).slice();
+  return pdfjsLib.getDocument({data: copy, isEvalSupported:false}).promise;
 }
 
 /* ---------- PDF loading that copes with real-world files ---------- */
@@ -1107,12 +1113,32 @@ function buildDropzone(container, {multiple, accept, onFiles}){
   input.type='file'; input.multiple=!!multiple; input.accept=accept||''; input.style.display='none';
   dz.appendChild(input);
   dz.addEventListener('click', ()=>input.click());
-  input.addEventListener('change', ()=>onFiles([...input.files]));
+  // Most tools' onFiles handlers are async and parse the file immediately.
+  // When one throws — an unreadable PDF, an image codec the browser lacks —
+  // an unguarded call becomes an unhandled promise rejection: the panel just
+  // sits there with no message, which reads to the user as "this tool does
+  // nothing". Funnel every entry point through here so a failure always says
+  // something. Individual tools may still catch first for a better message.
+  const safeOnFiles = async (files)=>{
+    try{
+      await onFiles(files);
+    }catch(err){
+      const log = container.querySelector('.runlog');
+      const msg = (err && err.message) ? err.message : String(err);
+      if(log) log.textContent = msg;
+      else {
+        const d=document.createElement('div'); d.className='runlog'; d.textContent=msg;
+        container.appendChild(d);
+      }
+      console.error('[dockbench] file handler failed:', err);
+    }
+  };
+  input.addEventListener('change', ()=>safeOnFiles([...input.files]));
   ['dragenter','dragover'].forEach(evt=>dz.addEventListener(evt, e=>{e.preventDefault();dz.classList.add('drag');}));
   ['dragleave','drop'].forEach(evt=>dz.addEventListener(evt, e=>{e.preventDefault();dz.classList.remove('drag');}));
   dz.addEventListener('drop', e=>{
     const files=[...e.dataTransfer.files];
-    onFiles(files);
+    safeOnFiles(files);
   });
   container.appendChild(dz);
   // Assistant hand-off: if a file is waiting in the chain, load it into this
@@ -1121,7 +1147,7 @@ function buildDropzone(container, {multiple, accept, onFiles}){
   // buildDropzone.
   if(pendingAssistFile){
     const pf = pendingAssistFile; pendingAssistFile = null;
-    setTimeout(()=>onFiles([pf]), 0);
+    setTimeout(()=>safeOnFiles([pf]), 0);
   }
   return dz;
 }
@@ -1579,6 +1605,35 @@ async function loadQpdf(){
   return _qpdfModulePromise;
 }
 
+/* qpdf's exit code, turned into something a person can act on.
+   Emscripten throws an ExitStatus object — `{name:'ExitStatus', status:N}`
+   with no `.message` — so the old handlers printed "undefined" for the most
+   common failure there is, a wrong password. */
+function qpdfError(e){
+  const status = (e && typeof e.status === 'number') ? e.status
+               : (e && e.name === 'ExitStatus') ? -1 : null;
+  if(status === 2) return 'the password is not correct for this file.';
+  if(status === 3) return 'qpdf reported warnings it could not recover from — the file may be damaged.';
+  if(status !== null) return `the PDF engine exited with code ${status}. Check the password, or try Repair PDF first.`;
+  if(e && e.message) return e.message;
+  // Emscripten can also reject with a plain object carrying no message at
+  // all. Serialise whatever it is rather than printing "[object Object]".
+  if(e && typeof e === 'object'){
+    try{
+      const own = Object.getOwnPropertyNames(e)
+        .map(k => `${k}=${String(e[k]).slice(0,60)}`).join(', ');
+      if(own) return `the PDF engine failed (${own}).`;
+    }catch(_){}
+  }
+  return String(e);
+}
+
+/* One failed callMain can leave the Emscripten runtime aborted, and the
+   module is cached — so every later attempt fails too, even with the right
+   password. Drop the cached module after a failure so the next try is a
+   fresh instance. */
+function resetQpdf(){ _qpdfModulePromise = null; }
+
 /* Structural PDF optimization with qpdf (C++ via WebAssembly): rebuilds
  * object streams and recompresses every stream. Lossless — pairs with the
  * lossy page-recompression in Make PDF Smaller for near server-grade
@@ -1625,7 +1680,8 @@ function toolProtectPDF(){
       qpdf.FS.unlink('/input.pdf'); qpdf.FS.unlink('/output.pdf');
       log.innerHTML='<span class="ok">✓ Done — encrypted locally with AES-256, 0 bytes of your file uploaded.</span>';
     }catch(e){
-      log.textContent = 'Could not load the encryption engine (needs network access for the one-time WASM download): '+e.message;
+      resetQpdf();
+      log.textContent = 'Could not encrypt — ' + qpdfError(e);
     }
   };
 }
@@ -1658,7 +1714,8 @@ function toolUnlockPDF(){
       qpdf.FS.unlink('/input.pdf'); qpdf.FS.unlink('/output.pdf');
       log.innerHTML='<span class="ok">✓ Done — unlocked locally, 0 bytes of your file uploaded.</span>';
     }catch(e){
-      log.textContent = 'Could not unlock — check the password is correct, or the engine failed to load: '+e.message;
+      resetQpdf();
+      log.textContent = 'Could not unlock — ' + qpdfError(e);
     }
   };
 }
@@ -1733,34 +1790,66 @@ function toolExtractImages(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Scanning pages on-device...';
     const bytes = await file.arrayBuffer();
-    const pdf = await getPdfDoc(bytes);
     const zip = new JSZip();
     let count=0;
-    for(let i=1;i<=pdf.numPages;i++){
-      const page = await pdf.getPage(i);
-      const ops = await page.getOperatorList();
-      for(let j=0;j<ops.fnArray.length;j++){
-        if(ops.fnArray[j]===pdfjsLib.OPS.paintImageXObject){
-          const name = ops.argsArray[j][0];
-          try{
-            const img = await new Promise((res,rej)=>page.objs.get(name,res));
-            if(img && img.data){
-              const canvas=document.createElement('canvas');
-              canvas.width=img.width; canvas.height=img.height;
-              const ctx=canvas.getContext('2d');
-              const imgData = ctx.createImageData(img.width, img.height);
-              if(img.data.length === img.width*img.height*4) imgData.data.set(img.data);
-              else { for(let p=0,q=0;p<img.data.length;p+=3,q+=4){ imgData.data[q]=img.data[p]; imgData.data[q+1]=img.data[p+1]; imgData.data[q+2]=img.data[p+2]; imgData.data[q+3]=255; } }
-              ctx.putImageData(imgData,0,0);
-              const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
-              zip.file(`page${i}-image${++count}.png`, blob);
+    // Read the image XObjects out of the PDF's own resource dictionaries.
+    // The previous version asked pdf.js for them via page.objs, which is only
+    // populated once a page has actually been *rendered* — so it reported
+    // "no images found" on files that plainly contain them. Going at the
+    // structure directly also returns the original JPEG bytes untouched
+    // instead of re-encoding every photo to PNG.
+    const doc = await loadPdf(bytes);
+    const seen = new Set();
+    const pages = doc.getPages();
+    for(let i=0;i<pages.length;i++){
+      let xobjects = null;
+      try{
+        const res = pages[i].node.Resources();
+        xobjects = res && res.lookup(PDFLib.PDFName.of('XObject'));
+      }catch(e){ /* a page with no resources simply has no images */ }
+      if(!xobjects || !xobjects.entries) { log.textContent = `Scanned page ${i+1} of ${pages.length} — ${count} image(s) found...`; continue; }
+      for(const [, ref] of xobjects.entries()){
+        try{
+          const key = ref.toString();
+          if(seen.has(key)) continue;          // one logo reused on 400 pages is one image
+          const stream = doc.context.lookup(ref);
+          if(!stream || !stream.dict) continue;
+          const sub = stream.dict.get(PDFLib.PDFName.of('Subtype'));
+          if(!sub || sub.asString() !== '/Image') continue;
+          seen.add(key);
+          const filter = stream.dict.get(PDFLib.PDFName.of('Filter'));
+          const fname = filter ? filter.toString() : '';
+          const raw = stream.getContents();
+          let blob, ext;
+          if(fname.includes('DCTDecode')){ blob = new Blob([raw], {type:'image/jpeg'}); ext='jpg'; }
+          else if(fname.includes('JPXDecode')){ blob = new Blob([raw], {type:'image/jp2'}); ext='jp2'; }
+          else {
+            // Not a directly-writable encoding (Flate/CCITT/etc). Rasterise
+            // through an ImageData so something usable still comes out.
+            const w = Number(stream.dict.get(PDFLib.PDFName.of('Width'))?.asNumber?.() ?? 0);
+            const h = Number(stream.dict.get(PDFLib.PDFName.of('Height'))?.asNumber?.() ?? 0);
+            if(!w || !h) continue;
+            const px = stream.getContents();
+            const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+            const ctx=canvas.getContext('2d');
+            const imgData = ctx.createImageData(w,h);
+            const comps = px.length >= w*h*3 ? 3 : 1;
+            for(let p=0,q=0;q<imgData.data.length;p+=comps,q+=4){
+              imgData.data[q]   = px[p];
+              imgData.data[q+1] = px[p+(comps>1?1:0)];
+              imgData.data[q+2] = px[p+(comps>1?2:0)];
+              imgData.data[q+3] = 255;
             }
-          }catch(e){}
-        }
+            ctx.putImageData(imgData,0,0);
+            blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+            ext='png';
+          }
+          if(blob && blob.size) zip.file(`page${i+1}-image${++count}.${ext}`, blob);
+        }catch(e){ /* one unreadable image must not abandon the rest */ }
       }
-      log.textContent = `Scanned page ${i} of ${pdf.numPages} — ${count} image(s) found...`;
+      log.textContent = `Scanned page ${i+1} of ${pages.length} — ${count} image(s) found...`;
     }
-    if(count===0){ log.textContent='No embedded raster images found in this PDF.'; return; }
+    if(count===0){ log.textContent='No embedded raster images found in this PDF. (Pages that are vector drawings or text have no image to extract — use PDF to JPG to render them as pictures instead.)'; return; }
     const zipBlob = await zip.generateAsync({type:'blob'});
     download(zipBlob, file.name.replace(/\.pdf$/i,'')+'-images.zip');
     log.innerHTML=`<span class="ok">✓ Done — extracted ${count} image(s) locally, 0 bytes uploaded.</span>`;
@@ -3898,6 +3987,11 @@ function toolPassportPhoto(){
 
   let photo=null, panX=0.5, panY=0.4, zoom=1;
   const viewW = 260;
+  // Derived from the chosen preset's aspect ratio in setupCropper(), but
+  // declared here because btn.onclick needs it too. It used to be a const
+  // inside setupCropper, so clicking "Create" threw
+  // "viewH is not defined" and the tool never produced a photo.
+  let viewH = 0;
 
   function currentPreset(){
     const key = document.getElementById('pp-preset').value;
@@ -3921,7 +4015,7 @@ function toolPassportPhoto(){
   function setupCropper(){
     const preset = currentPreset();
     const aspect = preset.w/preset.h;
-    const viewH = Math.round(viewW/aspect);
+    viewH = Math.round(viewW/aspect);
     cropWrap.innerHTML = `<div id="pp-frame" style="position:relative;width:${viewW}px;height:${viewH}px;margin:0 auto;overflow:hidden;border-radius:8px;border:2px solid var(--copper);touch-action:none;"></div>`;
     const frame = document.getElementById('pp-frame');
     const img = document.createElement('img'); img.src=photo.src; img.style.cssText='position:absolute;left:0;top:0;cursor:grab;user-select:none;-webkit-user-drag:none;';
@@ -5611,7 +5705,7 @@ function toolHtmlToPDF(){
 function toolRepairPDF(){
   const body = panelShell({title:'Repair PDF', desc:'Attempts to fix a damaged or malformed PDF by fully re-parsing and re-saving it.'});
   const note=document.createElement('div'); note.className='note';
-  note.textContent='This fixes broken cross-reference tables and structural issues that a fresh re-save resolves. It cannot recover data from a truly corrupted/truncated file — for that, server-side recovery tools are needed.';
+  note.textContent='Rebuilds the cross-reference table by scanning the file for objects, the same recovery a desktop tool does — so a truncated download or a file with a damaged index usually comes back. Runs entirely on this device.';
   body.appendChild(note);
   let file=null;
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
@@ -5621,14 +5715,44 @@ function toolRepairPDF(){
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Repairing on-device...';
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    // Fast path: if pdf-lib can still parse it, a clean re-save fixes most
+    // structural complaints and costs nothing.
     try{
-      const bytes = await file.arrayBuffer();
       const doc = await PDFDocument.load(bytes, { ignoreEncryption:true, throwOnInvalidObject:false, updateMetadata:false });
       const out = await doc.save({ useObjectStreams:false });
       download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+'-repaired.pdf');
       log.innerHTML='<span class="ok">✓ Done — re-parsed and re-saved locally, 0 bytes uploaded.</span>';
+      return;
+    }catch(e){ /* the file is damaged enough that pdf-lib gives up — that is
+                  precisely the case this tool exists for, so fall through to
+                  the recovery engine rather than surrendering to a server. */ }
+    log.textContent='Damaged index — rebuilding it by scanning for objects...';
+    try{
+      const qpdf = await loadQpdf();
+      qpdf.FS.writeFile('/rep-in.pdf', bytes);
+      // qpdf reconstructs the cross-reference table from the object stream
+      // when the declared one is missing or wrong. Warnings are expected on
+      // a damaged file and are not failures, hence --no-warn.
+      try{ qpdf.callMain(['--no-warn','/rep-in.pdf','/rep-out.pdf']); }
+      catch(_){ /* qpdf exits non-zero on a damaged file even when it managed
+                   to write a usable result — judge it by the output, below. */ }
+      // If the damage reaches the trailer and the document catalog there is
+      // nothing left to rebuild from, and qpdf writes no file at all — the
+      // read then fails with a bare ENOENT from the virtual filesystem. Say
+      // what actually happened instead.
+      let out = null;
+      try{ out = qpdf.FS.readFile('/rep-out.pdf'); }catch(_){ out = null; }
+      try{ qpdf.FS.unlink('/rep-in.pdf'); }catch(_){}
+      if(out) { try{ qpdf.FS.unlink('/rep-out.pdf'); }catch(_){} }
+      if(!out || !out.length){
+        throw new Error('this file is damaged past recovery — the trailer and document catalog are missing, so there is no index left to rebuild. If you still have the original, downloading it again is the only fix.');
+      }
+      download(new Blob([out],{type:'application/pdf'}), file.name.replace(/\.pdf$/i,'')+'-repaired.pdf');
+      log.innerHTML=`<span class="ok">✓ Recovered — cross-reference table rebuilt on this device, ${fmtBytes(out.length)} written, 0 bytes uploaded.</span>`;
     }catch(e){
-      log.textContent = 'Could not repair this file locally — it may need server-side recovery: '+e.message;
+      resetQpdf();
+      log.textContent = 'Could not repair this file — ' + qpdfError(e);
     }
   };
 }
@@ -6512,7 +6636,11 @@ function toolSlideshowVideo(){
         function frame(now){
           const t = (now-t0)/1000;
           if(t >= total){ resolve(); return; }
-          const i = Math.min(files.length-1, Math.floor(t/secs));
+          // The first rAF timestamp can predate t0 (the frame was already
+          // scheduled when we sampled the clock), making t slightly negative
+          // and floor() return -1. Clamp both ends, and bound by the bitmaps
+          // we actually decoded rather than the file list.
+          const i = Math.max(0, Math.min(bitmaps.length-1, Math.floor(t/secs)));
           const tin = t - i*secs;
           ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
           drawFitted(bitmaps[i], 1);
@@ -6527,6 +6655,7 @@ function toolSlideshowVideo(){
       rec.stop();
       await done;
       const blob = new Blob(chunks, {type:mime});
+      if(!blob.size) throw new Error('the recorder produced no data — try a different browser, or fewer/smaller pictures');
       download(blob, 'slideshow.'+mimeExt(mime));
       log.innerHTML = `<span class="ok">✓ Done — ${files.length} picture(s), ${Math.round(total)}s, ${fmtBytes(blob.size)}. Made entirely on your device.</span>`;
     }catch(e){
@@ -6659,6 +6788,9 @@ function toolTrimVideo(){
       await done;
       video.volume = 1;
       const blob = new Blob(chunks, {type:mime});
+      // A zero-length recording used to be handed to the user as a "✓ Done"
+      // download. Fail loudly instead: an empty file is not a result.
+      if(!blob.size) throw new Error('the recorder captured no frames — the video may be in a format this browser cannot play back for re-encoding');
       download(blob, file.name.replace(/\.[^.]+$/,'')+'-trimmed.'+mimeExt(mime));
       log.innerHTML = `<span class="ok">✓ Done — ${(end-start).toFixed(1)}s clip, ${fmtBytes(blob.size)}. Made entirely on your device.</span>`;
     }catch(e){
@@ -7191,11 +7323,11 @@ const convertTools = [
   {icon:'🌐', name:'HTML / Text to PDF', desc:'Paste HTML or text, get a PDF.', fn:toolHtmlToPDF},
   {icon:'🔊', name:'Read PDF Aloud', desc:'Text-to-speech, built into your browser.', fn:toolPDFToSpeech},
   {icon:'▦', name:'Table to CSV', desc:'Extract a table from one page.', fn:toolTableToCSV},
-  {icon:'📊', name:'PDF to PowerPoint', desc:'Each page becomes a slide (.pptx). Server-assisted.', fn:()=>toolServerConvert('PDF','pptx','application/pdf','PDF to PowerPoint','Turns every PDF page into a slide in an editable .pptx deck.')},
-  {icon:'📈', name:'PDF to Excel', desc:'Pull tables into a spreadsheet (.xlsx). Server-assisted.', fn:()=>toolServerConvert('PDF','xlsx','application/pdf','PDF to Excel','Detects tables on every page and exports them as sheets in an .xlsx workbook.')},
+  {icon:'📊', name:'PDF to PowerPoint', server:true, desc:'Each page becomes a slide (.pptx). Server-assisted.', fn:()=>toolServerConvert('PDF','pptx','application/pdf','PDF to PowerPoint','Turns every PDF page into a slide in an editable .pptx deck.')},
+  {icon:'📈', name:'PDF to Excel', server:true, desc:'Pull tables into a spreadsheet (.xlsx). Server-assisted.', fn:()=>toolServerConvert('PDF','xlsx','application/pdf','PDF to Excel','Detects tables on every page and exports them as sheets in an .xlsx workbook.')},
   {icon:'📗', name:'PowerPoint to PDF', desc:'Slides → PDF, on this device.', fn:toolPptxToPDFLocal},
   {icon:'📙', name:'Excel to PDF', desc:'Spreadsheet → PDF, on this device.', fn:toolExcelToPDFLocal},
-  {icon:'📚', name:'PDF to PDF/A', desc:'ISO 19005 archival format. Server-assisted.', fn:()=>toolServerPDFA()},
+  {icon:'📚', name:'PDF to PDF/A', server:true, desc:'ISO 19005 archival format. Server-assisted.', fn:()=>toolServerPDFA()},
 ];
 const editTools = [
   {icon:'✎', name:'PDF Editor', desc:'Add text anywhere on a page.', fn:toolPDFEditor},
@@ -7260,7 +7392,13 @@ function makeCard(t, sectionId){
   const card = document.createElement('button');
   card.className='tool-card';
   card.dataset.tool = t.name;
-  card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${sectionId==='api-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
+  // Where a tool runs is a property of the tool, not of the row it happens
+  // to be rendered in. Deciding it from sectionId alone made three
+  // server-assisted converters in the Convert row advertise "runs
+  // on-device", which is the one claim this product cannot get wrong.
+  const isServer = t.server === true || sectionId === 'api-tools';
+  card.dataset.where = isServer ? 'server' : 'device';
+  card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${isServer ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
   const star=document.createElement('span');
   star.className='fav-star'+(favs.has(t.name)?' faved':'');
   star.textContent = favs.has(t.name) ? '★' : '☆';
