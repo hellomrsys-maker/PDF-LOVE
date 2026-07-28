@@ -90,27 +90,45 @@ def main():
         print("No canonical tags found — nothing to check.")
         return 0
 
+    # Three distinct ways a canonical host can be wrong, and all three have
+    # to reach the exit code. Until this domain existed only the NXDOMAIN
+    # branch was ever taken, which hid a bug: a host that resolved but served
+    # nothing printed FAIL in the table and still exited 0, under a closing
+    # line that claimed every origin "resolves and answers".
     failed = []
     for origin, count in sorted(origins.items(), key=lambda kv: -kv[1]):
         host = re.sub(r"^https?://", "", origin).split("/")[0].split(":")[0]
         dns = resolves(host)
         status = responds(origin) if dns else None
-        mark = "OK  " if dns and status and status < 500 else "FAIL"
+        ok = bool(dns and status and status < 500)
         detail = ("does not resolve (NXDOMAIN)" if not dns
                   else f"HTTP {status}" if status
                   else "resolves but does not answer")
-        print(f"  {mark}  {origin:<44} {count:>4} page(s)   {detail}")
-        if not dns:
-            failed.append((origin, host))
+        print(f"  {'OK  ' if ok else 'FAIL'}  {origin:<44} {count:>4} page(s)   {detail}")
+        if not ok:
+            reason = ("no-dns" if not dns
+                      else "server-error" if status
+                      else "no-answer")
+            failed.append((origin, host, reason, status))
 
     if failed:
-        print("\nFAIL: canonical tags point at a host that does not exist.")
-        for origin, host in failed:
-            print(f"  {host} has no DNS record, so every canonical, og:url and")
-            print(f"  sitemap entry naming {origin} is unreachable to a crawler.")
-        print("\nFix by either registering/pointing the domain, or rebuilding")
-        print("with the host the site is actually served from:")
-        print("  SITE_ORIGIN=https://<real-host> python scripts/build-seo.py")
+        print("\nFAIL: canonical tags point at a host crawlers cannot use.")
+        for origin, host, reason, status in failed:
+            if reason == "no-dns":
+                print(f"  {host} has no DNS record, so every canonical, og:url and")
+                print(f"  sitemap entry naming {origin} is unreachable to a crawler.")
+                print(f"  Fix: point the domain, or rebuild with the real host:")
+                print(f"    SITE_ORIGIN=https://<real-host> python scripts/build-seo.py")
+            elif reason == "server-error":
+                print(f"  {host} resolves but returns HTTP {status}. DNS is done;")
+                print(f"  the origin behind it is broken or nothing is deployed there.")
+                print(f"  Fix: check the Worker is deployed and the Custom Domain is attached.")
+            else:
+                print(f"  {host} resolves but did not answer an HTTP request.")
+                print(f"  Either nothing is serving it yet, or this machine cannot")
+                print(f"  reach it (a sandboxed or firewalled network will look")
+                print(f"  identical from here). Re-run from CI, which has real")
+                print(f"  egress, before concluding the site is down.")
         return 1
 
     print("\nPASS: every canonical origin resolves and answers.")

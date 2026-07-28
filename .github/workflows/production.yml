@@ -11,7 +11,12 @@ name: Production
 
 on:
   push:
-    branches: [main, master]
+    # "the default branch" cannot be written as a branch filter, so this
+    # accepts every branch and the job below narrows it. Hardcoding
+    # [main, master] meant this never ran on push at all in a repository
+    # that has neither branch — it fired only on the schedule, so a broken
+    # deploy stayed unnoticed until the next morning.
+    branches: ["**"]
   schedule:
     - cron: '17 6 * * *'
   workflow_dispatch:
@@ -25,6 +30,9 @@ permissions:
 
 jobs:
   production:
+    # Scheduled and manual runs always go ahead; pushes only from the
+    # default branch, so feature branches don't test production.
+    if: github.event_name != 'push' || github.ref_name == github.event.repository.default_branch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
