@@ -13,6 +13,7 @@ const APP_SHELL = [
   // index.html itself.
   './app.js',
   './app.css',
+  './ads.js',
   './icons/tools.svg',
   // Company pages — precached so About/Pricing/Privacy/Terms stay reachable
   // in an installed, offline app (app stores expect the legal pages to work).

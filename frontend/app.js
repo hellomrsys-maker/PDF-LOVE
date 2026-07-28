@@ -22,9 +22,22 @@ const VENDOR_FALLBACKS = {
    Both are fully inert (zero network requests, zero UI) until a real ad
    network is configured below and its `enabled` flag is flipped true. */
 const AD_CONFIG = {
+  // Marketing-surface banner/leaderboard slots — #ad-banner-slot on the
+  // homepage, #ad-leaderboard-slot and #ad-sticky-slot on every /tools/
+  // page (see frontend/ads.js, which loads every entry here once at page
+  // load — before any file could possibly have been chosen — and never
+  // again). Each entry is one ad network; run several at once for fill
+  // rate. AdSense has no traffic minimum but does gate on domain age;
+  // Adsterra/PropellerAds/Monetag have neither gate, so they're the ones
+  // likely to be live first. Empty by default: zero network requests,
+  // every .ad-slot collapses via the .ad-slot:empty rule in app.css.
   banner: {
-    enabled: false,     // flip true once bannerSlotId/scriptUrl below are real
-    scriptUrl: null,    // your ad network's loader <script src>
+    enabled: false,     // flip true once at least one network below is real
+    networks: [
+      // {name:'adsterra', scriptUrl:'<url from your Adsterra placement>'},
+      // {name:'propellerads', scriptUrl:'<url from your PropellerAds placement>'},
+      // {name:'adsense', scriptUrl:'<url from your AdSense ad unit>'},
+    ],
   },
   rewarded: {
     enabled: false,     // flip true once scriptUrl below is real
@@ -7276,21 +7289,8 @@ if(checkBackendBtn){
 const licenseBtn = document.getElementById('license-btn');
 if(licenseBtn) licenseBtn.onclick = ()=>showLicensePanel();
 
-// Passive banner ad (see AD_CONFIG) — a no-op until a real network is
-// configured, so out of the box this makes zero network requests and
-// leaves #ad-banner-slot empty (collapsed to nothing by .ad-slot:empty).
-function initBannerAd(){
-  const cfg = AD_CONFIG.banner;
-  if(!cfg.enabled || !cfg.scriptUrl || IS_FILE) return;
-  const slot = document.getElementById('ad-banner-slot');
-  if(!slot) return;
-  const s = document.createElement('script');
-  s.async = true;
-  s.src = cfg.scriptUrl;
-  s.onerror = ()=>{ /* network unreachable or blocked — slot just stays empty */ };
-  document.head.appendChild(s);
-}
-initBannerAd();
+// Banner/leaderboard/sticky marketing-surface ad slots are handled by
+// frontend/ads.js (loaded after this file), not here — see AD_CONFIG.banner.
 
 // Result-area passive ad (see AD_CONFIG.result) — only ever appears at the
 // bottom of a tool panel AFTER a result has been delivered, never before or

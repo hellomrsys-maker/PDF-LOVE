@@ -21,7 +21,8 @@
   <p>On-device tools read your file with the browser's File API, process it in
   page memory, and hand the result to the browser's download mechanism. No
   network request carries file contents or filenames. This is verifiable:
-  developer tools → Network tab → use a tool → nothing fires.</p>
+  pick a file and watch the Network tab — nothing fires while it is being
+  processed.</p>
   <p>We state it this way deliberately. "We don't store your files" is a
   promise about someone's conduct. "Your file is never transmitted" is a
   property of the system that you can check for yourself.</p>

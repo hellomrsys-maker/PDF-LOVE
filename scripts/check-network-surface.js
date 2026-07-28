@@ -2,6 +2,7 @@
  * Enforces the network contract.
  *
  *   node scripts/check-network-surface.js
+ *   node scripts/check-network-surface.js --url https://example.com
  *
  * The product's central claim is that it makes no request of its own. That
  * claim decays silently: someone adds a font, an analytics snippet, a CDN
@@ -10,11 +11,20 @@
  * below, so adding one has to be a deliberate, reviewed act.
  *
  * Every entry needs a reason. If you cannot write one, that is the answer.
+ *
+ * With --url, also drives a real browser through Merge PDF end to end and
+ * asserts that zero requests fire between choosing the file and the
+ * download completing — the exact window the marketing copy invites
+ * visitors to watch in their own Network tab. Ad scripts on marketing pages
+ * (see frontend/ads.js) only ever load before that window opens, which is
+ * what this proves rather than just asserts.
  */
 const fs = require('fs');
 const path = require('path');
 
 const FRONTEND = path.join(__dirname, '..', 'frontend');
+const args = process.argv.slice(2);
+const URL_ARG = args.includes('--url') ? args[args.indexOf('--url') + 1] : null;
 
 /* The complete set of hosts the app may reference, and why.
  * Keep in sync with frontend/company/security.html and deploy/API.md. */
@@ -118,3 +128,62 @@ if (problems.length) {
   process.exit(1);
 }
 console.log('\n  Every referenced host is declared. The app makes no request of its own.');
+
+/* ---------------------------------------------------------------------
+ * Live processing-window check (only with --url): choose a file in Merge
+ * PDF, click merge, and assert zero requests fire before the download
+ * completes. Requires playwright — lazily required so the static check
+ * above still runs with no extra dependency when --url is omitted. */
+async function processingWindowCheck(base) {
+  const { chromium } = require(process.env.PLAYWRIGHT_PATH || 'playwright');
+  const fixturesDir = path.join(__dirname, '..', 'fixtures');
+  const fixture = path.join(fixturesDir, 'text.pdf');
+  if (!fs.existsSync(fixture)) {
+    console.log('\n  processing-window check: skipped — no fixtures. Run scripts/make-fixtures.py first.');
+    return true;
+  }
+
+  const browser = await chromium.launch();
+  const page = await browser.newContext({ acceptDownloads: true }).then(c => c.newPage());
+  await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(500);
+
+  await page.locator('.tool-card[data-tool="Merge PDF"]').first().click();
+  await page.waitForTimeout(300);
+  await page.locator('#panel-body input[type=file]').setInputFiles([fixture, fixture]);
+  await page.waitForTimeout(300);
+
+  // Everything the app needs (vendor libs, fonts, the ad scripts on
+  // marketing pages) has already loaded by now — the window under test
+  // starts here, after the file is chosen, not at page load.
+  const requestsDuringProcessing = [];
+  const onRequest = req => requestsDuringProcessing.push(req.url());
+  page.on('request', onRequest);
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 20000 }),
+    page.locator('#panel-body button.primary-btn:not([disabled])').last().click(),
+  ]);
+  await download.path().catch(() => {}); // wait for the download to actually land
+
+  page.off('request', onRequest);
+  await browser.close();
+
+  console.log(`\n  processing window (file chosen → download complete): ${requestsDuringProcessing.length} request(s)`);
+  if (requestsDuringProcessing.length) {
+    requestsDuringProcessing.forEach(u => console.error('   - ' + u));
+    console.error('\n  FAIL: the app requested the network while a file was being processed.');
+    return false;
+  }
+  console.log('  PASS: pick a file and watch the Network tab — nothing fires while it is being processed.');
+  return true;
+}
+
+if (URL_ARG) {
+  processingWindowCheck(URL_ARG.replace(/\/$/, '')).then(ok => {
+    if (!ok) process.exit(1);
+  }).catch(err => {
+    console.error('\n  processing-window check errored:', err.message);
+    process.exit(1);
+  });
+}
