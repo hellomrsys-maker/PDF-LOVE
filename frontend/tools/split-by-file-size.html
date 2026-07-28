@@ -13,24 +13,30 @@
 <meta property="og:url" content="https://dockbench.app/tools/split-by-file-size.html">
 <meta property="og:image" content="https://dockbench.app/icons/feature-graphic-1024x500.png">
 <meta name="twitter:card" content="summary_large_image">
-<link href="../vendor/fonts/fonts.css" rel="stylesheet">
-<link href="../company/company.css" rel="stylesheet">
+<base href="/">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="company/company.css" rel="stylesheet">
+<link href="app.css" rel="stylesheet">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Split by File Size free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Dockbench", "item": "https://dockbench.app/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://dockbench.app/tools/"}, {"@type": "ListItem", "position": 3, "name": "Split by File Size", "item": "https://dockbench.app/tools/split-by-file-size.html"}]}</script>
 </head>
 <body>
 <header><div class="wrap"><a class="brand" href="../index.html"><span class="dot"></span>Dockbench</a></div></header>
+<div class="overlay" id="overlay"><div class="panel" id="panel"></div></div>
 <main><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Split by File Size</p>
   <h1>Split by File Size</h1>
   <p class="lede">Split by File Size, running entirely on your own device.</p>
 
-  <p><a class="cta" href="../index.html?tool=Split by File Size">Open Split by File Size</a></p>
+  <div id="tool-mount" data-tool="Split by File Size"></div>
+  <noscript><p><a class="cta" href="../index.html?tool=Split by File Size">Open Split by File Size</a></p></noscript>
+
+  <div class="ad-slot" id="ad-leaderboard-slot"></div>
 
   <div class="note">
-    <strong>Your file never leaves this device.</strong> It is read, processed
-    and saved back by your own browser — no upload, no account, no daily limit.
-    Check it yourself: open developer tools, watch the Network tab, and use
-    the tool. Nothing fires.
+    <strong>Your file never leaves this device.</strong> Pick a file and watch
+    the Network tab — nothing fires while it is being processed. No upload,
+    no account, no daily limit.
   </div>
 
 
@@ -51,16 +57,17 @@
 <h3>Is Split by File Size free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
 
   <h2>Related tools</h2>
-  <ul><li><a href="merge-pdf.html">Merge PDF</a></li><li><a href="split-pdf.html">Split PDF</a></li><li><a href="images-to-pdf.html">Images to PDF</a></li><li><a href="pdf-to-jpg.html">PDF to JPG</a></li><li><a href="rotate-pdf.html">Rotate PDF</a></li><li><a href="organize-pdf.html">Organize PDF</a></li></ul>
+  <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>
 
-  <p style="margin-top:26px;"><a class="cta" href="../index.html?tool=Split by File Size">Open Split by File Size</a>
-     <a class="cta secondary" href="../index.html">See all 104 tools</a></p>
+  <div class="ad-slot ad-slot-sticky" id="ad-sticky-slot"></div>
+
+  <p style="margin-top:26px;"><a class="cta secondary" href="../index.html">See all 104 tools</a></p>
 </div></main>
 <footer class="site-footer"><div class="wrap">
   <nav>
     <a href="../index.html">Tools</a>
     <a href="../download.html">Download</a>
-    <a href="index.html">All guides</a>
+    <a href="/tools/index.html">All guides</a>
     <a href="../company/about.html">About</a>
     <a href="../company/pricing.html">Pricing</a>
     <a href="../company/privacy.html">Privacy</a>
@@ -68,5 +75,12 @@
   </nav>
   <p class="fine">Dockbench — PDF, image and video tools that run on your own device.</p>
 </div></footer>
+<script defer src="../vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
+<script defer src="../app.js"></script>
 </body>
 </html>

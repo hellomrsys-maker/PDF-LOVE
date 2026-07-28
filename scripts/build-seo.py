@@ -179,7 +179,14 @@ def esc(s):
 
 
 def page(slug, title, description, h1, lede, body_html, faq, tool_name, related):
-    """Render one landing page."""
+    """Render one landing page.
+
+    The page mounts its one named tool in place via #tool-mount (see
+    panelShell() in frontend/app.js) instead of only linking out to the
+    modal — a visitor from search lands on a working tool, not a doorway
+    page. #overlay/#panel still ship too: "related tools" links on this
+    page open in the modal, exactly as they do from the homepage.
+    """
     canonical = f"{SITE}/tools/{slug}.html"
     faq_ld = {
         "@context": "https://schema.org",
@@ -199,13 +206,21 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
             {"@type": "ListItem", "position": 3, "name": h1, "item": canonical},
         ],
     }
+    # Root-absolute, not page-relative: <base href="/"> below makes every
+    # relative path in this page (including app.js's internal vendor/ and
+    # sw.js lookups) resolve against the site root instead of /tools/, which
+    # is what app.js — written for index.html at the root — assumes. That
+    # means same-directory links must be written as absolute paths here.
     related_html = "".join(
-        f'<li><a href="{esc(r_slug)}.html">{esc(r_title)}</a></li>'
+        f'<li><a href="/tools/{esc(r_slug)}.html">{esc(r_title)}</a></li>'
         for r_slug, r_title in related
     )
     faq_html = "".join(
         f"<h3>{esc(q)}</h3><p>{esc(a)}</p>" for q, a in faq
     )
+    # Fallback for JS-disabled visitors and for anything that opens this
+    # page's tool from elsewhere (search, ?tool= deep links). The primary
+    # path is #tool-mount below, filled in by panelShell() in app.js.
     deep_link = f"../index.html?tool={esc(tool_name)}"
 
     return f"""<!doctype html>
@@ -223,24 +238,30 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
 <meta property="og:url" content="{canonical}">
 <meta property="og:image" content="{SITE}/icons/feature-graphic-1024x500.png">
 <meta name="twitter:card" content="summary_large_image">
-<link href="../vendor/fonts/fonts.css" rel="stylesheet">
-<link href="../company/company.css" rel="stylesheet">
+<base href="/">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="company/company.css" rel="stylesheet">
+<link href="app.css" rel="stylesheet">
 <script type="application/ld+json">{json.dumps(faq_ld)}</script>
 <script type="application/ld+json">{json.dumps(breadcrumb_ld)}</script>
 </head>
 <body>
 <header><div class="wrap"><a class="brand" href="../index.html"><span class="dot"></span>Dockbench</a></div></header>
+<div class="overlay" id="overlay"><div class="panel" id="panel"></div></div>
 <main><div class="wrap">
+  <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / {esc(h1)}</p>
   <h1>{esc(h1)}</h1>
   <p class="lede">{esc(lede)}</p>
 
-  <p><a class="cta" href="{deep_link}">Open {esc(tool_name)}</a></p>
+  <div id="tool-mount" data-tool="{esc(tool_name)}"></div>
+  <noscript><p><a class="cta" href="{deep_link}">Open {esc(tool_name)}</a></p></noscript>
+
+  <div class="ad-slot" id="ad-leaderboard-slot"></div>
 
   <div class="note">
-    <strong>Your file never leaves this device.</strong> It is read, processed
-    and saved back by your own browser — no upload, no account, no daily limit.
-    Check it yourself: open developer tools, watch the Network tab, and use
-    the tool. Nothing fires.
+    <strong>Your file never leaves this device.</strong> Pick a file and watch
+    the Network tab — nothing fires while it is being processed. No upload,
+    no account, no daily limit.
   </div>
 
 {body_html}
@@ -251,14 +272,15 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
   <h2>Related tools</h2>
   <ul>{related_html}</ul>
 
-  <p style="margin-top:26px;"><a class="cta" href="{deep_link}">Open {esc(tool_name)}</a>
-     <a class="cta secondary" href="../index.html">See all 104 tools</a></p>
+  <div class="ad-slot ad-slot-sticky" id="ad-sticky-slot"></div>
+
+  <p style="margin-top:26px;"><a class="cta secondary" href="../index.html">See all 104 tools</a></p>
 </div></main>
 <footer class="site-footer"><div class="wrap">
   <nav>
     <a href="../index.html">Tools</a>
     <a href="../download.html">Download</a>
-    <a href="index.html">All guides</a>
+    <a href="/tools/index.html">All guides</a>
     <a href="../company/about.html">About</a>
     <a href="../company/pricing.html">Pricing</a>
     <a href="../company/privacy.html">Privacy</a>
@@ -266,6 +288,13 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
   </nav>
   <p class="fine">Dockbench — PDF, image and video tools that run on your own device.</p>
 </div></footer>
+<script defer src="../vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
+<script defer src="../vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
+<script defer src="../app.js"></script>
 </body>
 </html>
 """
@@ -395,9 +424,14 @@ def build_questions(index):
 
 def extract_tool_names():
     """Read the real tool list out of the app, so these pages can never
-    drift from what actually exists."""
-    src = open(os.path.join(FRONTEND, "index.html")).read()
-    names = re.findall(r"name:'([^']+)'", src)
+    drift from what actually exists. Tool registry arrays live in
+    frontend/app.js (extracted out of index.html's inline <script>)."""
+    src = open(os.path.join(FRONTEND, "app.js")).read()
+    # Anchored to the {icon:'...', name:'...' registry-entry shape, not just
+    # any `name:'...'` — a comment describing Emscripten's ExitStatus object
+    # (`{name:'ExitStatus', status:N}`) otherwise matches too and produces a
+    # bogus tool page for a thing that isn't a tool.
+    names = re.findall(r"\{icon:'[^']*',\s*name:'([^']+)'", src)
     # Server-assisted tools are hidden without a backend; a landing page for
     # one would send visitors to a tool they cannot see.
     skip = {"OCR (server)", "Word/Office to PDF (full fidelity)",
