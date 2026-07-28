@@ -14,34 +14,41 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Extract and syntax-check inline script
-        run: |
-          node -e "
-          const fs = require('fs');
-          const html = fs.readFileSync('frontend/index.html','utf8');
-          const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-          fs.writeFileSync('/tmp/extracted.js', script);
-          "
-          node --check /tmp/extracted.js
+      # These three steps used to extract the app out of an inline <script>
+      # in index.html. That script was moved to frontend/app.js, the match
+      # started returning null, and this job threw a TypeError on every push
+      # — which meant app.js, the entire product, had no syntax check at all,
+      # and the two checks below silently stopped running. They now read
+      # app.js directly, and each one asserts it actually found something, so
+      # a pattern that matches nothing fails loudly instead of passing
+      # vacuously the way the duplicate-name check did.
+      - name: Syntax-check the app
+        run: node --check frontend/app.js
       - name: Verify every tool card resolves to a real function
         run: |
           node -e "
           const fs = require('fs');
-          const script = fs.readFileSync('/tmp/extracted.js','utf8');
+          const script = fs.readFileSync('frontend/app.js','utf8');
           const fnDefs = new Set([...script.matchAll(/function (tool\w+)\s*\(/g)].map(m=>m[1]));
           const fnRefs = [...script.matchAll(/fn:(tool\w+)[,}]/g)].map(m=>m[1]);
           const wrappedRefs = [...script.matchAll(/fn:\(\)=>(tool\w+)\(/g)].map(m=>m[1]);
+          const total = fnRefs.length + wrappedRefs.length;
+          if (total < 100) { console.error('Only', total, 'tool references found — the registry pattern has drifted.'); process.exit(1); }
           let missing = 0;
           [...fnRefs, ...wrappedRefs].forEach(f => { if(!fnDefs.has(f)){ console.error('MISSING:', f); missing++; } });
           if(missing > 0) process.exit(1);
-          console.log('All', fnRefs.length + wrappedRefs.length, 'tool references resolve.');
+          console.log('All', total, 'tool references resolve.');
           "
       - name: Check for duplicate tool names
         run: |
           node -e "
           const fs = require('fs');
-          const html = fs.readFileSync('frontend/index.html','utf8');
-          const names = [...html.matchAll(/name:'([^']*)'/g)].map(m=>m[1]);
+          const script = fs.readFileSync('frontend/app.js','utf8');
+          // Anchored to the {icon:'...', name:'...'} registry shape. A bare
+          // name:'...' also matches a comment describing Emscripten's
+          // ExitStatus object, which is not a tool.
+          const names = [...script.matchAll(/\{icon:'[^']*',\s*name:'([^']+)'/g)].map(m=>m[1]);
+          if (names.length < 100) { console.error('Only', names.length, 'tool names found — the registry pattern has drifted.'); process.exit(1); }
           const seen = {};
           names.forEach(n => seen[n] = (seen[n]||0) + 1);
           const dups = Object.entries(seen).filter(([n,c]) => c > 1);
@@ -485,10 +492,38 @@ jobs:
         # from the text layer rather than covering it, that Protect PDF
         # rejects a wrong password, that the EXIF stripper dropped GPS.
         run: |
-          pip install --quiet pikepdf pillow reportlab piexif python-docx openpyxl python-pptx
+          # pdfminer.six is not optional: without it the redaction and OCR
+          # checkers cannot read a PDF text layer, and both failed on every
+          # push while the tools themselves were fine.
+          pip install --quiet pikepdf pillow reportlab piexif python-docx openpyxl python-pptx pdfminer.six
           python3 scripts/make-fixtures.py
           node scripts/make-media-fixture.js
           PYTHON=python3 node scripts/functional-suite.js
+      - name: Tools work on their own pages, not just in the modal
+        # functional-suite.js loads index.html and scopes every selector to
+        # #panel-body. The 149 /tools/*.html pages render into
+        # #panel-body-mount instead, so that suite could pass while every
+        # one of them was broken — and those pages are where search traffic
+        # lands. This drives real files through them and checks the mount
+        # latch still hands a second tool to the modal.
+        run: node scripts/page-native-test.js
+      - name: The test report reflects what the suites actually measured
+        # TEST_REPORT.md claimed "86 of 86 passed" while the suite was
+        # failing on every push. It could not self-correct because nothing
+        # regenerated it. Now it does, and a stale committed copy fails here
+        # rather than sitting in the repository saying something untrue.
+        run: |
+          python3 scripts/build-report.py
+          # The header carries a generation timestamp and the commit hash,
+          # both of which change on every run by design. Compare everything
+          # else — a plain `git diff --quiet` here would always fail.
+          if ! diff <(git show HEAD:TEST_REPORT.md | grep -v '^Generated ') \
+                    <(grep -v '^Generated ' TEST_REPORT.md) > /dev/null; then
+            echo "::error::TEST_REPORT.md is out of date. Run: python scripts/build-report.py"
+            diff <(git show HEAD:TEST_REPORT.md | grep -v '^Generated ') \
+                 <(grep -v '^Generated ' TEST_REPORT.md) | head -40
+            exit 1
+          fi
       - name: Published tool counts match the app
         # The docs claimed 97 on-device tools while the app shipped 94,
         # because three server-assisted converters sat in an always-visible

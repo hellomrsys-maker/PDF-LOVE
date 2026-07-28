@@ -147,6 +147,38 @@ def no_form_fields(path, expected=None):
         return bad(f"unreadable: {e}")
 
 
+class TextUnavailable(RuntimeError):
+    """The PDF's text layer could not be read at all."""
+
+
+def pdf_text(path):
+    """Text from a PDF's text layer, or raise TextUnavailable.
+
+    This deliberately refuses to fall back to decoding the raw file as
+    latin-1. That fallback used to exist here, and it was worse than no
+    check: a PDF's content streams are Flate-compressed, and strings inside
+    them may be hex-encoded, so searching those bytes for a secret almost
+    never finds it — whether or not the secret is there. A redaction test
+    that cannot fail is not a test. It also made a working OCR tool look
+    broken, by comparing the phrase against 103,381 bytes of compressed
+    binary and reporting "0/5 words found".
+
+    Failing loudly when the dependency is missing is the only safe
+    behaviour, because the alternative is a silent false pass on the most
+    security-sensitive assertion in the suite.
+    """
+    try:
+        import pdfminer.high_level
+    except ImportError:
+        raise TextUnavailable(
+            "pdfminer.six is not installed, so the PDF text layer cannot be "
+            "read. Install it with: pip install pdfminer.six")
+    try:
+        return pdfminer.high_level.extract_text(path)
+    except Exception as e:
+        raise TextUnavailable(f"could not extract text: {e}")
+
+
 def ssn_removed(path, expected=None):
     """Redaction must remove the text, not cover it.
 
@@ -156,16 +188,9 @@ def ssn_removed(path, expected=None):
     """
     ssn = manifest()["secret_ssn"]
     try:
-        import pdfminer.high_level
-        text = pdfminer.high_level.extract_text(path)
-    except ImportError:
-        import pikepdf
-        with pikepdf.open(path) as p:
-            raw = b"".join(bytes(pg.Contents.read_bytes()) for pg in p.pages
-                           if "/Contents" in pg)
-        text = raw.decode("latin-1", "replace")
-    except Exception as e:
-        return bad(f"could not extract text: {e}")
+        text = pdf_text(path)
+    except TextUnavailable as e:
+        return bad(str(e))
 
     digits = ssn.replace("-", "")
     if ssn in text or digits in re.sub(r"[^0-9]", "", text):
@@ -177,13 +202,13 @@ def contains_ocr_phrase(path, expected=None):
     phrase = manifest()["ocr_phrase"]
     data = open(path, "rb").read()
     try:
+        # .txt and .md outputs are plain text and need no PDF parsing.
         text = data.decode("utf-8")
     except UnicodeDecodeError:
         try:
-            import pdfminer.high_level
-            text = pdfminer.high_level.extract_text(path)
-        except Exception:
-            text = data.decode("latin-1", "replace")
+            text = pdf_text(path)
+        except TextUnavailable as e:
+            return bad(str(e))
 
     norm = re.sub(r"\s+", " ", text).lower()
     want = phrase.lower()

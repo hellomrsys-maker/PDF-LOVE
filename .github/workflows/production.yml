@@ -81,7 +81,7 @@ jobs:
 
       - name: The app works, and sends no file data, against production
         run: |
-          python3 -m pip install --quiet pikepdf pillow reportlab
+          python3 -m pip install --quiet pikepdf pillow reportlab pdfminer.six
           python3 scripts/make-fixtures.py
           PYTHON=python3 node scripts/functional-suite.js \
             --url "${{ steps.target.outputs.url }}" \

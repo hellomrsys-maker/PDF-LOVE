@@ -95,13 +95,57 @@ BUGS = [
      "\"most features don't work\": they reported nothing when they failed.",
      "buildDropzone now routes every entry point through a guard that always "
      "reports."),
-    ("BUG-010", "open", "The canonical URL points at a domain that does not exist",
-     "All 168 pages declare https://pdflove.co.in as canonical, in og:url, and "
-     "throughout the sitemap. That host has no DNS record, so every canonical tag "
-     "tells crawlers the authoritative copy of the page is unreachable. No amount "
-     "of SEO content overcomes this.",
-     "python scripts/check-canonical.py — fails today. Fix by registering the "
-     "domain or rebuilding with SITE_ORIGIN set to the real host."),
+    ("BUG-010", "fixed", "The canonical URL pointed at a domain that did not exist",
+     "Every page declared a canonical host with no DNS record, so the markup told "
+     "crawlers the authoritative copy of each page was unreachable. The site now "
+     "lives at pdflove.co.in, which resolves.",
+     "python scripts/check-canonical.py"),
+    ("BUG-011", "fixed", "CI stopped syntax-checking the app, and said nothing",
+     "The frontend-syntax job pulled the app out of an inline <script> in "
+     "index.html. That script moved to frontend/app.js, so the match returned "
+     "null and the job threw a TypeError on every push. app.js — the whole "
+     "product — had no syntax check at all, \"every tool card resolves to a real "
+     "function\" never ran, and the duplicate-name check scanned index.html, found "
+     "zero tool names, and passed vacuously. Each check now reads app.js and "
+     "asserts it found something, so a pattern matching nothing fails loudly "
+     "instead of reporting success.",
+     "The three steps at the top of .github/workflows/validate.yml."),
+    ("BUG-012", "fixed", "The redaction and OCR checks could never have passed honestly",
+     "Both read a PDF's text layer. Without pdfminer.six — which CI never "
+     "installed — they fell back to decoding the raw file as latin-1. A PDF's "
+     "content streams are compressed and its strings may be hex-encoded, so that "
+     "search finds nothing whether or not the secret is there: a redaction test "
+     "that cannot fail. The same fallback made a working OCR tool look broken by "
+     "matching the phrase against 103,381 bytes of compressed binary. A second "
+     "bug — an except clause that was a sibling rather than a parent of the one "
+     "that raised — let a pikepdf error escape as a bare \"PdfError\", which read "
+     "like a product crash. The fallback is gone; the checkers now fail loudly "
+     "when the dependency is absent.",
+     "node scripts/functional-suite.js --only \"Search & Redact\""),
+    ("BUG-013", "fixed", "The privacy policy overstated how many tools run on-device",
+     "The site claimed 97 of 104 tools were on-device. The real number is 94: "
+     "three server-assisted converters sit in the always-visible Convert row. The "
+     "wrong figure was in the privacy policy, the terms, the About and download "
+     "pages, and the FAQPage JSON-LD that feeds Google's rich results. "
+     "check-tool-counts.js existed to prevent exactly this and missed it three "
+     "ways — it never scanned those files, its pattern required \"N of M\" where "
+     "the text said \"N of the M\", and it understood only digits, so "
+     "\"Ninety-seven of them\" was invisible.",
+     "node scripts/check-tool-counts.js"),
+    ("BUG-014", "fixed", "149 tool pages shipped with no test of any kind",
+     "The tool pages were made page-native, rendering into #panel-body-mount. "
+     "functional-suite.js only ever loads index.html and scopes every selector to "
+     "#panel-body, so it could pass in full while every one of those pages was "
+     "broken — and they are where search traffic lands.",
+     "node scripts/page-native-test.js"),
+    ("BUG-015", "open", "Nine of eleven chained-tool suggestions are dead config",
+     "SUGGESTED_NEXT names a follow-up for eleven tools, but only Make PDF Smaller "
+     "and Scan Document call offerChain, which is what renders the \"Also want "
+     "to ...\" button. For the other nine — including Merge PDF, Split PDF, Images "
+     "to PDF and Sign PDF — the entry exists and nothing ever shows it. Not a "
+     "visible fault, but a designed feature that silently does not run.",
+     "Compare the offerChain call sites in frontend/app.js against the "
+     "SUGGESTED_NEXT keys."),
 ]
 
 
