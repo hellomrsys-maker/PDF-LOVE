@@ -21,7 +21,24 @@
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Dockbench", "item": "https://dockbench.app/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://dockbench.app/tools/"}, {"@type": "ListItem", "position": 3, "name": "How do I extract images from a PDF?", "item": "https://dockbench.app/tools/how-to-extract-images-from-a-pdf.html"}]}</script>
 </head>
 <body>
-<header><div class="wrap"><a class="brand" href="../index.html"><span class="dot"></span>Dockbench</a></div></header>
+<header>
+  <div class="wrap header-row">
+    <a class="brand" href="index.html"><span class="dot"></span>Dockbench</a>
+    <nav class="site-nav" id="site-nav" aria-label="Tools">
+      <a class="nav-link" href="tools/merge-pdf.html">Merge PDF</a>
+      <a class="nav-link" href="tools/split-pdf.html">Split PDF</a>
+      <a class="nav-link" href="tools/make-pdf-smaller.html">Compress PDF</a>
+      <div class="nav-dropdown">
+        <button type="button" class="nav-link nav-trigger" id="nav-trigger-convert" aria-expanded="false" aria-controls="nav-panel-convert">Convert<span class="nav-caret">▾</span></button>
+        <div class="nav-panel" id="nav-panel-convert" hidden></div>
+      </div>
+      <div class="nav-dropdown">
+        <button type="button" class="nav-link nav-trigger" id="nav-trigger-all" aria-expanded="false" aria-controls="nav-panel-all">All tools<span class="nav-caret">▾</span></button>
+        <div class="nav-panel nav-panel-mega" id="nav-panel-all" hidden></div>
+      </div>
+    </nav>
+  </div>
+</header>
 <div class="overlay" id="overlay"><div class="panel" id="panel"></div></div>
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / How do I extract images from a PDF?</p>
@@ -66,18 +83,56 @@
 
   <p style="margin-top:26px;"><a class="cta secondary" href="../index.html">See all 104 tools</a></p>
 </div></main>
-<footer class="site-footer"><div class="wrap">
-  <nav>
-    <a href="../index.html">Tools</a>
-    <a href="../download.html">Download</a>
-    <a href="/tools/index.html">All guides</a>
-    <a href="../company/about.html">About</a>
-    <a href="../company/pricing.html">Pricing</a>
-    <a href="../company/privacy.html">Privacy</a>
-    <a href="../company/terms.html">Terms</a>
-  </nav>
-  <p class="fine">Dockbench — PDF, image and video tools that run on your own device.</p>
-</div></footer>
+<div class="platform-strip"><div class="wrap">
+  <span class="platform-label">Available on</span>
+  <a href="../download.html#plat-web">Web</a>
+  <a href="../download.html#plat-desktop">Windows</a>
+  <a href="../download.html#plat-desktop">macOS</a>
+  <a href="../download.html#plat-desktop">Linux</a>
+  <a href="../download.html#plat-android">Android</a>
+</div></div>
+
+<footer class="dark-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="../index.html">All 104 tools</a>
+      <a href="../tools/merge-pdf.html">Merge PDF</a>
+      <a href="../tools/split-pdf.html">Split PDF</a>
+      <a href="../tools/make-pdf-smaller.html">Compress PDF</a>
+      <a href="../download.html">Download</a>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="../guides/index.html">Guides</a>
+      <a href="/tools/index.html">All guides</a>
+      <a href="../company/security.html">Security</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <a href="../company/about.html">About</a>
+      <a href="../company/pricing.html">Pricing</a>
+      <a href="../company/for-business.html">For business</a>
+      <a href="../company/contact.html">Contact</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <a href="../company/privacy.html">Privacy</a>
+      <a href="../company/terms.html">Terms</a>
+      <a href="../company/refund.html">Refunds</a>
+    </div>
+    <div class="footer-col">
+      <h4>Get Dockbench</h4>
+      <a href="../download.html#plat-web">Web app</a>
+      <a href="../download.html#plat-desktop">Desktop app</a>
+      <a href="../download.html#plat-android">Android app</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <span class="brand-mini"><span class="dot"></span>Dockbench</span>
+    <span class="footer-fine">PDF, image and video tools that run on your own device.</span>
+  </div>
+</footer>
 <script defer src="../vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
 <script defer src="../vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
 <script defer src="../vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>

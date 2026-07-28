@@ -45,7 +45,7 @@
     z-index:40;
   }
   header .wrap{display:flex;align-items:center;justify-content:space-between;}
-  .brand{display:flex;align-items:baseline;gap:8px;font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;letter-spacing:-0.01em;}
+  .brand{display:flex;align-items:baseline;gap:8px;font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;letter-spacing:-0.01em;text-decoration:none;color:inherit;}
   .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;box-shadow:0 0 0 3px rgba(74,120,86,0.15);}
   .status-pill{
     font-family:'IBM Plex Mono',monospace;
@@ -276,10 +276,29 @@
   }
   .runlog .ok{color:var(--ok);}
 
-  footer{border-top:1px solid var(--line);margin-top:80px;padding:32px 0 60px;color:var(--ink-soft);font-size:0.85rem;}
+  .footer-note{border-top:1px solid var(--line);margin-top:80px;padding:32px 0 0;color:var(--ink-soft);font-size:0.85rem;}
   .footer-nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line);}
   .footer-nav a{color:var(--ink-soft);text-decoration:none;}
   .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
+
+  /* ---------- platform strip + dark footer ---------- */
+  .platform-strip{border-top:1px solid var(--line);margin-top:26px;}
+  .platform-strip .wrap{display:flex;align-items:center;gap:18px;padding:16px 24px;flex-wrap:wrap;}
+  .platform-label{font-size:0.78rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+  .platform-strip a{font-size:0.85rem;color:var(--ink-soft);text-decoration:none;padding:4px 0;}
+  .platform-strip a:hover{color:var(--copper-deep);}
+  .dark-footer{background:#1F2420;color:#D9D3C4;padding:44px 0 24px;margin-top:0;}
+  .footer-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:24px;padding-bottom:32px;border-bottom:1px solid #333A32;}
+  .footer-col h4{font-size:0.78rem;text-transform:uppercase;letter-spacing:.05em;color:#8B9186;margin:0 0 14px;}
+  .footer-col a{display:block;color:#D9D3C4;text-decoration:none;font-size:0.88rem;padding:5px 0;}
+  .footer-col a:hover{color:#fff;text-decoration:underline;}
+  .footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-top:20px;}
+  .brand-mini{display:inline-flex;align-items:center;gap:8px;font-family:'Fraunces',serif;font-weight:700;font-size:1.05rem;color:#fff;}
+  .brand-mini .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;}
+  .footer-fine{font-size:0.82rem;color:#8B9186;}
+  @media (max-width:800px){
+    .footer-grid{grid-template-columns:repeat(2,1fr);}
+  }
 
   .note{background:var(--paper);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;font-size:0.8rem;color:var(--ink-soft);margin:12px 0;}
   .canvas-wrap{position:relative;border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:60vh;margin:10px 0;background:#eee;}
@@ -333,8 +352,48 @@
   .tools.search-hidden{display:none;}
 
   /* ================= redesign: nav, tabs, rows, dark mode ================= */
-  header{padding:12px 0 0;}
+  header{padding:12px 0 0;position:sticky;top:0;z-index:60;}
   .header-row{display:flex;align-items:center;gap:16px;padding-bottom:12px;}
+
+  /* ---------- top nav: direct links, Convert / All tools mega-menu ---------- */
+  .site-nav{display:flex;align-items:center;gap:2px;}
+  .nav-link{
+    font-family:'IBM Plex Sans',sans-serif;font-size:0.88rem;font-weight:500;
+    color:var(--ink-soft);text-decoration:none;background:none;border:none;
+    padding:8px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:4px;font-family:inherit;
+  }
+  .nav-link:hover{color:var(--ink);background:var(--paper-raised);}
+  .nav-caret{font-size:0.65rem;transition:transform .15s;}
+  .nav-dropdown{position:relative;}
+  .nav-dropdown.open .nav-link{color:var(--copper-deep);}
+  .nav-dropdown.open .nav-caret{transform:rotate(180deg);}
+  .nav-panel{
+    position:absolute;top:calc(100% + 8px);left:0;
+    background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 18px 40px -20px rgba(31,36,32,0.35);
+    padding:18px;z-index:70;
+  }
+  .nav-panel[hidden]{display:none;}
+  .nav-panel::before{
+    content:'';position:absolute;top:-6px;left:22px;width:11px;height:11px;
+    background:var(--paper-raised);border-left:1px solid var(--line);border-top:1px solid var(--line);
+    transform:rotate(45deg);
+  }
+  .nav-panel-convert{width:340px;columns:2;column-gap:18px;}
+  /* Anchored to the trigger's right edge, not its left: "All tools" sits
+     near the right end of the header, and a 760px panel growing rightward
+     from there would run off the viewport. */
+  .nav-panel-mega{width:min(760px,86vw);left:auto;right:0;max-height:78vh;overflow-y:auto;}
+  .nav-panel-mega::before{left:auto;right:22px;}
+  .nav-mega-col h4{margin:0 0 6px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+  .nav-panel-mega{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 20px;}
+  .nav-mega-link,.nav-panel-convert a{
+    display:flex;align-items:center;gap:8px;padding:5px 0;font-size:0.85rem;
+    color:var(--ink);text-decoration:none;break-inside:avoid;
+  }
+  .nav-mega-link:hover,.nav-panel-convert a:hover{color:var(--copper-deep);}
+  .nav-mega-link svg{width:16px;height:16px;flex-shrink:0;}
   .header-search{flex:1;max-width:520px;margin-left:auto;}
   .header-search #tool-search{width:100%;padding:10px 14px;font-size:0.92rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);font-family:inherit;color:var(--ink);}
   .header-search #tool-search:focus{outline:none;border-color:var(--copper);}
@@ -353,6 +412,12 @@
   #home-rows .section-label{margin-top:34px;}
   #status-pill .backend-dot{width:7px;height:7px;border-radius:50%;background:var(--line);display:inline-block;}
   #status-pill .backend-dot.up{background:var(--ok);box-shadow:0 0 0 3px rgba(74,120,86,0.2);}
+  @media (max-width:1023px){
+    /* The mega-menu needs hover/room neither of which a touch-width header
+       has; search + the category pills already cover navigation below this
+       width, so the nav collapses rather than becoming a slide-in sheet. */
+    .site-nav{display:none;}
+  }
   @media (max-width:700px){
     .header-row{flex-wrap:wrap;gap:10px;}
     .header-search{order:3;flex-basis:100%;max-width:none;}

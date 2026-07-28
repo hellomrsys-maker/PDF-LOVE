@@ -7029,8 +7029,75 @@ const CATEGORIES = [
 const SECTION_IDS = CATEGORIES.slice(1).map(c=>c[0]);
 const POPULAR = ['Ask Dockbench','Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
                  'Protect PDF','Make Image Smaller','Resize Image','PDF to Word','Video to GIF','Invoice Generator'];
+
+// Header-level nav (direct links + Convert / All tools dropdowns) — present
+// on index.html AND every standalone /tools/*.html page, since app.js is
+// shared by both. Built from toolIndex, which renderGrid() always fills in
+// regardless of whether that page also has the grid to render cards into,
+// so this never drifts from the real tool list.
+function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+function toolLink(name){
+  const entry = toolIndex[name];
+  if(!entry) return '';
+  return `<a class="nav-mega-link" href="tools/${slugify(name)}.html">`
+       + `<svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons/tools.svg#i-tile"></use><use href="icons/tools.svg#i-${entry.tool.icon}"></use></svg>`
+       + `${escapeXml(name)}</a>`;
+}
+function buildSiteNav(){
+  const nav = document.getElementById('site-nav');
+  if(!nav) return; // page has no header nav markup
+
+  const allPanel = document.getElementById('nav-panel-all');
+  if(allPanel){
+    const bySection = {};
+    Object.values(toolIndex).forEach(({tool, sectionId})=>{
+      if(sectionId==='api-tools' && !serverAvailable) return;
+      (bySection[sectionId] = bySection[sectionId] || []).push(tool.name);
+    });
+    allPanel.innerHTML = CATEGORIES.slice(1)
+      .filter(([id])=>bySection[id] && bySection[id].length)
+      .map(([id,label])=>`<div class="nav-mega-col"><h4>${escapeXml(label)}</h4>${bySection[id].map(toolLink).join('')}</div>`)
+      .join('');
+  }
+
+  const convertPanel = document.getElementById('nav-panel-convert');
+  if(convertPanel){
+    const names = [...new Set(Object.values(toolIndex)
+      .filter(({sectionId})=>sectionId==='convert-tools')
+      .map(({tool})=>tool.name))];
+    convertPanel.innerHTML = names.map(n=>{
+      const entry = toolIndex[n];
+      return `<a href="tools/${slugify(n)}.html">${escapeXml(n)}</a>`;
+    }).join('');
+  }
+
+  const dropdowns = [...nav.querySelectorAll('.nav-dropdown')];
+  const closeAll = ()=>dropdowns.forEach(d=>{
+    d.classList.remove('open');
+    d.querySelector('.nav-panel').hidden = true;
+    d.querySelector('.nav-trigger').setAttribute('aria-expanded','false');
+  });
+  const canHover = window.matchMedia('(hover:hover) and (min-width:1024px)').matches;
+  dropdowns.forEach(d=>{
+    const trigger = d.querySelector('.nav-trigger');
+    const panel = d.querySelector('.nav-panel');
+    const open = ()=>{ closeAll(); d.classList.add('open'); panel.hidden=false; trigger.setAttribute('aria-expanded','true'); };
+    // With hover already driving open/close, a click that follows the mouse
+    // onto an already-open panel must not toggle it shut again — so click
+    // only ever opens (redundant while hovering, harmless) rather than
+    // toggling. Without hover (keyboard-only activation), toggle is correct.
+    trigger.onclick = canHover ? open : (()=> d.classList.contains('open') ? closeAll() : open());
+    if(canHover){
+      d.addEventListener('mouseenter', open);
+      d.addEventListener('mouseleave', closeAll);
+    }
+  });
+  document.addEventListener('click', e=>{ if(!nav.contains(e.target)) closeAll(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAll(); });
+}
 let activeCategory = 'all';
 let serverAvailable = false; // Server tab/tools appear only when a backend answers
+buildSiteNav(); // after serverAvailable exists — buildSiteNav() reads it
 
 const searchInput = document.getElementById('tool-search');
 const noResultsMsg = document.getElementById('search-no-results');

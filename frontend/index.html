@@ -111,7 +111,20 @@
 
 <header>
   <div class="wrap header-row">
-    <div class="brand"><span class="dot"></span>Dockbench</div>
+    <a class="brand" href="index.html"><span class="dot"></span>Dockbench</a>
+    <nav class="site-nav" id="site-nav" aria-label="Tools">
+      <a class="nav-link" href="tools/merge-pdf.html">Merge PDF</a>
+      <a class="nav-link" href="tools/split-pdf.html">Split PDF</a>
+      <a class="nav-link" href="tools/make-pdf-smaller.html">Compress PDF</a>
+      <div class="nav-dropdown">
+        <button type="button" class="nav-link nav-trigger" id="nav-trigger-convert" aria-expanded="false" aria-controls="nav-panel-convert">Convert<span class="nav-caret">▾</span></button>
+        <div class="nav-panel" id="nav-panel-convert" hidden></div>
+      </div>
+      <div class="nav-dropdown">
+        <button type="button" class="nav-link nav-trigger" id="nav-trigger-all" aria-expanded="false" aria-controls="nav-panel-all">All tools<span class="nav-caret">▾</span></button>
+        <div class="nav-panel nav-panel-mega" id="nav-panel-all" hidden></div>
+      </div>
+    </nav>
     <div class="header-search"><input type="text" id="tool-search" placeholder="Search 104 tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
     <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
     <button class="install-btn" id="install-btn" title="Install Dockbench as an app on this device">⬇ Install</button>
@@ -195,23 +208,61 @@
   <div class="tools" id="ai-tools"></div>
 </div>
 
-<footer>
-  <div class="wrap">
-    Dockbench is a static, client-side application. PDF and image tools above run on WebAssembly/Canvas in your browser. Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate opt-in backend — see <code>/backend</code> in the project for the self-hosted, open-source API that powers them.
-    Dockbench never checks for one automatically — <button class="small-btn" id="check-backend-btn" style="margin-left:4px;">Have a self-hosted backend? Check for it →</button>
-    <span id="check-backend-status" style="margin-left:8px;font-size:0.85rem;"></span>
-    <br><button class="small-btn" id="license-btn" style="margin-top:8px;">Have a license key? Manage it →</button>
-    <nav class="footer-nav">
+<div class="wrap footer-note">
+  Dockbench is a static, client-side application. PDF and image tools above run on WebAssembly/Canvas in your browser. Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate opt-in backend — see <code>/backend</code> in the project for the self-hosted, open-source API that powers them.
+  Dockbench never checks for one automatically — <button class="small-btn" id="check-backend-btn" style="margin-left:4px;">Have a self-hosted backend? Check for it →</button>
+  <span id="check-backend-status" style="margin-left:8px;font-size:0.85rem;"></span>
+  <br><button class="small-btn" id="license-btn" style="margin-top:8px;">Have a license key? Manage it →</button>
+</div>
+
+<div class="platform-strip"><div class="wrap">
+  <span class="platform-label">Available on</span>
+  <a href="download.html#plat-web">Web</a>
+  <a href="download.html#plat-desktop">Windows</a>
+  <a href="download.html#plat-desktop">macOS</a>
+  <a href="download.html#plat-desktop">Linux</a>
+  <a href="download.html#plat-android">Android</a>
+</div></div>
+
+<footer class="dark-footer">
+  <div class="wrap footer-grid">
+    <div class="footer-col">
+      <h4>Product</h4>
+      <a href="index.html">All 104 tools</a>
+      <a href="tools/merge-pdf.html">Merge PDF</a>
+      <a href="tools/split-pdf.html">Split PDF</a>
+      <a href="tools/make-pdf-smaller.html">Compress PDF</a>
+      <a href="download.html">Download</a>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="guides/index.html">Guides</a>
+      <a href="tools/index.html">All guides</a>
+      <a href="company/security.html">Security</a>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
       <a href="company/about.html">About</a>
       <a href="company/pricing.html">Pricing</a>
       <a href="company/for-business.html">For business</a>
-      <a href="guides/index.html">Guides</a>
       <a href="company/contact.html">Contact</a>
-      <a href="company/security.html">Security</a>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
       <a href="company/privacy.html">Privacy</a>
       <a href="company/terms.html">Terms</a>
       <a href="company/refund.html">Refunds</a>
-    </nav>
+    </div>
+    <div class="footer-col">
+      <h4>Get Dockbench</h4>
+      <a href="download.html#plat-web">Web app</a>
+      <a href="download.html#plat-desktop">Desktop app</a>
+      <a href="download.html#plat-android">Android app</a>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <span class="brand-mini"><span class="dot"></span>Dockbench</span>
+    <span class="footer-fine">PDF, image and video tools that run on your own device.</span>
   </div>
 </footer>
 
