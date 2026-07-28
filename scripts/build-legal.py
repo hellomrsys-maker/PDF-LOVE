@@ -223,7 +223,7 @@ def doc_privacy():
   <h2>2. The short version</h2>
   <p>We do not have a database of users, because we do not have users in the
   usual sense. There is no sign-up, no login, no profile and no analytics.
-  For 97 of our 104 tools your file is read, processed and saved entirely by
+  For 94 of our 104 tools your file is read, processed and saved entirely by
   your own browser and is never transmitted anywhere.</p>
 
   <h2>3. What we never collect</h2>
@@ -353,7 +353,7 @@ def doc_terms():
 
   <h2>2. What the Service actually is</h2>
   <p>{esc(BRAND)} is a set of tools that run on your own device. We are not a
-  file host, a storage provider or a conduit for anyone's content: for 97 of
+  file host, a storage provider or a conduit for anyone's content: for 94 of
   our 104 tools nothing you open ever reaches our servers. We mention this in
   the terms because it decides who is responsible for what.</p>
 

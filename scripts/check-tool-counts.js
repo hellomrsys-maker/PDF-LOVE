@@ -21,16 +21,52 @@ const args = process.argv.slice(2);
 const BASE = args.includes('--url') ? args[args.indexOf('--url') + 1] : 'http://localhost:5599';
 
 // Files that state the split, and the pattern that carries the number.
+//
+// This list was incomplete, and the omission cost something real: index.html,
+// about.html and terms.html all claimed "97 of 104" on-device for weeks —
+// including inside the FAQPage JSON-LD that feeds Google's rich results, and
+// inside the privacy policy, the one document whose whole job is to be exact
+// about which tools touch a server. Anything that states the split belongs
+// here.
 const CLAIMS = [
   'README.md',
   'desktop/README.md',
   'deploy/API.md',
   'deploy/CLOUDFLARE.md',
+  'frontend/index.html',
   'frontend/download.html',
+  'frontend/company/about.html',
   'frontend/company/pricing.html',
   'frontend/company/security.html',
   'frontend/company/privacy.html',
+  'frontend/company/terms.html',
+  'frontend/company/legal.html',
+  'frontend/company/cookies.html',
+  'frontend/company/grievance.html',
+  // The generators, so a wrong number is caught at the source rather than
+  // only in the output it produces.
+  'scripts/build-legal.py',
 ];
+
+// "Ninety-seven of them never send your file anywhere" slipped through for
+// the same reason: the scan only understood digits. Prose counts are still
+// counts.
+const WORD_NUM = (() => {
+  const ones = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
+                'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen',
+                'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen',
+                'nineteen'];
+  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty',
+                'seventy', 'eighty', 'ninety'];
+  const map = new Map();
+  ones.forEach((w, i) => map.set(w, i));
+  tens.forEach((w, t) => {
+    if (!w) return;
+    map.set(w, t * 10);
+    for (let u = 1; u <= 9; u++) map.set(`${w}-${ones[u]}`, t * 10 + u);
+  });
+  return map;
+})();
 
 (async () => {
   const browser = await chromium.launch();
@@ -74,9 +110,13 @@ const CLAIMS = [
     if (!fs.existsSync(file)) continue;
     const text = fs.readFileSync(file, 'utf8');
     text.split('\n').forEach((line, i) => {
-      const ofTotal = line.match(/(\d+)\s+of\s+(\d+)/g) || [];
+      // "97 of the 104 tools" must match as readily as "97 of 104" — the
+      // optional "the" is why the wrong figure in index.html's JSON-LD
+      // survived this check for as long as it did.
+      const OF_TOTAL = /(\d+)\s+of\s+(?:the\s+)?(\d+)/;
+      const ofTotal = line.match(new RegExp(OF_TOTAL, 'g')) || [];
       for (const m of ofTotal) {
-        const [, n, t] = m.match(/(\d+)\s+of\s+(\d+)/);
+        const [, n, t] = m.match(OF_TOTAL);
         if (Number(t) !== counts.total) {
           problems.push(`${rel}:${i + 1} says "${m}" but the app has ${counts.total} tools`);
         } else if (![counts.device, counts.server, counts.total].includes(Number(n))) {
@@ -89,6 +129,28 @@ const CLAIMS = [
       const onDevice = line.match(/(\d+)\s+on-device tools/);
       if (onDevice && Number(onDevice[1]) !== counts.device) {
         problems.push(`${rel}:${i + 1} says "${onDevice[0]}" but the app has ${counts.device}`);
+      }
+
+      // Spelled-out counts, in the shapes that actually occur:
+      //   "Ninety-seven of them"      "Seven of the 104 tools"
+      //   "those seven"               "including the seven that ..."
+      //
+      // "one" is excluded: "every one of the 104 tools" is idiomatic English,
+      // not a claim about how many. Every other number word in these
+      // positions is a count.
+      const words = [...WORD_NUM.keys()].filter(w => w !== 'one').join('|');
+      const spelled = new RegExp(
+        `\\b(${words})\\b\\s+(?:of\\s+them|of\\s+the\\s+\\d+\\s+tools)|` +
+        `\\bthose\\s+(${words})\\b|` +
+        `\\bthe\\s+(${words})\\s+that\\b`, 'gi');
+      for (const m of line.matchAll(spelled)) {
+        const word = (m[1] || m[2] || m[3]).toLowerCase();
+        const n = WORD_NUM.get(word);
+        if (n === undefined) continue;
+        if (![counts.device, counts.server, counts.total].includes(n)) {
+          problems.push(`${rel}:${i + 1} says "${m[0].trim()}" but the split is ` +
+                        `${counts.device} on-device / ${counts.server} server-assisted`);
+        }
       }
     });
   }

@@ -83,7 +83,7 @@
   },
   "Scan Document": {
     "mode": "skip",
-    "reason": "needs a camera or an interactive corner drag; covered by scripts/scanner-test.js"
+    "reason": "needs a camera and an interactive corner drag. NOT otherwise covered: scripts/scanner-test.js exercises only the corner-detection maths in vendor/docscan.js and is wired into no workflow."
   },
   "Compare PDF": {
     "input": [
@@ -320,7 +320,7 @@
   },
   "Remove Background": {
     "mode": "skip",
-    "reason": "downloads a ~44 MB model; covered separately"
+    "reason": "downloads a ~44 MB model on first use. NOT covered anywhere else — this tool has no automated test of any kind."
   },
   "Remove Photo Metadata (EXIF)": {
     "input": "photo-with-exif.jpg",

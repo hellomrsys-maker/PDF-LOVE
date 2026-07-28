@@ -2,7 +2,7 @@
 
 A native app for Windows, macOS and Linux that bundles the engine, so
 **every one of the 104 tools runs on the user's own machine** — including
-the seven that the web app can only offer when someone has stood up a
+the ten that the web app can only offer when someone has stood up a
 server.
 
 ## Why this exists
