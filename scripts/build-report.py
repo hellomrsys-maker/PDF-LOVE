@@ -217,6 +217,8 @@ def main():
                 "python scripts/capacity_shape.py          # what memory tracks\n"
                 "python scripts/capacity_test.py --ladder 0.5,1,3\n"
                 "python scripts/check-canonical.py         # canonical host resolves\n"
+                "python scripts/build-legal.py             # legal pages, one source of truth\n"
+                "python scripts/check-legal.py             # no placeholders left in them\n"
                 "node scripts/check-tool-counts.js         # published counts are true\n"
                 "python scripts/build-report.py            # this file\n"
                 "```\n")

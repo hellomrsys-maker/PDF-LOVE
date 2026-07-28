@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — PDF Love</title>
-<meta name="description" content="What PDF Love collects — and, for almost everything, why there is nothing to collect.">
+<meta name="description" content="PDF Love collects nothing: no accounts, no analytics, no uploads. What advertising partners receive, and your rights under DPDP, GDPR and CCPA.">
 <link rel="canonical" href="https://pdflove.co.in/company/privacy.html">
 <link href="../vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company.css" rel="stylesheet">
@@ -14,86 +14,127 @@
 <main><div class="wrap">
 
   <h1>Privacy Policy</h1>
-  <p class="meta">Last updated: [DATE]</p>
+  <p class="lede">We do not collect your files, your identity, or your behaviour. This page explains exactly what that means, and is candid about the one place third parties are involved.</p>
+  <p class="meta">Effective 2026-07-28. Operated by [TO BE COMPLETED: legal_name],
+  [TO BE COMPLETED: city], [TO BE COMPLETED: state], India.</p>
 
-  <div class="placeholder">
-  <strong>Before publishing:</strong> replace every <code>[BRACKETED]</code>
-  value on this page with your real details. Search the whole
-  <code>frontend/company/</code> folder for <code>[</code> to find them all.
-  App stores and payment processors reject listings whose legal pages carry
-  placeholder text.
-</div>
 
-  <h2>The short version</h2>
-  <p>PDF Love processes your files entirely on your own device. For the vast
-  majority of tools nothing about your files — not their contents, not their
-  names, not even the fact that you used a tool — is ever sent anywhere. There
-  is no account system for individuals, so there is no login, no email address
-  and no personal profile for us to collect in the first place.</p>
+  <h2>1. Who is responsible for your data</h2>
+  <p>[TO BE COMPLETED: legal_name], [TO BE COMPLETED: city], [TO BE COMPLETED: state], India — the
+  "Data Fiduciary" under India's Digital Personal Data Protection Act, 2023,
+  and the "controller" under the UK and EU GDPR. Contact:
+  <a href="mailto:privacy@pdflove.co.in">privacy@pdflove.co.in</a>.</p>
 
-  <h2>What we do not collect</h2>
+  <h2>2. The short version</h2>
+  <p>We do not have a database of users, because we do not have users in the
+  usual sense. There is no sign-up, no login, no profile and no analytics.
+  For 97 of our 104 tools your file is read, processed and saved entirely by
+  your own browser and is never transmitted anywhere.</p>
+
+  <h2>3. What we never collect</h2>
   <ul>
-    <li>File contents or filenames processed by on-device tools — merge, split,
-    compress, OCR, encrypt, redact, and the rest of the 94 on-device tools</li>
-    <li>Analytics, trackers or advertising identifiers, by default</li>
-    <li>Any account information for individual users — there is no login</li>
-    <li>Location data, contacts or device identifiers</li>
+    <li>Your files, their names, their contents or their metadata.</li>
+    <li>Your name, email address or phone number — we never ask.</li>
+    <li>Analytics, behavioural data, session recordings or heatmaps.</li>
+    <li>Any identifier we could use to recognise you on a later visit.</li>
   </ul>
 
-  <h2>What optional features collect, only if you use them</h2>
+  <h2>4. What stays on your device</h2>
+  <p>A few small values live in your browser's local storage so the app is
+  useful across visits. They never leave your device and we cannot read them.
+  Clearing your browser's site data removes them permanently. The full list is
+  in the <a href="cookies.html">Cookies &amp; Advertising</a> page.</p>
+
+  <h2>5. What other companies receive, and exactly when</h2>
+  <p>This is the complete list. A test in our build pipeline fails if any host
+  appears in our code that is not declared here, so this table cannot quietly
+  go out of date.</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Who</th><th>When</th><th>What they get</th></tr></thead>
+    <tbody>
+      <tr><td>Advertising partners</td><td>On information pages only — never in the tool, never while a file is being processed</td><td>Your IP address and browser user-agent, because any request over the internet reveals those, plus cookies they set themselves. See section 6.</td></tr>
+      <tr><td>Exchange-rate provider</td><td>Only if you open the Currency Converter</td><td>Nothing but the request itself.</td></tr>
+      <tr><td>AI model host</td><td>First use of an on-device AI tool, once</td><td>Nothing. The model downloads, caches, and then runs offline forever.</td></tr>
+      <tr><td>Optional backend</td><td>Only if you use one of the 10 server-assisted tools</td><td>The file you deliberately submitted. These are clearly labelled in the interface.</td></tr>
+      <tr><td>Cloudflare (our host)</td><td>Every page load</td><td>Standard server logs — IP, time, page. Unavoidable for any website that exists.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>6. Advertising — what we do and honestly cannot do</h2>
+  <p>PDF Love is free, and adverts on the information pages are how it
+  stays free. We want to be precise about this, because vague privacy claims
+  are worse than none.</p>
+  <p><strong>What we guarantee, and test:</strong></p>
   <ul>
-    <li><strong>Server-assisted tools</strong> (Office→PDF full fidelity, deep
-    compression, PDF/A, background removal, chat-with-PDF): these appear only
-    when a backend is available, and send only the file you explicitly submit
-    to that specific tool — to a backend operated by us or self-hosted by you.
-    That backend logs no file contents or filenames, and deletes per-request
-    temporary files immediately after the response is built.</li>
-    <li><strong>Currency converter</strong>: fetches live exchange rates from a
-    third-party provider. No file or personal data is sent, though the request
-    itself reveals your IP address to that provider, as any network request
-    would.</li>
-    <li><strong>On-device AI features</strong> (background removal, summarize,
-    translate, voice-to-text, image captioning): the models download once from
-    their public host and are cached in your browser. After that first
-    download these run fully offline.</li>
-    <li><strong>Advertising</strong>, if enabled by whoever operates this
-    deployment: off by default. If an operator turns it on, that ad network's
-    own privacy policy governs ad delivery. Note that <em>we</em> add no
-    tracking of our own alongside it — there is no PDF Love analytics, no
-    telemetry, and no platform-detection ping. An ad network already sees
-    your platform, browser and IP when it serves an ad, so there is nothing
-    for us to add.</li>
+    <li>Adverts never appear inside the tool workspace.</li>
+    <li>No advert script is loaded, and no request of any kind is made, between
+    the moment you choose a file and the moment your result is delivered.</li>
+    <li>We pass no information about you to any advertising partner. We have
+    none to pass.</li>
+    <li>We do not sell or share personal information, in the sense the
+    California CCPA/CPRA gives those words.</li>
   </ul>
+  <p><strong>What we cannot honestly promise:</strong> an advertising partner
+  whose advert is displayed on a page will see your IP address and browser
+  user-agent, and will generally set its own cookie. That is a property of how
+  the web works, not a choice we make, and no wording on this page could make
+  it untrue. Where you live decides what happens next:</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Where you are</th><th>What applies</th></tr></thead>
+    <tbody>
+      <tr><td>EU, EEA, UK, Switzerland</td><td>No advertising cookie is set until you agree through the consent banner. Refuse, and you get non-personalised adverts or none. You can change your mind at any time.</td></tr>
+      <tr><td>California</td><td>We do not sell or share personal information. We honour the Global Privacy Control signal.</td></tr>
+      <tr><td>India</td><td>Processing is limited to what advertising needs; your DPDP rights in section 7 apply.</td></tr>
+      <tr><td>Everywhere else</td><td>Contextual advertising — matched to the page you are reading, not to you.</td></tr>
+    </tbody>
+  </table>
+  </div>
 
-  <h2>Business API customers</h2>
-  <p>If you hold an API key we necessarily store the account details you gave
-  us — billing contact, company name — and a count of requests made against
-  your key, so we can invoice you and enforce limits. We do not log the
-  contents or names of files submitted through the API.</p>
+  <h2>7. Your rights</h2>
+  <p>You have these rights regardless of where you live; we do not ration them
+  by geography. Write to <a href="mailto:privacy@pdflove.co.in">privacy@pdflove.co.in</a> and we will answer within
+  30 days, and within 15 days for grievances filed under Indian rules.</p>
+  <ul>
+    <li><strong>Know</strong> what we hold about you and why.</li>
+    <li><strong>Correct</strong> anything inaccurate.</li>
+    <li><strong>Erase</strong> it.</li>
+    <li><strong>Object to, or restrict,</strong> processing.</li>
+    <li><strong>Withdraw consent</strong> you previously gave, as easily as you gave it.</li>
+    <li><strong>Portability</strong> — a copy in a machine-readable form.</li>
+    <li><strong>Nominate</strong> someone to exercise your rights if you die or become incapacitated (India, DPDP Act s.14).</li>
+    <li><strong>Complain</strong> — see section 10.</li>
+  </ul>
+  <p>In practice the honest answer to most of these requests will be that we
+  hold nothing about you. We will say so plainly, and explain how to verify it,
+  rather than sending a form.</p>
 
-  <h2>Self-hosted and enterprise deployments</h2>
-  <p>If you use a self-hosted or enterprise deployment with its own login or
-  SSO, that operator's privacy policy governs your account and any audit logs
-  they keep. This document describes the public product only.</p>
+  <h2>8. Children</h2>
+  <p>PDF Love is not directed at children. India's DPDP Act sets the
+  highest bar of the laws that apply to us — verifiable parental consent for
+  anyone under 18 — and we meet it the only way that is genuinely reliable: we
+  collect no personal data from anyone, of any age. We do not knowingly process
+  a child's data and we do not profile or target advertising at children.</p>
 
-  <h2>Your rights</h2>
-  <p>Where GDPR, UK GDPR or CCPA applies you have rights of access, correction,
-  deletion and portability over personal data we hold. For individual users of
-  the free app we hold none, so there is generally nothing to return. API
-  customers can exercise these rights via
-  <a href="mailto:[PRIVACY@YOURDOMAIN]">[PRIVACY@YOURDOMAIN]</a>.</p>
+  <h2>9. Retention and international transfer</h2>
+  <p>We retain nothing, so there is nothing to delete on a schedule and nothing
+  to transfer across a border. Our host serves the site from a global network,
+  which means the page itself may be delivered from a server near you — but no
+  personal data of yours travels with it, because none was collected.</p>
 
-  <h2>Children</h2>
-  <p>PDF Love is not directed at children under [13/16] and we knowingly
-  collect no personal data from them.</p>
+  <h2>10. Complaints</h2>
+  <p>Contact our Grievance Officer first — details and timelines on the
+  <a href="grievance.html">Grievance Redressal</a> page. If you are not
+  satisfied you may escalate to the Data Protection Board of India, or, in the
+  EEA or UK, to your national supervisory authority. You do not need our
+  permission to do either.</p>
 
-  <h2>Changes</h2>
-  <p>If this deployment's data practices change, this page is updated and the
-  date above changes with it.</p>
+  <h2>11. Changes</h2>
+  <p>If this policy changes materially we will update the effective date above
+  and describe what changed. We will not quietly broaden what we collect.</p>
 
-  <h2>Contact</h2>
-  <p><a href="mailto:[PRIVACY@YOURDOMAIN]">[PRIVACY@YOURDOMAIN]</a> — or see
-  the <a href="contact.html">contact page</a>.</p>
 </div></main>
 <footer class="site-footer"><div class="wrap">
   <nav>
@@ -103,15 +144,17 @@
     <a href="../guides/index.html">Guides</a>
     <a href="about.html">About</a>
     <a href="pricing.html">Pricing</a>
-    <a href="for-business.html">For business</a>
     <a href="contact.html">Contact</a>
-    <a href="security.html">Security</a>
+    <a href="legal.html">Legal</a>
     <a href="privacy.html">Privacy</a>
     <a href="terms.html">Terms</a>
+    <a href="cookies.html">Cookies</a>
+    <a href="grievance.html">Grievance</a>
+    <a href="security.html">Security</a>
     <a href="refund.html">Refunds</a>
   </nav>
   <p class="fine">PDF Love — PDF, image and video tools that run on your own device.<br>
-  &copy; <span id="yr">2026</span> [COMPANY LEGAL NAME]. All rights reserved.</p>
+  &copy; <span id="yr">2026</span> [TO BE COMPLETED: legal_name]. All rights reserved.</p>
 </div></footer>
 <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
 </body>

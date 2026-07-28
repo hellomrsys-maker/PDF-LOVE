@@ -327,8 +327,11 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
+      <a href="../company/legal.html">Legal, in plain English</a>
       <a href="../company/privacy.html">Privacy</a>
       <a href="../company/terms.html">Terms</a>
+      <a href="../company/cookies.html">Cookies &amp; ads</a>
+      <a href="../company/grievance.html">Grievance</a>
       <a href="../company/refund.html">Refunds</a>
     </div>
     <div class="footer-col">

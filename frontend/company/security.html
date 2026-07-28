@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Security &amp; the on-device guarantee — PDF Love</title>
-<meta name="description" content="PDF Love's security model, the on-device guarantee, and how to report a vulnerability.">
+<meta name="description" content="PDF Love&#x27;s security model: why there is no server to breach, every request the app can make, and how to report a vulnerability.">
 <link rel="canonical" href="https://pdflove.co.in/company/security.html">
 <link href="../vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company.css" rel="stylesheet">
@@ -14,87 +14,83 @@
 <main><div class="wrap">
 
   <h1>Security</h1>
-  <p class="lede">The architecture is the security story: for 94 of 104 tools
-  there is no server to breach, because your file never reaches one.</p>
+  <p class="lede">The architecture is the security story: for 94 of 104 tools there is no server to breach, because your file never reaches one.</p>
+  <p class="meta">Effective 2026-07-28. Operated by [TO BE COMPLETED: legal_name],
+  [TO BE COMPLETED: city], [TO BE COMPLETED: state], India.</p>
+
 
   <h2>The on-device guarantee, stated precisely</h2>
   <p>On-device tools read your file with the browser's File API, process it in
   page memory, and hand the result to the browser's download mechanism. No
-  network request carries file contents or filenames. This is verifiable:
-  pick a file and watch the Network tab — nothing fires while it is being
+  network request carries file contents or filenames. This is verifiable: pick
+  a file and watch the Network tab — nothing fires while it is being
   processed.</p>
-  <p>We state it this way deliberately. "We don't store your files" is a
-  promise about someone's conduct. "Your file is never transmitted" is a
-  property of the system that you can check for yourself.</p>
+  <p>We word it this way deliberately. "We don't store your files" is a promise
+  about someone's conduct. "Your file is never transmitted" is a property of
+  the system that you can check for yourself, and that an automated test checks
+  on every deploy.</p>
 
   <h2>Every request the app can make</h2>
-  <p>This is the complete list, and it is enforced: a CI check fails the
-  build if any host appears in the code that is not declared here. Adding
-  one has to be a deliberate, reviewed act, so this table cannot quietly go
-  out of date.</p>
+  <p>This is the complete list, and it is enforced: a build check fails if any
+  host appears in the code that is not declared here.</p>
   <div class="table-scroll">
   <table>
     <thead><tr><th>Request</th><th>When</th><th>What it carries</th></tr></thead>
     <tbody>
-      <tr><td>Ad network</td><td>Only if ads are enabled <em>and</em> you are online</td><td>Whatever that network collects — see its own policy. Off by default.</td></tr>
+      <tr><td>Advertising</td><td>Information pages only, never in a tool and never during processing</td><td>Your IP and user-agent, plus the partner's own cookies. See <a href="cookies.html">Cookies &amp; Advertising</a>.</td></tr>
       <tr><td>Desktop update check</td><td>Desktop app launch</td><td>A version string out; a signed manifest back. No telemetry.</td></tr>
-      <tr><td>Exchange rates</td><td>Only when you open Currency Converter</td><td>Nothing but the request itself.</td></tr>
+      <tr><td>Exchange rates</td><td>Only when you open the Currency Converter</td><td>Nothing but the request itself.</td></tr>
       <tr><td>AI model download</td><td>First use of an on-device AI tool</td><td>Nothing. Cached afterwards, then fully offline.</td></tr>
-      <tr><td>Server-assisted tools</td><td>Only if you use one of the 7, and only with a backend configured</td><td>The file you explicitly submitted, to a backend you or we run.</td></tr>
+      <tr><td>Server-assisted tools</td><td>Only if you use one of the 10, and only with a backend configured</td><td>The file you explicitly submitted, to a backend you or we run.</td></tr>
     </tbody>
   </table>
   </div>
   <p><strong>PDF Love itself sends nothing.</strong> There is no analytics,
-  no telemetry, and no "which platform is this user on" ping — not even for
-  advertising. An ad network already sees the platform, user agent and IP
-  when it serves an ad, so there is nothing for us to add and no reason to
-  weaken the claim.</p>
+  no telemetry and no "which platform is this user on" ping — not even for
+  advertising. An advert network already sees the user-agent and IP when it
+  serves an advert, so there is nothing for us to add and no reason to weaken
+  the claim.</p>
 
-  <h2>Where the on-device guarantee doesn't apply</h2>
+  <h2>Where the guarantee does not apply</h2>
   <p>Honesty matters more than a clean claim:</p>
   <ul>
     <li><strong>Server-assisted tools</strong> (10 of 104) do transmit the file
     you submit. They appear only when a backend is reachable and are labelled
-    in the UI. That backend logs no file contents or filenames, and deletes
-    per-request temporary files as soon as the response is built. In the
-    desktop app that "backend" is on your own machine, bound to loopback.</li>
+    in the interface. That backend logs no file contents or filenames and
+    deletes per-request temporary files as soon as the response is built. In
+    the desktop app that "backend" is on your own machine, bound to loopback.</li>
     <li><strong>Currency converter</strong> requests live rates. No file or
-    personal data is sent; as with any network request, your IP is visible to
-    that provider.</li>
+    personal data is sent; as with any request, your IP is visible to that
+    provider.</li>
     <li><strong>On-device AI models</strong> download once from a public model
     host, then run offline from cache.</li>
   </ul>
 
   <h2>Application security</h2>
   <ul>
-    <li>Strict Content-Security-Policy; no third-party scripts and no CDN
-    dependency — every library is served from the same origin.</li>
+    <li>Strict Content-Security-Policy. Every library is served from our own
+    origin; the tool pages depend on no third-party script.</li>
     <li><code>object-src 'none'</code>, <code>frame-ancestors 'none'</code>,
     <code>X-Frame-Options: DENY</code>, <code>nosniff</code>.</li>
     <li>Encryption uses qpdf compiled to WebAssembly — real AES-256, not an
     obfuscation trick.</li>
-    <li>The backend runs as a non-root user with <code>no-new-privileges</code>,
-    per-endpoint rate limits, and a request size cap.</li>
+    <li>The optional backend runs as a non-root user with
+    <code>no-new-privileges</code>, per-endpoint rate limits and a request size cap.</li>
     <li>Page rendering is capped at 8192px to blunt decompression-bomb inputs,
     and heavy tools estimate memory before starting.</li>
   </ul>
 
   <h2>Reporting a vulnerability</h2>
-  <div class="placeholder">
-  <strong>Before publishing:</strong> replace every <code>[BRACKETED]</code>
-  value on this page with your real details. Search the whole
-  <code>frontend/company/</code> folder for <code>[</code> to find them all.
-  App stores and payment processors reject listings whose legal pages carry
-  placeholder text.
-</div>
-  <p>Email <strong><a href="mailto:[SECURITY@YOURDOMAIN]">[SECURITY@YOURDOMAIN]</a></strong>.
-  Please include enough detail to reproduce. We ask that you give us a
-  reasonable window to ship a fix before publishing.</p>
-  <p>In return: we'll acknowledge within [N] business days, keep you updated,
-  credit you if you'd like, and we will not pursue legal action over good-faith
-  research that respects user privacy and doesn't degrade the service.</p>
-  <p>Out of scope: reports generated solely by automated scanners with no
-  demonstrated impact, and anything requiring an already-compromised device.</p>
+  <p>Email <a href="mailto:security@pdflove.co.in">security@pdflove.co.in</a> with enough detail to reproduce. Please
+  give us a reasonable window to ship a fix before publishing.</p>
+  <p>In return: we will acknowledge within 3 business days, keep you updated,
+  credit you if you would like, and we will not pursue legal action over
+  good-faith research that respects user privacy and does not degrade the
+  service for others.</p>
+  <p>Out of scope: reports produced solely by automated scanners with no
+  demonstrated impact, and anything that requires an already-compromised
+  device.</p>
+
 </div></main>
 <footer class="site-footer"><div class="wrap">
   <nav>
@@ -104,15 +100,17 @@
     <a href="../guides/index.html">Guides</a>
     <a href="about.html">About</a>
     <a href="pricing.html">Pricing</a>
-    <a href="for-business.html">For business</a>
     <a href="contact.html">Contact</a>
-    <a href="security.html">Security</a>
+    <a href="legal.html">Legal</a>
     <a href="privacy.html">Privacy</a>
     <a href="terms.html">Terms</a>
+    <a href="cookies.html">Cookies</a>
+    <a href="grievance.html">Grievance</a>
+    <a href="security.html">Security</a>
     <a href="refund.html">Refunds</a>
   </nav>
   <p class="fine">PDF Love — PDF, image and video tools that run on your own device.<br>
-  &copy; <span id="yr">2026</span> [COMPANY LEGAL NAME]. All rights reserved.</p>
+  &copy; <span id="yr">2026</span> [TO BE COMPLETED: legal_name]. All rights reserved.</p>
 </div></footer>
 <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
 </body>

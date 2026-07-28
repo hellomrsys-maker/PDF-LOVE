@@ -49,6 +49,8 @@ const ALLOWED = {
   // --- links the user clicks, never fetched ---------------------------
   'github.com':      'Release download links on download.html.',
   'play.google.com': 'Play Store link on download.html.',
+  'optout.aboutads.info': 'Industry ad opt-out, linked from company/cookies.html so a visitor can refuse advertising cookies. A link, not a request.',
+  'youronlinechoices.eu': 'European equivalent of the above, same page, same reasoning.',
   'releases.pdflove.co.in': 'Desktop updater manifest. Desktop app only; a version string out, a signed manifest back.',
 };
 

@@ -151,6 +151,20 @@ jobs:
         # catch it — emitting the tag and resolving it are different things —
         # so check it explicitly before a deploy rather than after indexing.
         run: python3 scripts/check-canonical.py
+      - name: Legal pages are regenerable and carry no placeholders
+        # A privacy policy reading "[COMPANY LEGAL NAME]" gets a listing
+        # rejected by app stores and ad networks, and tells any visitor who
+        # reads it that nobody checked. Same no-op-regeneration rule as the
+        # SEO pages: if regenerating changes anything, the committed pages
+        # have drifted from the generator.
+        run: |
+          python3 scripts/build-legal.py
+          if ! git diff --quiet -- frontend/company; then
+            echo "Generated legal pages are out of date. Run: python scripts/build-legal.py"
+            git diff --stat -- frontend/company
+            exit 1
+          fi
+          python3 scripts/check-legal.py
       - name: Manifest icons and screenshots exist with the declared sizes
         run: |
           python3 -m pip install --quiet pillow
