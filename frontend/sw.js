@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dockbench-v6';
+const CACHE_NAME = 'dockbench-v7';
 
 // The app shell is served network-first (see the fetch handler): these are
 // the files that change when the app is updated, so a cached copy must
@@ -7,6 +7,13 @@ const SHELL_PATHS = ['/', '/index.html', '/manifest.json'];
 
 const APP_SHELL = [
   './', './index.html', './manifest.json',
+  // The app's logic and styling, extracted out of index.html's inline
+  // <script>/<style> so the same files can also power the standalone
+  // /tools/*.html pages. Without app.js nothing works, same tier as
+  // index.html itself.
+  './app.js',
+  './app.css',
+  './icons/tools.svg',
   // Company pages — precached so About/Pricing/Privacy/Terms stay reachable
   // in an installed, offline app (app stores expect the legal pages to work).
   './download.html',

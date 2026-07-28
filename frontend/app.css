@@ -8,6 +8,18 @@
     --sage:#6B7C6E;
     --line:#D9D3C4;
     --ok:#4A7856;
+    /* Per-category tool-card icon colours. Reuses existing tokens where a
+       category already has one (PDF=copper, Security=ok, Video=copper-deep). */
+    --c-pdf:var(--copper);
+    --c-convert:#3E5C76;
+    --c-edit:#7A5C7E;
+    --c-security:var(--ok);
+    --c-image:#B08968;
+    --c-video:var(--copper-deep);
+    --c-util:#566B7A;
+    --c-finance:#A98A3F;
+    --c-ai:#6B5CA5;
+    --c-server:#6E6E6E;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -132,7 +144,21 @@
   }
   .tool-card:hover{border-color:var(--copper);transform:translateY(-2px);}
   .tool-card:focus-visible{outline:2px solid var(--copper);outline-offset:2px;}
-  .tool-card .icon{font-size:1.3rem;margin-bottom:10px;display:block;}
+  .tool-card .icon{margin-bottom:10px;display:block;color:var(--c-util);}
+  .tool-card .icon svg{width:28px;height:28px;display:block;}
+  /* Category colour per card, extending the existing palette rather than
+     replacing it — the glyph itself stays currentColor inside tools.svg. */
+  .tool-card[data-cat="pdf-tools"] .icon{color:var(--c-pdf);}
+  .tool-card[data-cat="convert-tools"] .icon{color:var(--c-convert);}
+  .tool-card[data-cat="edit-tools"] .icon{color:var(--c-edit);}
+  .tool-card[data-cat="security-tools"] .icon{color:var(--c-security);}
+  .tool-card[data-cat="img-tools"] .icon{color:var(--c-image);}
+  .tool-card[data-cat="video-tools"] .icon{color:var(--c-video);}
+  .tool-card[data-cat="api-tools"] .icon{color:var(--c-server);}
+  .tool-card[data-cat="text-tools"] .icon{color:var(--c-util);}
+  .tool-card[data-cat="utility-tools"] .icon{color:var(--c-util);}
+  .tool-card[data-cat="finance-tools"] .icon{color:var(--c-finance);}
+  .tool-card[data-cat="ai-tools"] .icon{color:var(--c-ai);}
   .tool-card .name{font-weight:600;font-size:0.95rem;margin-bottom:4px;}
   .tool-card .desc{font-size:0.8rem;color:var(--ink-soft);}
   .tool-card .loc{
@@ -339,6 +365,8 @@
     :root{
       --paper:#181A17; --paper-raised:#22251F; --ink:#ECE8DC; --ink-soft:#A8AD9F;
       --copper:#D07E4C; --copper-deep:#E0925F; --sage:#8B977F; --line:#3A3E35; --ok:#7FB78F;
+      --c-convert:#6E93B5; --c-edit:#B08AB4; --c-image:#D2AE8C;
+      --c-util:#8AA0AF; --c-finance:#D4B563; --c-ai:#9E8FCB; --c-server:#9B9B9B;
     }
     header{background:rgba(24,26,23,0.92);}
     .search-bar-wrap{background:var(--paper);}
