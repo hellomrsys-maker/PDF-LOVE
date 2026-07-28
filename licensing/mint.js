@@ -8,7 +8,7 @@
  *   node licensing/mint.js --tier=offline-pro --licensee="Springfield Library" [--seats=50] [--expires=2027-12-31]
  *
  * The output is the license key string to hand to the buyer. They paste it
- * into Dockbench's "Enter a license key" panel, which verifies it entirely
+ * into PDF Love's "Enter a license key" panel, which verifies it entirely
  * offline via the public key already embedded in the app — no server
  * round-trip, ever, on either side.
  */

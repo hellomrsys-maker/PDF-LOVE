@@ -20,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 
 const FRONTEND = path.join(__dirname, '..', 'frontend');
-const SITE = 'https://dockbench.app';
+const SITE = 'https://pdflove.co.in';
 
 // Google truncates around these; outside the range is a rendering problem,
 // not a ranking one, but it costs click-through either way.

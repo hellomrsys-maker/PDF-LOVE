@@ -4,7 +4,7 @@
  * no third-party request on load. */
 window.DOCKBENCH_RELEASES = {
   "play": {
-    "url": "https://play.google.com/store/apps/details?id=app.dockbench.twa"
+    "url": "https://play.google.com/store/apps/details?id=in.co.pdflove"
   },
   "windows_msi": {
     "url": "https://github.com/hellomrsys-maker/Dockbench/releases/latest"

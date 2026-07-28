@@ -37,9 +37,9 @@ OUT_DIR = os.path.join(FRONTEND, "tools")
 # real copy of the page lives somewhere unreachable, which is worse for
 # ranking than having no canonical at all — so this must match the host the
 # site is actually served from. Override when deploying elsewhere:
-#     SITE_ORIGIN=https://dockbench.example.workers.dev python scripts/build-seo.py
+#     SITE_ORIGIN=https://pdflove.example.workers.dev python scripts/build-seo.py
 # scripts/check-canonical.py verifies the configured host really answers.
-SITE = os.environ.get("SITE_ORIGIN", "https://dockbench.app").rstrip("/")
+SITE = os.environ.get("SITE_ORIGIN", "https://pdflove.co.in").rstrip("/")
 TODAY = date.today().isoformat()
 
 
@@ -201,7 +201,7 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": [
-            {"@type": "ListItem", "position": 1, "name": "Dockbench", "item": SITE + "/"},
+            {"@type": "ListItem", "position": 1, "name": "PDF Love", "item": SITE + "/"},
             {"@type": "ListItem", "position": 2, "name": "Tools", "item": SITE + "/tools/"},
             {"@type": "ListItem", "position": 3, "name": h1, "item": canonical},
         ],
@@ -248,7 +248,7 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
 <body>
 <header>
   <div class="wrap header-row">
-    <a class="brand" href="index.html"><span class="dot"></span>Dockbench</a>
+    <a class="brand" href="index.html"><span class="dot"></span>PDF Love</a>
     <nav class="site-nav" id="site-nav" aria-label="Tools">
       <a class="nav-link" href="tools/merge-pdf.html">Merge PDF</a>
       <a class="nav-link" href="tools/split-pdf.html">Split PDF</a>
@@ -332,14 +332,14 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
       <a href="../company/refund.html">Refunds</a>
     </div>
     <div class="footer-col">
-      <h4>Get Dockbench</h4>
+      <h4>Get PDF Love</h4>
       <a href="../download.html#plat-web">Web app</a>
       <a href="../download.html#plat-desktop">Desktop app</a>
       <a href="../download.html#plat-android">Android app</a>
     </div>
   </div>
   <div class="wrap footer-bottom">
-    <span class="brand-mini"><span class="dot"></span>Dockbench</span>
+    <span class="brand-mini"><span class="dot"></span>PDF Love</span>
     <span class="footer-fine">PDF, image and video tools that run on your own device.</span>
   </div>
 </footer>
@@ -362,7 +362,7 @@ def build_pairs(index):
         s_name, s_desc = FORMATS[src]
         d_name, d_desc = FORMATS[dst]
         slug = f"{src}-to-{dst}"
-        title = f"{s_name} to {d_name} — free, no upload | Dockbench"
+        title = f"{s_name} to {d_name} — free, no upload | PDF Love"
         h1 = f"Convert {s_name} to {d_name}"
         desc = f"Convert {s_name} to {d_name} free in your browser. No upload, no account, no watermark. {extra}"
         if len(desc) > 160:
@@ -413,9 +413,9 @@ def build_tools(index, tool_names):
         # Device)"). Trim the parenthetical for the title so it still fits
         # what search engines render, while the h1 keeps the full name.
         short = re.sub(r"\s*\([^)]*\)", "", name).strip()
-        title = f"{short} — free, on-device | Dockbench"
+        title = f"{short} — free, on-device | PDF Love"
         if len(title) > 68:
-            title = f"{short[:52].rstrip()} — free | Dockbench"
+            title = f"{short[:52].rstrip()} — free | PDF Love"
         desc = (f"{name}, free in your browser. Runs on your own device — no upload, "
                 f"no account, no daily limit. Works offline.")
         h1 = name
@@ -449,7 +449,7 @@ def build_tools(index, tool_names):
 def build_questions(index):
     pages = []
     for slug, question, tool, answer in QUESTIONS:
-        title = f"{question} | Dockbench"
+        title = f"{question} | PDF Love"
         desc = f"{answer} Free, in your browser, with nothing uploaded."
         body = f"""
   <h2>The short answer</h2>
@@ -515,8 +515,8 @@ def build_index(index):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>All tools and guides | Dockbench</title>
-<meta name="description" content="Every Dockbench tool and conversion, with a guide for each. Free, on-device, no upload.">
+<title>All tools and guides | PDF Love</title>
+<meta name="description" content="Every PDF Love tool and conversion, with a guide for each. Free, on-device, no upload.">
 <link rel="canonical" href="{SITE}/tools/">
 <link href="../vendor/fonts/fonts.css" rel="stylesheet">
 <link href="../company/company.css" rel="stylesheet">
@@ -524,7 +524,7 @@ def build_index(index):
 </head>
 <body>
 <header><div class="wrap header-row">
-  <a class="brand" href="../index.html"><span class="dot"></span>Dockbench</a>
+  <a class="brand" href="../index.html"><span class="dot"></span>PDF Love</a>
   <nav class="site-nav" aria-label="Tools">
     <a class="nav-link" href="merge-pdf.html">Merge PDF</a>
     <a class="nav-link" href="split-pdf.html">Split PDF</a>
@@ -534,7 +534,7 @@ def build_index(index):
 <main><div class="wrap">
   <h1>Every tool, and how to use it</h1>
   <p class="lede">{len(index)} pages covering every conversion and tool in
-  Dockbench. All of them run on your own device.</p>
+  PDF Love. All of them run on your own device.</p>
   {sections}
 </div></main>
 <footer class="site-footer"><div class="wrap">

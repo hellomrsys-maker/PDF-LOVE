@@ -1,4 +1,4 @@
-package app.dockbench;
+package in.co.pdflove;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -24,7 +24,7 @@ import androidx.core.content.ContextCompat;
 import androidx.webkit.WebViewAssetLoader;
 
 /**
- * Hosts the Dockbench web app entirely from assets bundled in the APK.
+ * Hosts the PDF Love web app entirely from assets bundled in the APK.
  *
  * The app is served through {@link WebViewAssetLoader} rather than a
  * {@code file://} URL. That matters more than it looks: assets are handed to

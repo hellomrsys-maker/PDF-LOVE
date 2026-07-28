@@ -10,7 +10,7 @@
       "identifier": "shell:allow-execute",
       "allow": [
         {
-          "name": "dockbench-engine",
+          "name": "pdflove-engine",
           "sidecar": true,
           "args": false
         }

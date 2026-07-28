@@ -6,8 +6,8 @@ Run against the sidecar unpacked from the built AppImage, not the one in
 the source tree — the point is to test the artifact a user downloads,
 including that it was bundled with its compiled extensions intact.
 
-    python scripts/installed-app-test.py path/to/dockbench-engine
-    python scripts/installed-app-test.py path/to/dockbench-engine --offline
+    python scripts/installed-app-test.py path/to/pdflove-engine
+    python scripts/installed-app-test.py path/to/pdflove-engine --offline
 
 With --offline the script additionally asserts it really has no route out,
 so a pass cannot be an accident of the sandbox still having network. Meant

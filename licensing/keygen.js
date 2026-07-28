@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates the ECDSA P-256 keypair for Dockbench's offline license system.
+ * Generates the ECDSA P-256 keypair for PDF Love's offline license system.
  * Run this ONCE, on your own machine, entirely offline if you like — it
  * touches no network.
  *

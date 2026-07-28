@@ -466,14 +466,14 @@
     "mode": "live",
     "assert": "panel_not_empty"
   },
-  "Ask Dockbench": {
+  "Ask PDF Love": {
     "mode": "live",
     "fill_text": "make this pdf smaller",
     "assert": "panel_not_empty"
   },
   "QR Code Generator": {
     "mode": "live",
-    "fill_text": "https://dockbench.app",
+    "fill_text": "https://pdflove.co.in",
     "assert": "canvas_or_img"
   },
   "QR Code Reader": {

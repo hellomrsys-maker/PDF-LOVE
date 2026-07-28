@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dockbench-v7';
+const CACHE_NAME = 'pdflove-v7';
 
 // The app shell is served network-first (see the fetch handler): these are
 // the files that change when the app is updated, so a cached copy must

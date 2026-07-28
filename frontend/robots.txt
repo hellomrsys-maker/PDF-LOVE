@@ -3,4 +3,4 @@ Allow: /
 
 # Generated pages that exist only to be crawled would be a bad signal; every
 # page in /tools/ answers a real query and embeds the working tool.
-Sitemap: https://dockbench.app/sitemap.xml
+Sitemap: https://pdflove.co.in/sitemap.xml

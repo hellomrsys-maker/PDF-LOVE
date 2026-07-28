@@ -1,4 +1,4 @@
-// Dockbench desktop shell.
+// PDF Love desktop shell.
 //
 // Its whole job: start the bundled engine, learn the port and session token
 // it chose, hand those to the webview, and make sure the engine dies with
@@ -45,13 +45,13 @@ fn main() {
         .setup(|app| {
             let handle = app.handle().clone();
 
-            // `dockbench-engine` is the PyInstaller-frozen backend, declared
+            // `pdflove-engine` is the PyInstaller-frozen backend, declared
             // as an externalBin in tauri.conf.json. Tauri resolves the
             // platform-specific binary name for us.
             let (mut rx, child) = app
                 .shell()
-                .sidecar("dockbench-engine")
-                .expect("dockbench-engine sidecar is missing from the bundle")
+                .sidecar("pdflove-engine")
+                .expect("pdflove-engine sidecar is missing from the bundle")
                 .spawn()
                 .expect("failed to start the local engine");
 
@@ -91,7 +91,7 @@ fn main() {
                                 r#"try{{
                                      localStorage.setItem('dockbench.apiBase','http://127.0.0.1:{port}');
                                      localStorage.setItem('dockbench.apiToken','{token}');
-                                     window.dispatchEvent(new Event('dockbench-engine-ready'));
+                                     window.dispatchEvent(new Event('pdflove-engine-ready'));
                                    }}catch(e){{}}"#
                             );
                             if let Some(win) = handle.get_webview_window("main") {
@@ -105,7 +105,7 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error building the Dockbench app")
+        .expect("error building the PDF Love app")
         .run(|app_handle, event| {
             // Never leave an orphaned engine listening on loopback.
             if let RunEvent::ExitRequested { .. } | RunEvent::Exit = event {

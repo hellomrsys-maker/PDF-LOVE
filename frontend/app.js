@@ -320,7 +320,7 @@ async function addCornerMark(blob){
     const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
     doc.getPages().forEach(p=>{
       const { width } = p.getSize();
-      p.drawText('Dockbench', {
+      p.drawText('PDF Love', {
         x: Math.max(width-70, 8), y: 8, size: 8, font,
         color: PDFLib.rgb(0.55,0.55,0.55), opacity: 0.55
       });
@@ -454,7 +454,7 @@ function showLicensePanel(opts={}){
 // panelShell/overlay modal every tool already uses.
 function showWatermarkChoice(blob, filename){
   const body = panelShell({
-    title: 'Remove the Dockbench mark?',
+    title: 'Remove the PDF Love mark?',
     desc: 'This free export carries a small corner mark. Watch a short ad for a clean copy, or download it as-is — your choice.'
   });
   const watchBtn = document.createElement('button');
@@ -536,7 +536,7 @@ function memoryGuard(files, multiplier, log){
   if(largest > HARD_BROWSER_CEILING){
     log.innerHTML = `<strong>${fmtBytes(largest)} is past what any browser can hold.</strong> `+
       `Browsers cap a single buffer at about ${fmtBytes(HARD_BROWSER_CEILING)} — this is a limit of the ` +
-      `JavaScript engine itself, not of Dockbench. `+
+      `JavaScript engine itself, not of PDF Love. `+
       (hasLocalEngine()
         ? `The desktop app is running, so this job can be handed to it instead — it streams from disk with no size limit.`
         : `<a href="download.html">The desktop app</a> has no size limit: it streams from disk, so capacity is your free disk space.`);
@@ -1916,7 +1916,7 @@ function openToolPicker(){
   });
 }
 
-/* ---------- Ask Dockbench: the plain-language help desk ----------
+/* ---------- Ask PDF Love: the plain-language help desk ----------
    The user says what they want in their own words ("make this small enough
    to email and give me a markdown copy"); we split the request into steps,
    match each one to a real tool, and walk them through — carrying the file
@@ -2119,8 +2119,8 @@ function assistOpenNext(){
   if(entry) openTool(entry.tool);
 }
 
-function toolAskDockbench(prefill){
-  const body = panelShell({title:'✨ Ask Dockbench', desc:'Say what you want in your own words — no technical terms needed. I\'ll pick the right tools and walk you through, step by step.'});
+function toolAskPdfLove(prefill){
+  const body = panelShell({title:'✨ Ask PDF Love', desc:'Say what you want in your own words — no technical terms needed. I\'ll pick the right tools and walk you through, step by step.'});
   buildDropzone(body, {multiple:false, accept:'', onFiles:(f)=>{ assistSourceFile=f[0]; fileInfo.textContent = `Working with: ${assistSourceFile.name} (${fmtBytes(assistSourceFile.size)})`; }});
   const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:10px 0;font-size:0.85rem;'; body.appendChild(fileInfo);
   assistSourceFile = null; assistQueue = []; assistStepNum = 0; assistTotal = 0;
@@ -4277,7 +4277,7 @@ function toolInvoiceGenerator(){
 
 function serverNote(body, engineLabel){
   const note = document.createElement('div'); note.className='note';
-  note.innerHTML = `<strong>Server-assisted tool.</strong> This one sends the file to <em>your own</em> self-hosted Dockbench backend (${engineLabel}) — open-source, no third-party service, nothing retained after the response.`;
+  note.innerHTML = `<strong>Server-assisted tool.</strong> This one sends the file to <em>your own</em> self-hosted PDF Love backend (${engineLabel}) — open-source, no third-party service, nothing retained after the response.`;
   body.appendChild(note);
   return note;
 }
@@ -6996,7 +6996,7 @@ const textTools = [
 renderGrid('text-tools', textTools);
 
 const utilityTools = [
-  {icon:'ask', name:'Ask Dockbench', desc:'Say what you need in your own words — get walked through it, step by step.', fn:toolAskDockbench},
+  {icon:'ask', name:'Ask PDF Love', desc:'Say what you need in your own words — get walked through it, step by step.', fn:toolAskPdfLove},
   {icon:'qr', name:'QR Code Generator', desc:'Turn a link or text into a QR code.', fn:toolQRGenerate},
   {icon:'qr', name:'QR Code Reader', desc:'Read a QR code from a photo.', fn:toolQRRead},
   {icon:'password', name:'Password Generator', desc:'Make a strong, random password.', fn:toolPasswordGenerator},
@@ -7040,7 +7040,7 @@ const CATEGORIES = [
   ['ai-tools','AI on-device'], ['api-tools','Server'],
 ];
 const SECTION_IDS = CATEGORIES.slice(1).map(c=>c[0]);
-const POPULAR = ['Ask Dockbench','Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
+const POPULAR = ['Ask PDF Love','Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
                  'Protect PDF','Make Image Smaller','Resize Image','PDF to Word','Video to GIF','Invoice Generator'];
 
 // Header-level nav (direct links + Convert / All tools dropdowns) — present
@@ -7199,7 +7199,7 @@ if(searchInput){
   applyView();
 }
 
-// "Ask Dockbench" entry points: the hero input, the search dead-end, and a
+// "Ask PDF Love" entry points: the hero input, the search dead-end, and a
 // ?ask=... URL param — the link target for external guide/SEO pages so a
 // page titled "how do I make a PDF smaller?" can deep-link straight into
 // the assistant with the question already asked. Hero input and the
@@ -7209,7 +7209,7 @@ if(assistHeroInput){
   const openAssistFromHero = ()=>{
     const q = assistHeroInput.value.trim();
     assistHeroInput.value='';
-    toolAskDockbench(q);
+    toolAskPdfLove(q);
   };
   document.getElementById('assist-hero-btn').onclick = openAssistFromHero;
   assistHeroInput.addEventListener('keydown', e=>{ if(e.key==='Enter') openAssistFromHero(); });
@@ -7219,7 +7219,7 @@ if(noResultsAskBtn){
   noResultsAskBtn.onclick = ()=>{
     const q = searchInput.value.trim();
     searchInput.value=''; applyView();
-    toolAskDockbench(q);
+    toolAskPdfLove(q);
   };
 }
 // Two entry points into "open a specific tool immediately on load":
@@ -7230,7 +7230,7 @@ if(noResultsAskBtn){
   const params = new URLSearchParams(location.search);
 
   const q = params.get('ask');
-  if(q && q.trim()){ toolAskDockbench(q.trim()); return; }
+  if(q && q.trim()){ toolAskPdfLove(q.trim()); return; }
 
   const mountEl = document.getElementById('tool-mount');
   const t = params.get('tool') || (mountEl && mountEl.dataset.tool);
@@ -7253,7 +7253,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape' && overlay.classList.contains('open')) closePanel();
 });
 
-// Backend check is manual, not automatic — Dockbench makes zero network
+// Backend check is manual, not automatic — PDF Love makes zero network
 // requests of its own accord, on load or otherwise (installed app or plain
 // browser tab, same rule). Clicking the footer button is the only thing
 // that ever triggers this probe.
@@ -7333,8 +7333,8 @@ document.addEventListener('db-result-delivered', ()=>{
 
   function showManualInstallInstructions(){
     const body = panelShell({
-      title: 'Install Dockbench',
-      desc: 'Add Dockbench to your desktop, taskbar, or home screen — it opens like a real app and works offline after that.'
+      title: 'Install PDF Love',
+      desc: 'Add PDF Love to your desktop, taskbar, or home screen — it opens like a real app and works offline after that.'
     });
     const ua = navigator.userAgent;
     const isIOS = /iPad|iPhone|iPod/.test(ua);
@@ -7345,7 +7345,7 @@ document.addEventListener('db-result-delivered', ()=>{
     } else if(isSafari){
       steps = 'On Mac Safari: open the <strong>File</strong> menu, then <strong>Add to Dock</strong> (Safari 17+).';
     } else {
-      steps = 'Look for an install icon at the right edge of the address bar, or open the browser menu (⋮ or ≡) and choose <strong>Install Dockbench</strong> / <strong>Add to Home screen</strong>.';
+      steps = 'Look for an install icon at the right edge of the address bar, or open the browser menu (⋮ or ≡) and choose <strong>Install PDF Love</strong> / <strong>Add to Home screen</strong>.';
     }
     const p = document.createElement('div');
     p.innerHTML = `<p style="margin-top:0;">${steps}</p>`;
@@ -7382,7 +7382,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
       const bar = document.createElement('div');
       bar.id = 'sw-update-bar';
       bar.setAttribute('role','status');
-      bar.innerHTML = `<span>A new version of Dockbench is ready.</span>
+      bar.innerHTML = `<span>A new version of PDF Love is ready.</span>
         <button type="button" id="sw-update-btn">Reload</button>
         <button type="button" id="sw-update-dismiss" aria-label="Dismiss">✕</button>`;
       document.body.appendChild(bar);

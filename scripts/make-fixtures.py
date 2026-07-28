@@ -53,7 +53,7 @@ def pdf_text(path, pages=3):
     c = canvas.Canvas(path, pagesize=letter)
     for i in range(pages):
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(72, 720, f"Dockbench test document — page {i + 1}")
+        c.drawString(72, 720, f"PDF Love test document — page {i + 1}")
         c.setFont("Helvetica", 11)
         y = 680
         for line in [
@@ -239,7 +239,7 @@ def images(out):
     d = ImageDraw.Draw(base)
     d.ellipse((250, 150, 550, 450), fill=(193, 104, 58))
     d.rectangle((60, 60, 200, 200), fill=(74, 120, 86))
-    d.text((60, 540), "Dockbench fixture image", fill=(30, 30, 30))
+    d.text((60, 540), "PDF Love fixture image", fill=(30, 30, 30))
 
     base.save(os.path.join(out, "photo.jpg"), quality=92)
     base.save(os.path.join(out, "photo.png"))
@@ -283,7 +283,7 @@ def image_with_exif(out):
 
     exif = {
         "0th": {
-            piexif.ImageIFD.Make: b"Dockbench",
+            piexif.ImageIFD.Make: b"PDF Love",
             piexif.ImageIFD.Model: b"FixtureCam 1.0",
             piexif.ImageIFD.Software: b"make-fixtures.py",
         },
@@ -339,7 +339,7 @@ def documents(out):
     from pptx.util import Inches
 
     doc = Document()
-    doc.add_heading("Dockbench fixture document", 0)
+    doc.add_heading("PDF Love fixture document", 0)
     doc.add_paragraph(OCR_PHRASE)
     doc.add_paragraph("A second paragraph, so conversions have structure to keep.")
     t = doc.add_table(rows=2, cols=2)
@@ -355,7 +355,7 @@ def documents(out):
 
     prs = Presentation()
     s = prs.slides.add_slide(prs.slide_layouts[0])
-    s.shapes.title.text = "Dockbench fixture deck"
+    s.shapes.title.text = "PDF Love fixture deck"
     s.placeholders[1].text = OCR_PHRASE
     s2 = prs.slides.add_slide(prs.slide_layouts[1])
     s2.shapes.title.text = "Second slide"

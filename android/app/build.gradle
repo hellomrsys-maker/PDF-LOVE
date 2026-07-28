@@ -1,11 +1,11 @@
 plugins { id 'com.android.application' }
 
 android {
-    namespace 'app.dockbench'
+    namespace 'in.co.pdflove'
     compileSdk 34
 
     defaultConfig {
-        applicationId "app.dockbench"
+        applicationId "in.co.pdflove"
         minSdk 21              // Android 5.0 — WebViewAssetLoader's floor
         targetSdk 34
         versionCode 1          // bump for every Play upload
@@ -20,7 +20,7 @@ android {
             if (ks) {
                 storeFile file(ks)
                 storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "dockbench"
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "pdflove"
                 keyPassword System.getenv("ANDROID_KEY_PASSWORD")
                             ?: System.getenv("ANDROID_KEYSTORE_PASSWORD")
             }

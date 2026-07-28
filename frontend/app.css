@@ -339,7 +339,7 @@
      configured and actually injects content — see AD_CONFIG. */
   .ad-slot{min-height:0;overflow:hidden;}
   .ad-slot:empty{display:none;}
-  /* "Ask Dockbench" hero input — the plain-language front door. */
+  /* "Ask PDF Love" hero input — the plain-language front door. */
   .assist-hero{display:flex;gap:8px;margin:0 0 28px;max-width:56ch;}
   .assist-hero input{flex:1;padding:13px 16px;font-size:0.98rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-raised);font-family:inherit;}
   .assist-hero input:focus{outline:none;border-color:var(--copper);}

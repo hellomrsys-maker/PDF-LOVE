@@ -65,7 +65,7 @@ def resolves(host):
 def responds(origin):
     """True if the origin answers an HTTP request at all."""
     req = urllib.request.Request(origin, method="HEAD",
-                                 headers={"User-Agent": "dockbench-canonical-check"})
+                                 headers={"User-Agent": "pdflove-canonical-check"})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
             return r.status

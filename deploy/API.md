@@ -1,4 +1,4 @@
-# Dockbench API
+# PDF Love API
 
 The HTTP API exposes the server-side engines — OCR, full-fidelity Office
 conversion, Ghostscript compression, PDF/A, background removal — for
@@ -24,7 +24,7 @@ Enforcement is opt-in via `REQUIRE_API_KEY=1`. Self-hosters never set it.
 Send the key as a bearer token:
 
 ```bash
-curl -X POST https://api.dockbench.app/ocr \
+curl -X POST https://api.pdflove.co.in/ocr \
   -H "Authorization: Bearer dkb_live_eyJzdWIi..." \
   -F file=@scan.pdf \
   -F output=pdf
@@ -48,7 +48,7 @@ node licensing/mint-api-key.js --sub=acme-corp --tier=business \
 Then point the backend at the public half:
 
 ```bash
-DOCKBENCH_API_PUBLIC_KEY_FILE=/run/secrets/dockbench-api-public-key.json
+DOCKBENCH_API_PUBLIC_KEY_FILE=/run/secrets/pdflove-api-public-key.json
 REQUIRE_API_KEY=1
 ```
 
@@ -111,16 +111,16 @@ Long jobs should go through the queue so the API answers immediately:
 
 ```bash
 # submit
-curl -X POST https://api.dockbench.app/jobs/ocr \
+curl -X POST https://api.pdflove.co.in/jobs/ocr \
   -H "Authorization: Bearer $KEY" -F file=@big.pdf -F output=pdf
 # -> {"job_id":"a1b2...","status":"queued"}
 
 # poll
-curl -H "Authorization: Bearer $KEY" https://api.dockbench.app/jobs/a1b2...
+curl -H "Authorization: Bearer $KEY" https://api.pdflove.co.in/jobs/a1b2...
 # -> {"job_id":"a1b2...","status":"running"|"complete"|"failed"}
 
 # collect
-curl -H "Authorization: Bearer $KEY" https://api.dockbench.app/jobs/a1b2.../result -o out.pdf
+curl -H "Authorization: Bearer $KEY" https://api.pdflove.co.in/jobs/a1b2.../result -o out.pdf
 ```
 
 Valid kinds: `ocr`, `convert`, `compress-pdf`, `pdfa`, `remove-bg`,

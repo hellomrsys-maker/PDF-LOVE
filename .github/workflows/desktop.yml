@@ -88,7 +88,7 @@ jobs:
         run: |
           python - <<'PY'
           import glob, json, subprocess, sys, time, urllib.request, urllib.error
-          exe = glob.glob('desktop/binaries/dockbench-engine-*')
+          exe = glob.glob('desktop/binaries/pdflove-engine-*')
           assert exe, 'no engine binary was produced'
           p = subprocess.Popen([exe[0]], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, text=True)
@@ -155,7 +155,7 @@ jobs:
           SQUASH="$(dirname "$APPIMAGE")/squashfs-root"
           test -d "$SQUASH" || { echo "AppImage did not extract"; exit 1; }
 
-          ENGINE=$(find "$SQUASH" -name 'dockbench-engine*' -type f | head -1)
+          ENGINE=$(find "$SQUASH" -name 'pdflove-engine*' -type f | head -1)
           test -n "$ENGINE" || { echo "installed app ships no engine sidecar"; exit 1; }
           chmod +x "$ENGINE"
           echo "installed engine: ${ENGINE#$SQUASH}"
@@ -189,14 +189,14 @@ jobs:
           echo "GUI stayed up for 25s"
           kill "$GUI" 2>/dev/null || true
           sleep 3
-          if pgrep -f 'dockbench-engine' >/dev/null; then
-            echo "engine outlived the app it belongs to"; pkill -f dockbench-engine; exit 1
+          if pgrep -f 'pdflove-engine' >/dev/null; then
+            echo "engine outlived the app it belongs to"; pkill -f pdflove-engine; exit 1
           fi
           echo "engine exited with the app, leaving nothing on loopback"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dockbench-${{ matrix.target }}
+          name: pdflove-${{ matrix.target }}
           path: |
             desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
             desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe

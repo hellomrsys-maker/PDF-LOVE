@@ -1,10 +1,10 @@
-# Dockbench Privacy Policy
+# PDF Love Privacy Policy
 
 *Last updated: [fill in date before publishing]*
 
 ## The short version
 
-Dockbench processes your files entirely on your own device. For the vast
+PDF Love processes your files entirely on your own device. For the vast
 majority of tools, nothing about your files — not their contents, not their
 names, not even the fact that you used a tool — is ever sent anywhere. There
 is no account system for individuals, so there is no login, no email
@@ -39,7 +39,7 @@ address, and no personal profile for us to collect in the first place.
   browser; after that first download, these features run fully offline
   with no further network requests.
 - **Advertising** (if enabled by whoever is operating this deployment):
-  Dockbench's free tier can optionally show a passive banner ad or an
+  PDF Love's free tier can optionally show a passive banner ad or an
   optional rewarded video ad (to remove a small mark from a free PDF
   export). These are off by default. If an operator turns them on, the
   specific ad network they choose will have its own data collection
@@ -49,7 +49,7 @@ address, and no personal profile for us to collect in the first place.
 
 ## Enterprise/self-hosted deployments
 
-If you're using a self-hosted or enterprise deployment of Dockbench with
+If you're using a self-hosted or enterprise deployment of PDF Love with
 its own login/SSO, that operator's own privacy policy and data handling
 practices govern your account and any audit logs they choose to keep — this
 document describes the public, individual-tier product only.

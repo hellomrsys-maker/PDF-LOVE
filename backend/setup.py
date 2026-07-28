@@ -70,9 +70,9 @@ class build_ext(_build_ext):
 
 
 setup(
-    name="dockbench-native",
+    name="pdflove-native",
     version="0.4.0",
-    description="Fused C/C++ extensions for the Dockbench engine.",
+    description="Fused C/C++ extensions for the PDF Love engine.",
     ext_modules=[imgproc, pdfops],
     cmdclass={"build_ext": build_ext},
     zip_safe=False,

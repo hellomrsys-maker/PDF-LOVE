@@ -8,7 +8,7 @@ Three steps:
   1. compile the fused C/C++ extensions (backend/setup.py)
   2. freeze backend/local_engine.py with PyInstaller
   3. rename the result to the target-triple filename Tauri expects for a
-     sidecar, e.g. dockbench-engine-x86_64-unknown-linux-gnu
+     sidecar, e.g. pdflove-engine-x86_64-unknown-linux-gnu
 
 Run this before `npm run tauri build`.
 """
@@ -66,11 +66,11 @@ def main():
 
     print("\n== 3/3  naming it for Tauri ==")
     ext = ".exe" if sys.platform.startswith("win") else ""
-    src = os.path.join(BINARIES, "dockbench-engine" + ext)
+    src = os.path.join(BINARIES, "pdflove-engine" + ext)
     if not os.path.exists(src):
         sys.exit(f"PyInstaller did not produce {src}")
 
-    dst = os.path.join(BINARIES, f"dockbench-engine-{target_triple()}{ext}")
+    dst = os.path.join(BINARIES, f"pdflove-engine-{target_triple()}{ext}")
     shutil.move(src, dst)
     os.chmod(dst, 0o755)
 

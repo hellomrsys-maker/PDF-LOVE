@@ -106,7 +106,7 @@ def main():
         measure(args.measure[0], int(args.measure[1]))
         return
 
-    tmp = tempfile.mkdtemp(prefix="dockbench-shape-")
+    tmp = tempfile.mkdtemp(prefix="pdflove-shape-")
     out = {"generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     try:
         # --- A: same bytes, very different page counts -------------------

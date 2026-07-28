@@ -1,4 +1,4 @@
-# Dockbench production stack.
+# PDF Love production stack.
 #
 #   Local / evaluation:   docker compose up -d
 #                         -> http://localhost:8080 (frontend+API+queue)
@@ -46,7 +46,7 @@ services:
     logging: *default-logging
 
   frontend:
-    image: ${FRONTEND_IMAGE:-ghcr.io/hellomrsys-maker/dockbench-frontend:latest}
+    image: ${FRONTEND_IMAGE:-ghcr.io/hellomrsys-maker/pdflove-frontend:latest}
     build: ./frontend
     ports:
       - "${HTTP_PORT:-8080}:8080"
@@ -62,7 +62,7 @@ services:
     logging: *default-logging
 
   backend:
-    image: ${BACKEND_IMAGE:-ghcr.io/hellomrsys-maker/dockbench-backend:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/hellomrsys-maker/pdflove-backend:latest}
     build: ./backend
     environment:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8080}
@@ -104,7 +104,7 @@ services:
   # Same image as the backend, different entrypoint. Scale with
   # `--scale worker=N` when the queue backs up.
   worker:
-    image: ${BACKEND_IMAGE:-ghcr.io/hellomrsys-maker/dockbench-backend:latest}
+    image: ${BACKEND_IMAGE:-ghcr.io/hellomrsys-maker/pdflove-backend:latest}
     build: ./backend
     command: ["arq", "worker.WorkerSettings"]
     environment:

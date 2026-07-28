@@ -10,7 +10,7 @@
 #
 set -uo pipefail
 
-PKG=app.dockbench
+PKG=in.co.pdflove
 ACT="$PKG/.MainActivity"
 OUT=/tmp/android-test
 mkdir -p "$OUT"

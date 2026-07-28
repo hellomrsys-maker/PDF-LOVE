@@ -160,7 +160,7 @@ def main():
     if not hasattr(dockbench_pdf, "merge_files"):
         sys.exit("dockbench_pdf has no streaming API — build the extensions first.")
 
-    tmp = tempfile.mkdtemp(prefix="dockbench-capacity-")
+    tmp = tempfile.mkdtemp(prefix="pdflove-capacity-")
     records = []
     try:
         # ---------------- ladder: the invariant ----------------

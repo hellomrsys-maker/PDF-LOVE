@@ -1,9 +1,9 @@
-# PyInstaller spec for the bundled Dockbench engine.
+# PyInstaller spec for the bundled PDF Love engine.
 #
 #   pyinstaller desktop/engine.spec --distpath desktop/binaries
 #
 # Produces a single executable that the Tauri shell launches as a sidecar.
-# Tauri requires the target triple in the filename (dockbench-engine-x86_64-
+# Tauri requires the target triple in the filename (pdflove-engine-x86_64-
 # unknown-linux-gnu, etc.); desktop/build-engine.py renames it afterwards.
 #
 # What has to be forced in:
@@ -77,7 +77,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='dockbench-engine',
+    name='pdflove-engine',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

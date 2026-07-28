@@ -1,5 +1,5 @@
 /*
- * imgproc.c — Dockbench's native image-processing kernel.
+ * imgproc.c — PDF Love's native image-processing kernel.
  *
  * The scan-cleanup pipeline that runs before OCR, written as exactly two
  * passes over the pixel data (the theoretical minimum: one to read, one

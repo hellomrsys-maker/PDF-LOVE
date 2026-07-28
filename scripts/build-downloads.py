@@ -45,7 +45,7 @@ def fetch_release(tag=None):
            else f"https://api.github.com/repos/{REPO}/releases/latest")
     req = urllib.request.Request(url, headers={
         "Accept": "application/vnd.github+json",
-        "User-Agent": "dockbench-build",
+        "User-Agent": "pdflove-build",
     })
     token = os.environ.get("GITHUB_TOKEN")
     if token:
@@ -102,7 +102,7 @@ def main():
               "writing fallbacks only", file=sys.stderr)
 
     entries.setdefault("play", {
-        "url": "https://play.google.com/store/apps/details?id=app.dockbench.twa"})
+        "url": "https://play.google.com/store/apps/details?id=in.co.pdflove"})
 
     for key, _ in PATTERNS:
         entries.setdefault(key, {"url": RELEASES_PAGE})

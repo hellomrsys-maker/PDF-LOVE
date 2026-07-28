@@ -1,4 +1,4 @@
-# Dockbench for Android
+# PDF Love for Android
 
 A WebView app that **ships the entire application inside the APK**. Nothing
 is fetched from a server — not on first launch, not ever.
@@ -8,7 +8,7 @@ is fetched from a server — not on first launch, not ever.
 `twa/twa-manifest.json` scaffolded a Trusted Web Activity, which is the
 usual way to put a PWA on the Play Store. It was the wrong choice here:
 
-- A TWA loads `https://dockbench.app` in Chrome. **First launch requires a
+- A TWA loads `https://pdflove.co.in` in Chrome. **First launch requires a
   network connection**, and every launch is a request to our server. That
   contradicts the product's central promise.
 - It depends on the site staying up, and on `assetlinks.json` verification;

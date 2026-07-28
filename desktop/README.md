@@ -1,4 +1,4 @@
-# Dockbench Desktop
+# PDF Love Desktop
 
 A native app for Windows, macOS and Linux that bundles the engine, so
 **every one of the 104 tools runs on the user's own machine** — including
@@ -22,7 +22,7 @@ server anywhere in the picture.
 ```
 Tauri shell (Rust, ~10 MB)
 ├── webview → ../frontend/index.html        the existing app, unmodified
-└── sidecar → dockbench-engine (~39 MB)     PyInstaller-frozen backend
+└── sidecar → pdflove-engine (~39 MB)     PyInstaller-frozen backend
                 ├── dockbench_imgproc.so    fused C scan-cleanup kernel
                 ├── dockbench_pdf.so        fused libqpdf page operations
                 └── FastAPI on 127.0.0.1:0

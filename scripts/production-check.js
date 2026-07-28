@@ -25,7 +25,7 @@ function fetchOnce(url, method = 'GET') {
     const u = new URL(url);
     const lib = u.protocol === 'https:' ? https : http;
     const req = lib.request(u, { method, timeout: 25000,
-      headers: { 'User-Agent': 'dockbench-production-check' } }, res => {
+      headers: { 'User-Agent': 'pdflove-production-check' } }, res => {
       const chunks = [];
       res.on('data', c => chunks.push(c));
       res.on('end', () => resolve({

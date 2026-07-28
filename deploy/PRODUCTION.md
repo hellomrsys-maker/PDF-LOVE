@@ -1,4 +1,4 @@
-# Dockbench in production
+# PDF Love in production
 
 One VPS, docker compose, automatic HTTPS. Total operating cost: the
 server. There are no external services and nothing to subscribe to.
@@ -31,8 +31,8 @@ curl -fsSL https://get.docker.com | sh
 
 # 2. DNS: point an A (and AAAA) record for your domain at this server.
 
-# 3. Dockbench
-git clone https://github.com/hellomrsys-maker/Dockbench && cd Dockbench
+# 3. PDF Love
+git clone https://github.com/hellomrsys-maker/Dockbench && cd PDF Love
 cp .env.example .env
 nano .env        # set DOMAIN, ACME_EMAIL, ALLOWED_ORIGINS
 

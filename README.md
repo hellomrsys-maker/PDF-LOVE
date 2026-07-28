@@ -1,4 +1,4 @@
-# Dockbench
+# PDF Love
 
 A 104-tool PDF, image & video workbench where **everything — OCR, AI
 background removal, compression, conversion — runs on the user's own
@@ -30,7 +30,7 @@ anything.
 
 ## Why it beats the alternatives
 
-| | Dockbench | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
+| | PDF Love | iLovePDF / Smallpdf (paid) | Stirling-PDF (self-hosted) |
 |---|---|---|---|
 | Files stay on-device | ✅ 94 of 104 in-browser, **104 of 104 in the desktop app** | ❌ every tool uploads | ❌ every tool goes to the server |
 | Works by double-clicking the HTML file | ✅ no server needed at all | ❌ | ❌ |
@@ -92,7 +92,7 @@ Network tab → use any on-device tool → no request fires.
 
 ## 1. Frontend — no setup, no build step, no CDN
 
-**The simplest way to run Dockbench: download the `frontend/` folder and
+**The simplest way to run PDF Love: download the `frontend/` folder and
 double-click `index.html`.** Everything works straight from the file —
 PDF rendering runs on the main thread via the bundled worker script, and
 even AES-256 encryption works offline (the WASM engine ships as an
@@ -134,7 +134,7 @@ generator, QR/barcode, plus text, utility, finance, and fully on-device AI
 tools (summarize, translate, voice-to-text, image captioning via
 Transformers.js — model downloads once, then offline).
 
-**Ask Dockbench (plain-language help desk)**: type what you want in your
+**Ask PDF Love (plain-language help desk)**: type what you want in your
 own words — "compress this and give me a markdown copy", "make this scan
 searchable" — and the assistant splits the request into steps, picks the
 right tools, and walks you through with the file carried from step to step
@@ -181,7 +181,7 @@ chat). No server, no account, no upload.
 ```
 Tauri shell (~10 MB)
 ├── webview → frontend/index.html      the same app, not a fork
-└── sidecar → dockbench-engine         PyInstaller-frozen backend + the
+└── sidecar → pdflove-engine         PyInstaller-frozen backend + the
                                        fused C extensions above
 ```
 
@@ -378,7 +378,7 @@ its parent, and is serving the fused extensions rather than the fallbacks.
 Ad revenue needs a live connection — there's no way around that, an ad
 network has to serve the creative and verify the impression in real time.
 For a genuinely offline deployment (a library, a school, a government
-office, any air-gapped machine), that path doesn't exist, so Dockbench has
+office, any air-gapped machine), that path doesn't exist, so PDF Love has
 a separate one: a cryptographically signed license key, verified entirely
 on-device via the Web Crypto API, no server involved before or after, ever.
 Run `node licensing/keygen.js` once (keep `private-key.json` secret, embed

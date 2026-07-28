@@ -36,7 +36,7 @@ import threading
 # customer of ours to be metered.
 os.environ["DOCKBENCH_LOCAL"] = "1"
 os.environ.setdefault("UPLOAD_SPOOL_DIR", os.path.join(
-    os.environ.get("TMPDIR") or "/tmp", "dockbench-spool"))
+    os.environ.get("TMPDIR") or "/tmp", "pdflove-spool"))
 
 SESSION_TOKEN = os.environ.get("DOCKBENCH_SESSION_TOKEN") or secrets.token_urlsafe(32)
 

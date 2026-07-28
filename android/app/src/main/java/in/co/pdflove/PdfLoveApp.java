@@ -1,4 +1,4 @@
-package app.dockbench;
+package in.co.pdflove;
 
 import android.app.Application;
 import android.os.Build;
@@ -12,7 +12,7 @@ import android.webkit.WebView;
  * single process uses it. Naming it explicitly avoids a crash if the app
  * ever gains a second process (a share target, a widget).
  */
-public class DockbenchApp extends Application {
+public class PdfLoveApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();

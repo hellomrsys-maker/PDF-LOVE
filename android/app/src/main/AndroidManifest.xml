@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
-        android:name=".DockbenchApp"
+        android:name=".PdfLoveApp"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -23,14 +23,14 @@
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
-        android:theme="@style/Theme.Dockbench">
+        android:theme="@style/Theme.PdfLove">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.Dockbench">
+            android:theme="@style/Theme.PdfLove">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

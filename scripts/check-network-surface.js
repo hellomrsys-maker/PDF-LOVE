@@ -33,7 +33,7 @@ const ALLOWED = {
   'www.w3.org':                 'XML namespace URI in SVG markup. Never fetched.',
   'schema.org':                 'JSON-LD vocabulary URI. Never fetched.',
   'schemas.openxmlformats.org': 'OOXML namespace URI inside generated .docx/.xlsx. Never fetched.',
-  'dockbench.app':              'Our own canonical/OG URLs. Not fetched by the app.',
+  'pdflove.co.in':              'Our own canonical/OG URLs. Not fetched by the app.',
   'localhost':                  'Documentation of the self-hosted backend default.',
   'my-server':                  'Placeholder in a documentation comment.',
   'your-server':                'Placeholder in a documentation comment.',
@@ -49,7 +49,7 @@ const ALLOWED = {
   // --- links the user clicks, never fetched ---------------------------
   'github.com':      'Release download links on download.html.',
   'play.google.com': 'Play Store link on download.html.',
-  'releases.dockbench.app': 'Desktop updater manifest. Desktop app only; a version string out, a signed manifest back.',
+  'releases.pdflove.co.in': 'Desktop updater manifest. Desktop app only; a version string out, a signed manifest back.',
 };
 
 /* Hosts that must never appear. Not exhaustive — the allowlist above is the

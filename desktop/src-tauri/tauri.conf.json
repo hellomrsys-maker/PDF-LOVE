@@ -1,15 +1,15 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Dockbench",
+  "productName": "PDF Love",
   "version": "0.4.0",
-  "identifier": "app.dockbench.desktop",
+  "identifier": "in.co.pdflove.desktop",
   "build": {
     "frontendDist": "../../frontend/dist"
   },
   "app": {
     "windows": [
       {
-        "title": "Dockbench",
+        "title": "PDF Love",
         "width": 1280,
         "height": 860,
         "minWidth": 420,
@@ -31,7 +31,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["../binaries/dockbench-engine"],
+    "externalBin": ["../binaries/pdflove-engine"],
     "shortDescription": "PDF, image and video tools that run on your own device.",
     "longDescription": "104 tools for PDFs, images and video. Everything runs on your own machine — including OCR, Office conversion and deep compression, which the web version needs a server for. No account, no upload, no daily limit, works offline.",
     "category": "Productivity",
@@ -42,7 +42,7 @@
       "active": true,
       "dialog": true,
       "endpoints": [
-        "https://releases.dockbench.app/latest.json"
+        "https://releases.pdflove.co.in/latest.json"
       ],
       "pubkey": "[TAURI_UPDATER_PUBLIC_KEY — generate with: npm run tauri signer generate]"
     }

@@ -1,4 +1,4 @@
-# Dockbench offline licensing
+# PDF Love offline licensing
 
 Ad revenue only exists when a user is online — an ad network has to serve
 the creative and verify the impression over a live connection, and there is
@@ -6,7 +6,7 @@ no way around that (caching/replaying an ad offline would be ad fraud and
 risks a permanent network ban, so don't). For genuinely offline deployments
 — a library, a school, a government office, any air-gapped machine — this
 is a separate, purely local monetization path: a cryptographically signed
-license key that Dockbench verifies **entirely on-device**, with the
+license key that PDF Love verifies **entirely on-device**, with the
 browser's built-in Web Crypto API, no server involved before or after.
 
 This is the same trust model commercial desktop software has used for
@@ -46,14 +46,14 @@ node licensing/mint.js --tier=offline-pro --licensee="Springfield Library" --sea
   usable in `frontend/index.html` if you ever want different tiers to
   unlock different things.
 - `--licensee`, `--seats`, `--expires` (optional): `--expires` omitted means
-  a perpetual license. `--seats` is informational only (Dockbench doesn't
+  a perpetual license. `--seats` is informational only (PDF Love doesn't
   enforce a seat count locally — there's no server to track activations
   against) — for a 50-seat institutional deal, hand the same key to all 50
   machines, or mint 50 individual keys if you want per-machine tracking on
   your own side.
 
 The command prints the license key string — that's what you hand to the
-buyer. They paste it into Dockbench's license panel (reachable from the
+buyer. They paste it into PDF Love's license panel (reachable from the
 footer, or from the watermark-removal prompt), which verifies it instantly,
 fully offline, and never asks again once activated on that device
 (stored in `localStorage`, re-verified against the signature every load).

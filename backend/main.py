@@ -1,5 +1,5 @@
 """
-Dockbench backend — optional, self-hosted, zero-per-call-cost API.
+PDF Love backend — optional, self-hosted, zero-per-call-cost API.
 
 Every dependency here is free and open-source. There is no paid vendor
 API anywhere in this file. You run this yourself (a VPS, a Docker
@@ -127,7 +127,7 @@ def rate_limit_key(request: Request) -> str:
 
 
 limiter = Limiter(key_func=rate_limit_key, default_limits=["60/minute"])
-app = FastAPI(title="Dockbench API", version="0.3.0")
+app = FastAPI(title="PDF Love API", version="0.3.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
