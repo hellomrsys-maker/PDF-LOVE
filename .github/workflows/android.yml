@@ -130,10 +130,19 @@ jobs:
             android/app/build/outputs/bundle/**/*.aab
           if-no-files-found: warn
 
+      - name: Publish SHA-256 checksums for the APK and bundle
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          shasum -a 256 android/app/build/outputs/apk/release/*.apk \
+                        android/app/build/outputs/bundle/release/*.aab |
+            sed 's| .*/| |' > SHA256SUMS-android.txt
+          cat SHA256SUMS-android.txt
+
       - name: Attach to the release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            SHA256SUMS-android.txt
             android/app/build/outputs/apk/release/*.apk
             android/app/build/outputs/bundle/release/*.aab

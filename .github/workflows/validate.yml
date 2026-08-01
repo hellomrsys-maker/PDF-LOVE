@@ -517,6 +517,16 @@ jobs:
         # lands. This drives real files through them and checks the mount
         # latch still hands a second tool to the modal.
         run: node scripts/page-native-test.js
+      - name: Keyboard and screen-reader access to the tools
+        # Every tool worked, for anyone using a mouse. The favourite star was
+        # a <span role="button"> with no tabindex — announced as a button and
+        # not in the tab order. The file dropzone was a bare <div>, so the
+        # first step of nearly every tool was unreachable without a mouse.
+        # And all 138 form controls relied on an adjacent <label> carrying no
+        # `for`, or on a placeholder, which is a hint and not a name. None of
+        # it showed up in a functional suite that drives the page by
+        # selector, so this checks it directly.
+        run: node scripts/check-a11y.js
       - name: The test report reflects what the suites actually measured
         # TEST_REPORT.md claimed "86 of 86 passed" while the suite was
         # failing on every push. It could not self-correct because nothing
@@ -553,11 +563,22 @@ jobs:
         # this runs the same functional checks against dist.
         run: |
           node build.mjs
-          node --check <(node -e "
+          # The app's logic lives in app.js, not in an inline <script>, since
+          # it was extracted so the standalone /tools/*.html pages could share
+          # it. This step still looked for the inline script — and the failure
+          # was invisible, because `node --check <(node -e ...)` reports the
+          # status of node --check, which succeeds on the empty file that a
+          # crashed inner command leaves behind. A fourth dead step.
+          node -e "
             const fs=require('fs');
-            process.stdout.write(fs.readFileSync('frontend/dist/index.html','utf8')
-              .match(/<script>([\s\S]*?)<\/script>/)[1]);
-          ") && echo "  minified inline script parses"
+            const src=fs.readFileSync('frontend/dist/app.js','utf8');
+            if(src.length < 100000)
+              throw new Error('dist/app.js is '+src.length+' bytes — minification produced a stub');
+            if(!/toolMergePDF/.test(src))
+              throw new Error('dist/app.js does not contain the tool definitions');
+            console.log('  dist/app.js is '+src.length+' bytes and carries the tools');
+          "
+          node --check frontend/dist/app.js && echo "  minified app.js parses"
           node --check frontend/dist/sw.js
           node -e "
             const fs=require('fs');

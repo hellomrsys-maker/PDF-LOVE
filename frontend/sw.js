@@ -1,9 +1,19 @@
-const CACHE_NAME = 'pdflove-v7';
+const CACHE_NAME = 'pdflove-v8';
 
 // The app shell is served network-first (see the fetch handler): these are
 // the files that change when the app is updated, so a cached copy must
 // never win over a newer one on the server.
-const SHELL_PATHS = ['/', '/index.html', '/manifest.json'];
+//
+// app.js, app.css and ads.js belong here and were missing. index.html was
+// network-first while the code it loads was cache-first, so a returning
+// visitor got the new page markup driving the previous build's JavaScript —
+// and because sw.js itself was unchanged, no update prompt fired and the
+// stale copy was served indefinitely. That is the exact shape of "I shipped
+// the fix and users still see the bug".
+const SHELL_PATHS = [
+  '/', '/index.html', '/manifest.json',
+  '/app.js', '/app.css', '/ads.js',
+];
 
 const APP_SHELL = [
   './', './index.html', './manifest.json',
@@ -129,7 +139,8 @@ self.addEventListener('activate', (event) => {
 
 // Two strategies, because the two kinds of asset have opposite requirements:
 //
-//   app shell (index.html, manifest.json)  -> NETWORK-FIRST
+//   app shell (index.html, app.js, app.css, ads.js, manifest.json)
+//                                          -> NETWORK-FIRST
 //     These change on every deploy. Serving them cache-first meant an
 //     installed PWA could keep showing an old build indefinitely: the
 //     background refresh only ever helped the *next* load, so a user who

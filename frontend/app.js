@@ -568,10 +568,26 @@ function buildDropzone(container, {multiple, accept, onFiles}){
   const dz = document.createElement('div');
   dz.className = 'dropzone';
   dz.innerHTML = `<strong>Click to choose ${multiple?'files':'a file'}</strong><br>or drag &amp; drop here — stays on this device`;
+  // The real <input type=file> is hidden and the div is what people click,
+  // which left the file picker — the first step of almost every tool —
+  // completely unreachable without a mouse. Give the div the semantics it
+  // was already pretending to have.
+  dz.setAttribute('role','button');
+  dz.tabIndex = 0;
+  dz.setAttribute('aria-label', `Choose ${multiple?'files':'a file'}, or drop ${multiple?'them':'it'} here`);
   const input = document.createElement('input');
   input.type='file'; input.multiple=!!multiple; input.accept=accept||''; input.style.display='none';
+  input.setAttribute('aria-label', `Choose ${multiple?'files':'a file'}`);
+  input.tabIndex = -1;
   dz.appendChild(input);
   dz.addEventListener('click', ()=>input.click());
+  dz.addEventListener('keydown', e=>{
+    if(e.target !== dz) return;
+    if(e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault();
+      input.click();
+    }
+  });
   // Most tools' onFiles handlers are async and parse the file immediately.
   // When one throws — an unreadable PDF, an image codec the browser lacks —
   // an unguarded call becomes an unhandled promise rejection: the panel just
@@ -701,8 +717,8 @@ function toolSplitPDF(){
   body.appendChild(tabRow);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
-    <div class="field"><label>From page</label><input type="number" id="sp-from" min="1" value="1"></div>
-    <div class="field"><label>To page</label><input type="number" id="sp-to" min="1" value="1"></div>
+    <div class="field"><label for="sp-from">From page</label><input type="number" id="sp-from" min="1" value="1"></div>
+    <div class="field"><label for="sp-to">To page</label><input type="number" id="sp-to" min="1" value="1"></div>
   `;
   body.appendChild(row);
   tabRow.querySelectorAll('.tab-btn').forEach(b=>{
@@ -776,7 +792,7 @@ function toolImageToPDF(){
   buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
   const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
   const sizeField=document.createElement('div'); sizeField.className='field';
-  sizeField.innerHTML=`<label>Page size</label>
+  sizeField.innerHTML=`<label for="i2p-size">Page size</label>
     <select id="i2p-size" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       <option value="image">Match each image (no borders)</option>
       <option value="a4">A4 portrait, image fitted</option>
@@ -885,7 +901,7 @@ function toolCompressImage(){
 
   const qualityField=document.createElement('div'); qualityField.id='ci-quality-field';
   qualityField.innerHTML=`
-    <div class="field"><label>How much smaller? <span id="q-val">80</span>%</label><input type="range" id="q-range" min="10" max="100" value="80"></div>
+    <div class="field"><label for="q-range">How much smaller? <span id="q-val">80</span>%</label><input type="range" id="q-range" min="10" max="100" value="80"></div>
     <div class="helper-line">Lower number = smaller file, but the picture looks a bit rougher. 80% is a good balance.</div>`;
   body.appendChild(qualityField);
 
@@ -893,8 +909,8 @@ function toolCompressImage(){
   targetField.innerHTML = `
     <div class="field"><label>The final file must be smaller than:</label></div>
     <div class="big-input-row">
-      <input type="number" id="ci-target-val" value="200">
-      <select id="ci-target-unit">
+      <input type="number" id="ci-target-val" aria-label="Target size" value="200">
+      <select id="ci-target-unit" aria-label="Target size unit">
         <option value="KB" selected>KB (kilobytes)</option>
         <option value="MB">MB (megabytes)</option>
       </select>
@@ -960,7 +976,7 @@ function toolResizeImage(){
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
 
   const unitField=document.createElement('div'); unitField.className='field';
-  unitField.innerHTML = `<label>Unit</label>
+  unitField.innerHTML = `<label for="rz-unit">Unit</label>
     <select id="rz-unit" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       <option value="px" selected>Pixels</option>
       <option value="in">Inches</option>
@@ -970,17 +986,17 @@ function toolResizeImage(){
   body.appendChild(unitField);
 
   const dpiField=document.createElement('div'); dpiField.className='field'; dpiField.id='rz-dpi-field'; dpiField.style.display='none';
-  dpiField.innerHTML = `<label>Resolution (DPI)</label><input type="number" id="rz-dpi" value="300">`;
+  dpiField.innerHTML = `<label for="rz-dpi">Resolution (DPI)</label><input type="number" id="rz-dpi" value="300">`;
   body.appendChild(dpiField);
 
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
-    <div class="field"><label>Width</label><input type="number" id="rw" value="800"></div>
-    <div class="field"><label>Height</label><input type="number" id="rh" value="600"></div>
+    <div class="field"><label for="rw">Width</label><input type="number" id="rw" value="800"></div>
+    <div class="field"><label for="rh">Height</label><input type="number" id="rh" value="600"></div>
   `;
   body.appendChild(row);
   const lockField=document.createElement('label'); lockField.style.cssText='display:flex;gap:6px;align-items:center;font-size:0.85rem;margin:8px 0;';
-  lockField.innerHTML = `<input type="checkbox" id="rz-lock" checked> Lock aspect ratio`;
+  lockField.innerHTML = `<input type="checkbox" id="rz-lock" checked><label for="rz-lock"> Lock aspect ratio</label>`;
   body.appendChild(lockField);
 
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Resize & download'; body.appendChild(btn);
@@ -1028,7 +1044,7 @@ function toolRotatePDF(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Rotation</label>
+  field.innerHTML=`<label for="rot">Rotation</label>
     <select id="rot" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       <option value="90">90°</option><option value="180">180°</option><option value="270">270°</option>
     </select>`;
@@ -1134,7 +1150,7 @@ function toolProtectPDF(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Password</label><input type="text" id="pp-pass" placeholder="Choose a password">`;
+  field.innerHTML=`<label for="pp-pass">Password</label><input type="text" id="pp-pass" placeholder="Choose a password">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Encrypt & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -1169,7 +1185,7 @@ function toolUnlockPDF(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Current password</label><input type="text" id="up-pass" placeholder="Enter the PDF's password">`;
+  field.innerHTML=`<label for="up-pass">Current password</label><input type="text" id="up-pass" placeholder="Enter the PDF's password">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Unlock & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -1376,7 +1392,7 @@ function toolPDFToSpeech(){
     <button class="small-btn" id="tts-play">▶ Play</button>
     <button class="small-btn" id="tts-pause">⏸ Pause</button>
     <button class="small-btn" id="tts-stop">⏹ Stop</button>
-    <select id="tts-rate" style="padding:6px;border:1px solid var(--line);border-radius:6px;">
+    <select id="tts-rate" aria-label="Speaking rate" style="padding:6px;border:1px solid var(--line);border-radius:6px;">
       <option value="0.8">0.8x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option>
     </select>
   `;
@@ -1405,12 +1421,12 @@ function toolBatesNumbering(){
 
   // --- Section 1: sequential (unified) number ---
   const sec1Toggle=document.createElement('label'); sec1Toggle.style.cssText='display:flex;gap:8px;align-items:center;font-weight:600;margin:16px 0 6px;';
-  sec1Toggle.innerHTML = `<input type="checkbox" id="bn-seq-on" checked> Number that goes up on each page`;
+  sec1Toggle.innerHTML = `<input type="checkbox" id="bn-seq-on" checked><label for="bn-seq-on"> Number that goes up on each page</label>`;
   body.appendChild(sec1Toggle);
   const seqWrap=document.createElement('div'); seqWrap.id='bn-seq-wrap';
   seqWrap.innerHTML = `
     <div class="helper-line">Example: with prefix "SMITH-" and 6 digits, page 1 gets SMITH-000001, page 2 gets SMITH-000002, and so on. Or pick "Simple" below for a plain "Page 1 of 47" style.</div>
-    <div class="field"><label>Style</label>
+    <div class="field"><label for="bn-style">Style</label>
       <select id="bn-style" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="custom">Custom prefix/digits (e.g. SMITH-000001)</option>
         <option value="simple">Simple — "Page 1 of 47"</option>
@@ -1418,15 +1434,15 @@ function toolBatesNumbering(){
     </div>
     <div id="bn-custom-fields">
     <div class="row">
-      <div class="field"><label>Text before the number</label><input type="text" id="bn-prefix" value="DOC-"></div>
-      <div class="field"><label>Text after the number</label><input type="text" id="bn-suffix" value=""></div>
+      <div class="field"><label for="bn-prefix">Text before the number</label><input type="text" id="bn-prefix" value="DOC-"></div>
+      <div class="field"><label for="bn-suffix">Text after the number</label><input type="text" id="bn-suffix" value=""></div>
     </div>
     <div class="row">
-      <div class="field"><label>Start counting at</label><input type="number" id="bn-start" value="1"></div>
-      <div class="field"><label>How many digits (e.g. 6 = 000001)</label><input type="number" id="bn-digits" value="6"></div>
+      <div class="field"><label for="bn-start">Start counting at</label><input type="number" id="bn-start" value="1"></div>
+      <div class="field"><label for="bn-digits">How many digits (e.g. 6 = 000001)</label><input type="number" id="bn-digits" value="6"></div>
     </div>
     </div>
-    <div class="field"><label>Where on the page</label>
+    <div class="field"><label for="bn-pos">Where on the page</label>
       <select id="bn-pos" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="bottom-right">Bottom right</option>
         <option value="bottom-center">Bottom center</option>
@@ -1444,7 +1460,7 @@ function toolBatesNumbering(){
 
   // --- Section 2: fixed (non-changing) IDs, e.g. GST number ---
   const sec2Toggle=document.createElement('label'); sec2Toggle.style.cssText='display:flex;gap:8px;align-items:center;font-weight:600;margin:20px 0 6px;';
-  sec2Toggle.innerHTML = `<input type="checkbox" id="bn-fixed-on"> A fixed number that's the same on every page (e.g. GST number, PAN, invoice no.)`;
+  sec2Toggle.innerHTML = `<input type="checkbox" id="bn-fixed-on"><label for="bn-fixed-on"> A fixed number that's the same on every page (e.g. GST number, PAN, invoice no.)</label>`;
   body.appendChild(sec2Toggle);
   const fixedWrap=document.createElement('div'); fixedWrap.id='bn-fixed-wrap'; fixedWrap.style.display='none';
   fixedWrap.innerHTML = `<div class="helper-line">Add as many as you need — each stamps identically on every page, right below the previous one.</div>`;
@@ -1453,7 +1469,7 @@ function toolBatesNumbering(){
   const addFixedBtn=document.createElement('button'); addFixedBtn.type='button'; addFixedBtn.className='small-btn'; addFixedBtn.textContent='+ Add another field';
   fixedWrap.appendChild(addFixedBtn);
   const fixedPosField=document.createElement('div'); fixedPosField.className='field'; fixedPosField.style.marginTop='10px';
-  fixedPosField.innerHTML = `<label>Where on the page</label>
+  fixedPosField.innerHTML = `<label for="bn-fixed-pos">Where on the page</label>
     <select id="bn-fixed-pos" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       <option value="top-left">Top left</option>
       <option value="top-right">Top right</option>
@@ -1466,8 +1482,8 @@ function toolBatesNumbering(){
   function addFixedRow(labelVal='GST No.', valueVal=''){
     const row=document.createElement('div'); row.className='row'; row.style.marginBottom='6px';
     row.innerHTML = `
-      <div class="field" style="flex:1;"><input type="text" class="bn-fixed-label" placeholder="Label, e.g. GST No." value="${escapeXml(labelVal)}"></div>
-      <div class="field" style="flex:1.4;"><input type="text" class="bn-fixed-value" placeholder="Value, e.g. 22AAAAA0000A1Z5" value="${escapeXml(valueVal)}"></div>
+      <div class="field" style="flex:1;"><input type="text" class="bn-fixed-label" aria-label="Label for this fixed value" placeholder="Label, e.g. GST No." value="${escapeXml(labelVal)}"></div>
+      <div class="field" style="flex:1.4;"><input type="text" class="bn-fixed-value" aria-label="The fixed value to stamp on every page" placeholder="Value, e.g. 22AAAAA0000A1Z5" value="${escapeXml(valueVal)}"></div>
       <button type="button" class="small-btn" style="align-self:center;">✕</button>
     `;
     row.querySelector('button').onclick = ()=>row.remove();
@@ -1548,10 +1564,10 @@ function toolHeaderFooter(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field1=document.createElement('div'); field1.className='field';
-  field1.innerHTML=`<label>Header text (leave blank to skip)</label><input type="text" id="hf-header" placeholder="e.g. Confidential Draft">`;
+  field1.innerHTML=`<label for="hf-header">Header text (leave blank to skip)</label><input type="text" id="hf-header" placeholder="e.g. Confidential Draft">`;
   body.appendChild(field1);
   const field2=document.createElement('div'); field2.className='field';
-  field2.innerHTML=`<label>Footer text (leave blank to skip)</label><input type="text" id="hf-footer" placeholder="e.g. \${date}">`;
+  field2.innerHTML=`<label for="hf-footer">Footer text (leave blank to skip)</label><input type="text" id="hf-footer" placeholder="e.g. \${date}">`;
   body.appendChild(field2);
   const note=document.createElement('div'); note.className='note'; note.textContent='Use ${date} in either field to insert today\'s date automatically.'; body.appendChild(note);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Apply & download'; body.appendChild(btn);
@@ -1582,7 +1598,7 @@ function toolNUp(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Layout</label>
+  field.innerHTML=`<label for="nup-count">Layout</label>
     <select id="nup-count" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       <option value="2">2 pages per sheet</option>
       <option value="4">4 pages per sheet</option>
@@ -1630,14 +1646,14 @@ function toolInsertReplacePage(){
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
-    <div class="field"><label>Action</label>
+    <div class="field"><label for="ir-action">Action</label>
       <select id="ir-action" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="insert-blank">Insert blank page</option>
         <option value="insert-file">Insert a page from another file</option>
         <option value="replace">Replace a page with another file's page</option>
       </select>
     </div>
-    <div class="field"><label>At page #</label><input type="number" id="ir-at" value="1"></div>
+    <div class="field"><label for="ir-at">At page #</label><input type="number" id="ir-at" value="1"></div>
   `;
   body.appendChild(row);
   const field1=document.createElement('div'); field1.className='field';
@@ -1741,7 +1757,7 @@ function toolSplitBySize(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — ${fmtBytes(file.size)}`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Target size per chunk (MB)</label><input type="number" id="sbs-mb" value="10" min="1">`;
+  field.innerHTML=`<label for="sbs-mb">Target size per chunk (MB)</label><input type="number" id="sbs-mb" value="10" min="1">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -1779,7 +1795,7 @@ function toolTableToCSV(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Page number</label><input type="number" id="tcsv-page" value="1" min="1">`;
+  field.innerHTML=`<label for="tcsv-page">Page number</label><input type="number" id="tcsv-page" value="1" min="1">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .csv'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -1819,8 +1835,8 @@ function toolBookmarkEditor(){
   const outlineWrap=document.createElement('div'); outlineWrap.style.margin='12px 0'; body.appendChild(outlineWrap);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
-    <div class="field"><label>New bookmark title</label><input type="text" id="bm-title" placeholder="Chapter name"></div>
-    <div class="field"><label>Points to page</label><input type="number" id="bm-page" value="1"></div>
+    <div class="field"><label for="bm-title">New bookmark title</label><input type="text" id="bm-title" placeholder="Chapter name"></div>
+    <div class="field"><label for="bm-page">Points to page</label><input type="number" id="bm-page" value="1"></div>
   `;
   body.appendChild(row);
   const note=document.createElement('div'); note.className='note';
@@ -2213,7 +2229,7 @@ function toolSearchRedact(){
   }});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Pattern to find</label>
+  field.innerHTML=`<label for="sr-preset">Pattern to find</label>
     <select id="sr-preset" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;margin-bottom:8px;">
       <option value="ssn">Social Security Numbers (###-##-####)</option>
       <option value="email">Email addresses</option>
@@ -2221,7 +2237,7 @@ function toolSearchRedact(){
       <option value="cc">Credit card numbers</option>
       <option value="custom">Custom text</option>
     </select>
-    <input type="text" id="sr-custom" placeholder="Custom text or exact phrase..." style="display:none;">`;
+    <input type="text" id="sr-custom" aria-label="Custom text or exact phrase to redact" placeholder="Custom text or exact phrase..." style="display:none;">`;
   body.appendChild(field);
   body.addEventListener('change', e=>{
     if(e.target.id==='sr-preset') document.getElementById('sr-custom').style.display = e.target.value==='custom' ? 'block' : 'none';
@@ -2331,7 +2347,7 @@ function toolDigitalStamp(){
   let selected = presets[0];
 
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Or type your own stamp text</label><input type="text" id="stamp-custom" placeholder="e.g. RECEIVED">`;
+  field.innerHTML = `<label for="stamp-custom">Or type your own stamp text</label><input type="text" id="stamp-custom" placeholder="e.g. RECEIVED">`;
   body.appendChild(field);
 
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
@@ -2408,7 +2424,7 @@ function toolDigitalStamp(){
 function toolWordCounter(){
   const body = panelShell({title:'Word & Character Counter', desc:'Paste text below and see the count update as you type.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<textarea id="wc-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);" placeholder="Paste or type your text here..."></textarea>`;
+  field.innerHTML = `<textarea id="wc-input" aria-label="Text to count" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);" placeholder="Paste or type your text here..."></textarea>`;
   body.appendChild(field);
   const stats=document.createElement('div'); stats.className='tools'; stats.style.gridTemplateColumns='repeat(4,1fr)'; body.appendChild(stats);
   const boxes = ['Words','Characters','Sentences','Paragraphs'].map(label=>{
@@ -2430,7 +2446,7 @@ function toolWordCounter(){
 function toolCaseConverter(){
   const body = panelShell({title:'Change Text Case', desc:'Paste text, pick a style, copy the result.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Your text</label><textarea id="cc-input" rows="6" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);"></textarea>`;
+  field.innerHTML = `<label for="cc-input">Your text</label><textarea id="cc-input" rows="6" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);"></textarea>`;
   body.appendChild(field);
   const tabRow=document.createElement('div'); tabRow.className='tools'; tabRow.style.gridTemplateColumns='repeat(3,1fr)';
   const styles = [
@@ -2464,8 +2480,8 @@ function toolTextDiff(){
   const body = panelShell({title:'Compare Two Texts', desc:'Paste the original and the changed version, see what\'s different, line by line.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Original</label><textarea id="td-a" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);"></textarea></div>
-    <div class="field"><label>Changed</label><textarea id="td-b" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);"></textarea></div>
+    <div class="field"><label for="td-a">Original</label><textarea id="td-a" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);"></textarea></div>
+    <div class="field"><label for="td-b">Changed</label><textarea id="td-b" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);"></textarea></div>
   `;
   body.appendChild(row);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Compare'; body.appendChild(btn);
@@ -2491,10 +2507,10 @@ function toolTextDiff(){
 function toolRemoveDuplicateLines(){
   const body = panelShell({title:'Remove Duplicate Lines', desc:'Paste a list, remove repeated lines, optionally sort it.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<textarea id="rdl-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);" placeholder="One item per line..."></textarea>`;
+  field.innerHTML = `<textarea id="rdl-input" aria-label="Lines to de-duplicate, one item per line" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);" placeholder="One item per line..."></textarea>`;
   body.appendChild(field);
   const opts=document.createElement('label'); opts.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
-  opts.innerHTML = `<input type="checkbox" id="rdl-sort"> Also sort alphabetically`;
+  opts.innerHTML = `<input type="checkbox" id="rdl-sort"><label for="rdl-sort"> Also sort alphabetically</label>`;
   body.appendChild(opts);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Clean it up'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -2511,7 +2527,7 @@ function toolLoremIpsum(){
   const body = panelShell({title:'Placeholder Text Generator', desc:'Generate filler text for mockups and designs.'});
   const words = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat".split(' ');
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>How many paragraphs?</label><input type="number" id="li-count" value="3" min="1" max="20">`;
+  field.innerHTML = `<label for="li-count">How many paragraphs?</label><input type="number" id="li-count" value="3" min="1" max="20">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; body.appendChild(btn);
   const out=document.createElement('textarea'); out.rows=10; out.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--paper);margin-top:12px;'; body.appendChild(out);
@@ -2538,7 +2554,7 @@ function toolLoremIpsum(){
 function toolQRGenerate(){
   const body = panelShell({title:'QR Code Generator', desc:'Turn a link or text into a scannable QR code.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Text or link</label><input type="text" id="qr-input" placeholder="https://example.com">`;
+  field.innerHTML = `<label for="qr-input">Text or link</label><input type="text" id="qr-input" placeholder="https://example.com">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; body.appendChild(btn);
   const canvasWrap=document.createElement('div'); canvasWrap.style.cssText='text-align:center;margin:16px 0;'; body.appendChild(canvasWrap);
@@ -2602,7 +2618,7 @@ function toolPasswordGenerator(){
   const body = panelShell({title:'Password Generator', desc:'Make a strong, random password — created on your device, never sent anywhere.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Length</label><input type="number" id="pw-len" value="16" min="4" max="64"></div>
+    <div class="field"><label for="pw-len">Length</label><input type="number" id="pw-len" value="16" min="4" max="64"></div>
   `;
   body.appendChild(row);
   const opts = [
@@ -2654,10 +2670,10 @@ function toolUnitConverter(){
   function setGroup(g){
     if(g==='temperature'){
       row.innerHTML = `
-        <div class="field"><label>From</label>
+        <div class="field"><label for="uc-from">From</label>
           <select id="uc-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);"><option>Celsius</option><option>Fahrenheit</option><option>Kelvin</option></select>
         </div>
-        <div class="field"><label>Value</label><input type="number" id="uc-val" value="0"></div>
+        <div class="field"><label for="uc-val">Value</label><input type="number" id="uc-val" value="0"></div>
       `;
       row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input', ()=>{
         const from = document.getElementById('uc-from').value;
@@ -2669,11 +2685,11 @@ function toolUnitConverter(){
     }
     const units = Object.keys(groups[g].units);
     row.innerHTML = `
-      <div class="field"><label>From</label>
+      <div class="field"><label for="uc-from">From</label>
         <select id="uc-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${units.map(u=>`<option>${u}</option>`).join('')}</select>
       </div>
-      <div class="field"><label>Value</label><input type="number" id="uc-val" value="1"></div>
-      <div class="field"><label>To</label>
+      <div class="field"><label for="uc-val">Value</label><input type="number" id="uc-val" value="1"></div>
+      <div class="field"><label for="uc-to">To</label>
         <select id="uc-to" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${units.map(u=>`<option>${u}</option>`).join('')}</select>
       </div>
     `;
@@ -2690,13 +2706,13 @@ function toolUnitConverter(){
 function toolBase64(){
   const body = panelShell({title:'Base64 Encode / Decode', desc:'Turn text into Base64 code, or decode Base64 back into text — used when embedding data in URLs, emails, or code.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Input</label><textarea id="b64-input" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
+  field.innerHTML = `<label for="b64-input">Input</label><textarea id="b64-input" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
   body.appendChild(field);
   const tabRow=document.createElement('div'); tabRow.className='pill-row';
   tabRow.innerHTML = `<button class="small-btn" id="b64-encode">Encode →</button><button class="small-btn" id="b64-decode">← Decode</button>`;
   body.appendChild(tabRow);
   const outField=document.createElement('div'); outField.className='field';
-  outField.innerHTML = `<label>Result</label><textarea id="b64-output" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
+  outField.innerHTML = `<label for="b64-output">Result</label><textarea id="b64-output" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
   body.appendChild(outField);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   tabRow.querySelector('#b64-encode').onclick = ()=>{
@@ -2712,7 +2728,7 @@ function toolBase64(){
 function toolJSONFormatter(){
   const body = panelShell({title:'JSON Formatter & Checker', desc:'Paste messy or minified JSON and get it cleanly formatted — also tells you if there\'s an error.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<textarea id="json-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder='{"example": "paste your JSON here"}'></textarea>`;
+  field.innerHTML = `<textarea id="json-input" aria-label="JSON to format or check" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder='{"example": "paste your JSON here"}'></textarea>`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Format & Check'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -2780,7 +2796,7 @@ function md5(str){
 function toolHashGenerator(){
   const body = panelShell({title:'Hash Generator', desc:'Turn text into a fixed-length fingerprint (checksum) — used to verify a file or password hasn\'t changed.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Text</label><textarea id="hg-input" rows="4" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
+  field.innerHTML = `<label for="hg-input">Text</label><textarea id="hg-input" rows="4" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate all hashes'; body.appendChild(btn);
   const results=document.createElement('div'); results.style.marginTop='14px'; body.appendChild(results);
@@ -2799,10 +2815,10 @@ function toolTimestampConverter(){
   const body = panelShell({title:'Date & Timestamp Converter', desc:'Convert between a human-readable date and a computer timestamp.'});
   const nowBtn=document.createElement('button'); nowBtn.className='small-btn'; nowBtn.textContent='Use current moment'; body.appendChild(nowBtn);
   const field1=document.createElement('div'); field1.className='field'; field1.style.marginTop='12px';
-  field1.innerHTML = `<label>Unix timestamp (seconds since 1970)</label><input type="number" id="ts-epoch" placeholder="1776495426">`;
+  field1.innerHTML = `<label for="ts-epoch">Unix timestamp (seconds since 1970)</label><input type="number" id="ts-epoch" placeholder="1776495426">`;
   body.appendChild(field1);
   const field2=document.createElement('div'); field2.className='field';
-  field2.innerHTML = `<label>Or a normal date & time</label><input type="datetime-local" id="ts-date">`;
+  field2.innerHTML = `<label for="ts-date">Or a normal date & time</label><input type="datetime-local" id="ts-date">`;
   body.appendChild(field2);
   const result=document.createElement('div'); result.className='note'; body.appendChild(result);
   function showFromDate(d){
@@ -2818,13 +2834,13 @@ function toolTimestampConverter(){
 function toolURLEncoder(){
   const body = panelShell({title:'URL Encode / Decode', desc:'Make text safe to put inside a web address, or reverse it back.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Input</label><textarea id="ue-input" rows="5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
+  field.innerHTML = `<label for="ue-input">Input</label><textarea id="ue-input" rows="5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
   body.appendChild(field);
   const tabRow=document.createElement('div'); tabRow.className='pill-row';
   tabRow.innerHTML = `<button class="small-btn" id="ue-encode">Encode →</button><button class="small-btn" id="ue-decode">← Decode</button>`;
   body.appendChild(tabRow);
   const outField=document.createElement('div'); outField.className='field';
-  outField.innerHTML = `<label>Result</label><textarea id="ue-output" rows="5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
+  outField.innerHTML = `<label for="ue-output">Result</label><textarea id="ue-output" rows="5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
   body.appendChild(outField);
   tabRow.querySelector('#ue-encode').onclick = ()=>{ document.getElementById('ue-output').value = encodeURIComponent(document.getElementById('ue-input').value); };
   tabRow.querySelector('#ue-decode').onclick = ()=>{ try{ document.getElementById('ue-output').value = decodeURIComponent(document.getElementById('ue-input').value); }catch(e){ document.getElementById('ue-output').value = 'Could not decode — check for typos.'; } };
@@ -2833,7 +2849,7 @@ function toolURLEncoder(){
 function toolAgeCalculator(){
   const body = panelShell({title:'Age Calculator', desc:'Find out exactly how old someone is (or how long until a date).'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Date of birth</label><input type="date" id="ac-dob">`;
+  field.innerHTML = `<label for="ac-dob">Date of birth</label><input type="date" id="ac-dob">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Calculate'; body.appendChild(btn);
   const result=document.createElement('div'); result.className='note'; body.appendChild(result);
@@ -2855,8 +2871,8 @@ function toolBMICalculator(){
   const body = panelShell({title:'BMI Calculator', desc:'A quick body mass index estimate from height and weight — for general reference only, not medical advice.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Height (cm)</label><input type="number" id="bmi-h" value="170"></div>
-    <div class="field"><label>Weight (kg)</label><input type="number" id="bmi-w" value="65"></div>
+    <div class="field"><label for="bmi-h">Height (cm)</label><input type="number" id="bmi-h" value="170"></div>
+    <div class="field"><label for="bmi-w">Weight (kg)</label><input type="number" id="bmi-w" value="65"></div>
   `;
   body.appendChild(row);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Calculate'; body.appendChild(btn);
@@ -2874,7 +2890,7 @@ function toolBMICalculator(){
 function toolColorConverter(){
   const body = panelShell({title:'Color Converter & Palette', desc:'Pick a color, get its HEX/RGB/HSL codes, and a matching palette.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Pick a color</label><input type="color" id="cc-picker" value="#C1683A" style="width:100%;height:48px;border:1px solid var(--line);border-radius:8px;">`;
+  field.innerHTML = `<label for="cc-picker">Pick a color</label><input type="color" id="cc-picker" value="#C1683A" style="width:100%;height:48px;border:1px solid var(--line);border-radius:8px;">`;
   body.appendChild(field);
   const codes=document.createElement('div'); codes.style.margin='12px 0'; body.appendChild(codes);
   const paletteWrap=document.createElement('div'); paletteWrap.style.cssText='display:flex;gap:6px;margin-top:12px;'; body.appendChild(paletteWrap);
@@ -2913,13 +2929,13 @@ function toolColorConverter(){
 function toolCSVJSONConverter(){
   const body = panelShell({title:'CSV ↔ JSON Converter', desc:'Paste a spreadsheet-style list (CSV) and turn it into JSON, or the other way around.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Input</label><textarea id="cj-input" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" placeholder="name,age&#10;Alice,30&#10;Bob,25"></textarea>`;
+  field.innerHTML = `<label for="cj-input">Input</label><textarea id="cj-input" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" placeholder="name,age&#10;Alice,30&#10;Bob,25"></textarea>`;
   body.appendChild(field);
   const tabRow=document.createElement('div'); tabRow.className='pill-row';
   tabRow.innerHTML = `<button class="small-btn" id="cj-tocsv">CSV → JSON</button><button class="small-btn" id="cj-tojson">JSON → CSV</button>`;
   body.appendChild(tabRow);
   const outField=document.createElement('div'); outField.className='field';
-  outField.innerHTML = `<label>Result</label><textarea id="cj-output" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" readonly></textarea>`;
+  outField.innerHTML = `<label for="cj-output">Result</label><textarea id="cj-output" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" readonly></textarea>`;
   body.appendChild(outField);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   tabRow.querySelector('#cj-tocsv').onclick = ()=>{
@@ -2957,7 +2973,7 @@ function toolStopwatchTimer(){
   body.appendChild(tabRow);
   const display=document.createElement('div'); display.style.cssText='font-family:IBM Plex Mono,monospace;font-size:2.4rem;text-align:center;padding:24px 0;font-weight:600;'; display.textContent='00:00:00'; body.appendChild(display);
   const countdownField=document.createElement('div'); countdownField.className='field'; countdownField.style.display='none';
-  countdownField.innerHTML = `<label>Minutes to count down from</label><input type="number" id="sw-mins" value="5">`;
+  countdownField.innerHTML = `<label for="sw-mins">Minutes to count down from</label><input type="number" id="sw-mins" value="5">`;
   body.appendChild(countdownField);
   const controls=document.createElement('div'); controls.className='pill-row'; controls.style.justifyContent='center';
   controls.innerHTML = `<button class="primary-btn" id="sw-start" style="width:auto;padding:12px 24px;">Start</button><button class="small-btn" id="sw-reset">Reset</button>`;
@@ -2990,8 +3006,8 @@ function toolRandomGenerator(){
   const body = panelShell({title:'Random Number, Dice & Coin', desc:'Get a random number in a range, roll dice, or flip a coin.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Lowest number</label><input type="number" id="rg-min" value="1"></div>
-    <div class="field"><label>Highest number</label><input type="number" id="rg-max" value="100"></div>
+    <div class="field"><label for="rg-min">Lowest number</label><input type="number" id="rg-min" value="1"></div>
+    <div class="field"><label for="rg-max">Highest number</label><input type="number" id="rg-max" value="100"></div>
   `;
   body.appendChild(row);
   const tabRow=document.createElement('div'); tabRow.className='tools'; tabRow.style.gridTemplateColumns='repeat(3,1fr)';
@@ -3016,12 +3032,12 @@ function toolEMICalculator(){
   const body = panelShell({title:'Loan / EMI Calculator', desc:'See your monthly payment, and exactly how much of it is interest vs. paying down the loan.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Loan amount</label><input type="number" id="emi-p" value="1000000"></div>
-    <div class="field"><label>Interest rate per year (%)</label><input type="number" id="emi-r" value="8.5" step="0.1"></div>
+    <div class="field"><label for="emi-p">Loan amount</label><input type="number" id="emi-p" value="1000000"></div>
+    <div class="field"><label for="emi-r">Interest rate per year (%)</label><input type="number" id="emi-r" value="8.5" step="0.1"></div>
   `;
   body.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
-  row2.innerHTML = `<div class="field"><label>Loan length (years)</label><input type="number" id="emi-y" value="20"></div>`;
+  row2.innerHTML = `<div class="field"><label for="emi-y">Loan length (years)</label><input type="number" id="emi-y" value="20"></div>`;
   body.appendChild(row2);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Calculate'; body.appendChild(btn);
   const result=document.createElement('div'); body.appendChild(result);
@@ -3052,14 +3068,14 @@ function toolInterestComparison(){
   body.appendChild(note);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Starting amount</label><input type="number" id="ic-p" value="100000"></div>
-    <div class="field"><label>Interest rate per year (%)</label><input type="number" id="ic-r" value="10"></div>
+    <div class="field"><label for="ic-p">Starting amount</label><input type="number" id="ic-p" value="100000"></div>
+    <div class="field"><label for="ic-r">Interest rate per year (%)</label><input type="number" id="ic-r" value="10"></div>
   `;
   body.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML = `
-    <div class="field"><label>Number of years</label><input type="number" id="ic-t" value="10"></div>
-    <div class="field"><label>Compounding frequency</label>
+    <div class="field"><label for="ic-t">Number of years</label><input type="number" id="ic-t" value="10"></div>
+    <div class="field"><label for="ic-n">Compounding frequency</label>
       <select id="ic-n" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="1">Once a year</option>
         <option value="2">Every 6 months</option>
@@ -3120,14 +3136,14 @@ function toolBatchImageProcessor(){
 
   const resizeField=document.createElement('div'); resizeField.id='batch-resize-field';
   resizeField.innerHTML = `<div class="row">
-    <div class="field"><label>Width (px)</label><input type="number" id="batch-w" value="1200"></div>
-    <div class="field"><label>Height (px)</label><input type="number" id="batch-h" value="1200"></div>
+    <div class="field"><label for="batch-w">Width (px)</label><input type="number" id="batch-w" value="1200"></div>
+    <div class="field"><label for="batch-h">Height (px)</label><input type="number" id="batch-h" value="1200"></div>
   </div>
   <div class="helper-line">Each photo is resized to fit inside this box, keeping its own shape (no stretching).</div>`;
   body.appendChild(resizeField);
 
   const compressField=document.createElement('div'); compressField.id='batch-compress-field'; compressField.style.display='none';
-  compressField.innerHTML = `<div class="field"><label>How much smaller? <span id="batch-qval">75</span>%</label><input type="range" id="batch-q" min="20" max="100" value="75"></div>`;
+  compressField.innerHTML = `<div class="field"><label for="batch-q">How much smaller? <span id="batch-qval">75</span>%</label><input type="range" id="batch-q" min="20" max="100" value="75"></div>`;
   body.appendChild(compressField);
 
   tabRow.querySelectorAll('.tab-btn').forEach(b=>{
@@ -3188,11 +3204,11 @@ function toolCurrencyConverter(){
   const currencies = ['USD','EUR','GBP','JPY','INR','AUD','CAD','CHF','CNY','SEK','NZD','SGD','HKD','ZAR','MXN','BRL','AED','SAR','KRW','THB'];
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Amount</label><input type="number" id="cur-amt" value="100"></div>
-    <div class="field"><label>From</label>
+    <div class="field"><label for="cur-amt">Amount</label><input type="number" id="cur-amt" value="100"></div>
+    <div class="field"><label for="cur-from">From</label>
       <select id="cur-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${currencies.map(c=>`<option ${c==='USD'?'selected':''}>${c}</option>`).join('')}</select>
     </div>
-    <div class="field"><label>To</label>
+    <div class="field"><label for="cur-to">To</label>
       <select id="cur-to" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${currencies.map(c=>`<option ${c==='INR'?'selected':''}>${c}</option>`).join('')}</select>
     </div>
   `;
@@ -3262,12 +3278,12 @@ function toolAISummarizeLocal(){
   note.textContent='First use downloads a small AI model (about 60–150MB, one time only, then cached by your browser). After that it works instantly, even with no internet.';
   body.appendChild(note);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Text to summarize</label><textarea id="ais-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="Paste an article, essay, or long text..."></textarea>`;
+  field.innerHTML = `<label for="ais-input">Text to summarize</label><textarea id="ais-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="Paste an article, essay, or long text..."></textarea>`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Summarize'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   const outField=document.createElement('div'); outField.className='field'; outField.style.display='none';
-  outField.innerHTML = `<label>Summary</label><textarea id="ais-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
+  outField.innerHTML = `<label for="ais-output">Summary</label><textarea id="ais-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
   body.appendChild(outField);
   btn.onclick = async ()=>{
     const text = document.getElementById('ais-input').value.trim();
@@ -3297,17 +3313,17 @@ function toolAITranslateLocal(){
   const langs = {English:'eng_Latn', Spanish:'spa_Latn', French:'fra_Latn', German:'deu_Latn', Hindi:'hin_Deva', Chinese:'zho_Hans', Arabic:'arb_Arab', Portuguese:'por_Latn', Russian:'rus_Cyrl', Japanese:'jpn_Jpan'};
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>From</label><select id="ait-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${Object.keys(langs).map(l=>`<option ${l==='English'?'selected':''}>${l}</option>`).join('')}</select></div>
-    <div class="field"><label>To</label><select id="ait-to" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${Object.keys(langs).map(l=>`<option ${l==='Spanish'?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="ait-from">From</label><select id="ait-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${Object.keys(langs).map(l=>`<option ${l==='English'?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="ait-to">To</label><select id="ait-to" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${Object.keys(langs).map(l=>`<option ${l==='Spanish'?'selected':''}>${l}</option>`).join('')}</select></div>
   `;
   body.appendChild(row);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Text</label><textarea id="ait-input" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
+  field.innerHTML = `<label for="ait-input">Text</label><textarea id="ait-input" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Translate'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   const outField=document.createElement('div'); outField.className='field'; outField.style.display='none';
-  outField.innerHTML = `<label>Translation</label><textarea id="ait-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
+  outField.innerHTML = `<label for="ait-output">Translation</label><textarea id="ait-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
   body.appendChild(outField);
   btn.onclick = async ()=>{
     const text = document.getElementById('ait-input').value.trim();
@@ -3339,7 +3355,7 @@ function toolVoiceToText(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='● Start Recording'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   const outField=document.createElement('div'); outField.className='field'; outField.style.display='none';
-  outField.innerHTML = `<label>What you said</label><textarea id="vtt-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
+  outField.innerHTML = `<label for="vtt-output">What you said</label><textarea id="vtt-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
   body.appendChild(outField);
 
   btn.onclick = async ()=>{
@@ -3432,15 +3448,15 @@ function toolPassportPhoto(){
   };
 
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Country / document</label>
+  field.innerHTML = `<label for="pp-preset">Country / document</label>
     <select id="pp-preset" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       ${Object.keys(presets).map(k=>`<option>${k}</option>`).join('')}
     </select>`;
   body.appendChild(field);
   const customRow=document.createElement('div'); customRow.className='row'; customRow.style.display='none';
   customRow.innerHTML = `
-    <div class="field"><label>Width (mm)</label><input type="number" id="pp-cw" value="35"></div>
-    <div class="field"><label>Height (mm)</label><input type="number" id="pp-ch" value="45"></div>
+    <div class="field"><label for="pp-cw">Width (mm)</label><input type="number" id="pp-cw" value="35"></div>
+    <div class="field"><label for="pp-ch">Height (mm)</label><input type="number" id="pp-ch" value="45"></div>
   `;
   body.appendChild(customRow);
 
@@ -3452,7 +3468,7 @@ function toolPassportPhoto(){
 
   const cropWrap=document.createElement('div'); cropWrap.style.cssText='margin:14px 0;text-align:center;'; body.appendChild(cropWrap);
   const zoomField=document.createElement('div'); zoomField.className='field'; zoomField.style.display='none';
-  zoomField.innerHTML = `<label>Zoom</label><input type="range" id="pp-zoom" min="100" max="300" value="100">`;
+  zoomField.innerHTML = `<label for="pp-zoom">Zoom</label><input type="range" id="pp-zoom" min="100" max="300" value="100">`;
   body.appendChild(zoomField);
   const dragHint=document.createElement('div'); dragHint.className='helper-line'; dragHint.style.display='none'; dragHint.textContent='Drag the photo to center your face, use Zoom to adjust framing.'; body.appendChild(dragHint);
 
@@ -3560,7 +3576,7 @@ function toolPassportPhoto(){
 function toolBarcodeGenerator(){
   const body = panelShell({title:'Barcode Generator', desc:'Turn a product code or number into a scannable barcode.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Code or number</label><input type="text" id="bc-input" placeholder="e.g. 123456789012">`;
+  field.innerHTML = `<label for="bc-input">Code or number</label><input type="text" id="bc-input" placeholder="e.g. 123456789012">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; body.appendChild(btn);
   const canvasWrap=document.createElement('div'); canvasWrap.style.cssText='text-align:center;margin:16px 0;background:#fff;padding:12px;border-radius:8px;'; body.appendChild(canvasWrap);
@@ -3590,10 +3606,10 @@ function toolBarcodeGenerator(){
 function toolRegexTester(){
   const body = panelShell({title:'Pattern (Regex) Tester', desc:'Test a search pattern against some text and see every match highlighted.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Pattern</label><input type="text" id="rt-pattern" placeholder="e.g. \\d+" style="font-family:'IBM Plex Mono',monospace;">`;
+  field.innerHTML = `<label for="rt-pattern">Pattern</label><input type="text" id="rt-pattern" placeholder="e.g. \\d+" style="font-family:'IBM Plex Mono',monospace;">`;
   body.appendChild(field);
   const field2=document.createElement('div'); field2.className='field';
-  field2.innerHTML = `<label>Text to search</label><textarea id="rt-text" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
+  field2.innerHTML = `<label for="rt-text">Text to search</label><textarea id="rt-text" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
   body.appendChild(field2);
   const result=document.createElement('div'); result.style.cssText='margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font-family:IBM Plex Mono,monospace;font-size:0.85rem;white-space:pre-wrap;word-break:break-word;'; body.appendChild(result);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -3764,15 +3780,15 @@ function toolCardDesigner(kind){
   if(!isID){
     const row=document.createElement('div'); row.className='row';
     row.innerHTML = `
-      <div class="field"><label>Phone</label><input type="text" id="card-phone" placeholder="+1 555 123 4567"></div>
-      <div class="field"><label>Email</label><input type="text" id="card-email" placeholder="jordan@acme.com"></div>
+      <div class="field"><label for="card-phone">Phone</label><input type="text" id="card-phone" placeholder="+1 555 123 4567"></div>
+      <div class="field"><label for="card-email">Email</label><input type="text" id="card-email" placeholder="jordan@acme.com"></div>
     `;
     body.appendChild(row);
     const row2=document.createElement('div'); row2.className='row';
-    row2.innerHTML = `<div class="field"><label>Website (optional)</label><input type="text" id="card-web" placeholder="acme.com"></div>`;
+    row2.innerHTML = `<div class="field"><label for="card-web">Website (optional)</label><input type="text" id="card-web" placeholder="acme.com"></div>`;
     body.appendChild(row2);
     const qrToggle=document.createElement('label'); qrToggle.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
-    qrToggle.innerHTML = `<input type="checkbox" id="card-qr-on" checked> Add a QR code people can scan to save your contact`;
+    qrToggle.innerHTML = `<input type="checkbox" id="card-qr-on" checked><label for="card-qr-on"> Add a QR code people can scan to save your contact</label>`;
     body.appendChild(qrToggle);
   }
 
@@ -3947,10 +3963,10 @@ function toolBatchIDCards(){
   note.textContent='Your list needs these column headers in the first row: name, title, org, idnum — one row per person. No photos in batch mode; add those one at a time with the single ID Card Designer if you need them.';
   body.appendChild(note);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Paste your list (CSV — one person per line)</label><textarea id="bic-input" rows="8" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" placeholder="name,title,org,idnum&#10;Jordan Rivera,Manager,Acme Co.,ID-001&#10;Sam Lee,Engineer,Acme Co.,ID-002"></textarea>`;
+  field.innerHTML = `<label for="bic-input">Paste your list (CSV — one person per line)</label><textarea id="bic-input" rows="8" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" placeholder="name,title,org,idnum&#10;Jordan Rivera,Manager,Acme Co.,ID-001&#10;Sam Lee,Engineer,Acme Co.,ID-002"></textarea>`;
   body.appendChild(field);
   const colorField=document.createElement('div'); colorField.className='field';
-  colorField.innerHTML = `<label>Accent color</label><input type="color" id="bic-color" value="#C1683A" style="width:100%;height:44px;border:1px solid var(--line);border-radius:8px;">`;
+  colorField.innerHTML = `<label for="bic-color">Accent color</label><input type="color" id="bic-color" value="#C1683A" style="width:100%;height:44px;border:1px solid var(--line);border-radius:8px;">`;
   body.appendChild(colorField);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create All Cards & Download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -4161,14 +4177,14 @@ function toolInvoiceGenerator(){
   const body = panelShell({title:'Invoice Generator', desc:'Create a professional invoice with line items, totals, and your business details.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Your business name</label><input type="text" id="inv-from" placeholder="Acme Co."></div>
-    <div class="field"><label>Invoice number</label><input type="text" id="inv-num" placeholder="INV-2026-0042"></div>
+    <div class="field"><label for="inv-from">Your business name</label><input type="text" id="inv-from" placeholder="Acme Co."></div>
+    <div class="field"><label for="inv-num">Invoice number</label><input type="text" id="inv-num" placeholder="INV-2026-0042"></div>
   `;
   body.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML = `
-    <div class="field"><label>Bill to</label><input type="text" id="inv-to" placeholder="Client name / company"></div>
-    <div class="field"><label>Date</label><input type="date" id="inv-date"></div>
+    <div class="field"><label for="inv-to">Bill to</label><input type="text" id="inv-to" placeholder="Client name / company"></div>
+    <div class="field"><label for="inv-date">Date</label><input type="date" id="inv-date"></div>
   `;
   body.appendChild(row2);
   const note=document.createElement('div'); note.className='helper-line'; note.style.fontWeight='600'; note.textContent='Line items'; body.appendChild(note);
@@ -4178,9 +4194,9 @@ function toolInvoiceGenerator(){
   function addItemRow(desc='', qty='1', price=''){
     const row=document.createElement('div'); row.className='row'; row.dataset.invItem='1'; row.style.cssText='margin-bottom:6px;align-items:flex-end;';
     row.innerHTML = `
-      <div class="field" style="flex:2.4;"><label>Description</label><input type="text" class="inv-desc" placeholder="e.g. Website design" value="${escapeXml(desc)}"></div>
-      <div class="field" style="flex:0.7;"><label>Qty</label><input type="number" class="inv-qty" min="0" step="any" value="${escapeXml(qty)}"></div>
-      <div class="field" style="flex:1;"><label>Unit price</label><input type="number" class="inv-price" min="0" step="any" placeholder="0.00" value="${escapeXml(price)}"></div>
+      <div class="field" style="flex:2.4;"><label>Description</label><input type="text" class="inv-desc" aria-label="Line item description" placeholder="e.g. Website design" value="${escapeXml(desc)}"></div>
+      <div class="field" style="flex:0.7;"><label>Qty</label><input type="number" class="inv-qty" aria-label="Line item quantity" min="0" step="any" value="${escapeXml(qty)}"></div>
+      <div class="field" style="flex:1;"><label>Unit price</label><input type="number" class="inv-price" aria-label="Line item unit price" min="0" step="any" placeholder="0.00" value="${escapeXml(price)}"></div>
       <button type="button" class="small-btn" style="margin-bottom:4px;" title="Remove this item">✕</button>`;
     row.querySelector('button').onclick=()=>{ row.remove(); updateTotals(); };
     itemsWrap.appendChild(row);
@@ -4204,8 +4220,8 @@ function toolInvoiceGenerator(){
   body.addEventListener('input', updateTotals);
   const row3=document.createElement('div'); row3.className='row';
   row3.innerHTML = `
-    <div class="field"><label>Tax rate (%, optional)</label><input type="number" id="inv-tax" value="0"></div>
-    <div class="field"><label>Currency symbol</label><input type="text" id="inv-currency" value="$"></div>
+    <div class="field"><label for="inv-tax">Tax rate (%, optional)</label><input type="number" id="inv-tax" value="0"></div>
+    <div class="field"><label for="inv-currency">Currency symbol</label><input type="text" id="inv-currency" value="$"></div>
   `;
   body.appendChild(row3);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Invoice & Download PDF'; body.appendChild(btn);
@@ -4320,12 +4336,12 @@ function toolServerOCR(){
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Output</label>
+    <div class="field"><label for="ocr-output">Output</label>
       <select id="ocr-output" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="pdf">Searchable PDF (recommended)</option>
         <option value="text">Plain text (.txt)</option>
       </select></div>
-    <div class="field"><label>Language</label>
+    <div class="field"><label for="ocr-lang">Language</label>
       <select id="ocr-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="eng">English</option><option value="deu">German</option><option value="fra">French</option>
         <option value="spa">Spanish</option><option value="por">Portuguese</option><option value="hin">Hindi</option>
@@ -4391,7 +4407,7 @@ function toolServerCompressPDF(){
     outName:(f)=>f.name.replace(/\.pdf$/i,'')+'-compressed.pdf', outType:'application/pdf',
     extraUI:(body)=>{
       const field=document.createElement('div'); field.className='field';
-      field.innerHTML=`<label>How hard to squeeze</label>
+      field.innerHTML=`<label for="dc-level">How hard to squeeze</label>
         <select id="dc-level" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
           <option value="strong" selected>Strong (e-book quality, great for email)</option>
           <option value="balanced">Balanced (print quality)</option>
@@ -4425,7 +4441,7 @@ function toolServerChatPDF(){
   }});
   const chatBox=document.createElement('div'); chatBox.style.cssText='max-height:300px;overflow-y:auto;margin:10px 0;display:flex;flex-direction:column;gap:8px;'; body.appendChild(chatBox);
   const row=document.createElement('div'); row.className='row';
-  row.innerHTML=`<div class="field" style="flex:1;"><input type="text" id="chat-q" placeholder="e.g. What is the total amount due?"></div>`;
+  row.innerHTML=`<div class="field" style="flex:1;"><input type="text" id="chat-q" aria-label="Your question about this document" placeholder="e.g. What is the total amount due?"></div>`;
   body.appendChild(row);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Ask'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -4646,8 +4662,8 @@ function toolPDFEditor(){
     document.getElementById('nextp').onclick = ()=>{ if(pageNum<pdfjsDoc.numPages){pageNum++; renderPage();} };
     document.getElementById('undo-btn').onclick = undo;
     addRow.innerHTML = `
-      <input type="text" id="anno-text" placeholder="Text to place..." style="flex:1;min-width:160px;">
-      <input type="number" id="anno-size" value="14" style="width:60px;" title="font size">
+      <input type="text" id="anno-text" aria-label="Text to place on the page" placeholder="Text to place..." style="flex:1;min-width:160px;">
+      <input type="number" id="anno-size" aria-label="Font size in points" value="14" style="width:60px;" title="font size">
       <button class="small-btn" id="anno-add">Place at last click</button>
     `;
     document.getElementById('anno-add').onclick = ()=>{
@@ -4726,12 +4742,12 @@ function toolAddWatermark(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Watermark text</label><input type="text" id="wm-text" value="CONFIDENTIAL">`;
+  field.innerHTML=`<label for="wm-text">Watermark text</label><input type="text" id="wm-text" value="CONFIDENTIAL">`;
   body.appendChild(field);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
-    <div class="field"><label>Font size</label><input type="number" id="wm-size" value="48"></div>
-    <div class="field"><label>Opacity (0-1)</label><input type="number" id="wm-op" value="0.25" step="0.05"></div>
+    <div class="field"><label for="wm-size">Font size</label><input type="number" id="wm-size" value="48"></div>
+    <div class="field"><label for="wm-op">Opacity (0-1)</label><input type="number" id="wm-op" value="0.25" step="0.05"></div>
   `;
   body.appendChild(row);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add watermark & download'; body.appendChild(btn);
@@ -4992,14 +5008,14 @@ function toolCropPDF(){
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
-    <div class="field"><label>Top</label><input type="number" id="cr-top" value="20"></div>
-    <div class="field"><label>Bottom</label><input type="number" id="cr-bottom" value="20"></div>
+    <div class="field"><label for="cr-top">Top</label><input type="number" id="cr-top" value="20"></div>
+    <div class="field"><label for="cr-bottom">Bottom</label><input type="number" id="cr-bottom" value="20"></div>
   `;
   body.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML=`
-    <div class="field"><label>Left</label><input type="number" id="cr-left" value="20"></div>
-    <div class="field"><label>Right</label><input type="number" id="cr-right" value="20"></div>
+    <div class="field"><label for="cr-left">Left</label><input type="number" id="cr-left" value="20"></div>
+    <div class="field"><label for="cr-right">Right</label><input type="number" id="cr-right" value="20"></div>
   `;
   body.appendChild(row2);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Crop & download'; body.appendChild(btn);
@@ -5043,8 +5059,8 @@ function toolCompressPDF(){
 
   const manualRow=document.createElement('div'); manualRow.className='row'; manualRow.id='cp-manual-row';
   manualRow.innerHTML=`
-    <div class="field"><label>How much smaller? <span id="cp-qval">70</span>%</label><input type="range" id="cp-quality" min="20" max="95" value="70"></div>
-    <div class="field"><label>Picture sharpness: <span id="cp-sval">1.0x</span></label><input type="range" id="cp-scale" min="0.5" max="2" step="0.1" value="1.0"></div>
+    <div class="field"><label for="cp-quality">How much smaller? <span id="cp-qval">70</span>%</label><input type="range" id="cp-quality" min="20" max="95" value="70"></div>
+    <div class="field"><label for="cp-scale">Picture sharpness: <span id="cp-sval">1.0x</span></label><input type="range" id="cp-scale" min="0.5" max="2" step="0.1" value="1.0"></div>
   `;
   body.appendChild(manualRow);
 
@@ -5052,8 +5068,8 @@ function toolCompressPDF(){
   targetField.innerHTML = `
     <div class="field"><label>The final file must be smaller than:</label></div>
     <div class="big-input-row">
-      <input type="number" id="cp-target-val" value="2">
-      <select id="cp-target-unit">
+      <input type="number" id="cp-target-val" aria-label="Target size" value="2">
+      <select id="cp-target-unit" aria-label="Target size unit">
         <option value="KB">KB (kilobytes)</option>
         <option value="MB" selected>MB (megabytes)</option>
         <option value="GB">GB (gigabytes)</option>
@@ -5151,7 +5167,7 @@ function toolHtmlToPDF(){
   note.textContent='Converting a live URL requires fetching that page\'s content, which browsers block cross-origin for security — paste the HTML source or text instead (view-source, or copy from the page) and this converts it locally.';
   body.appendChild(note);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>HTML or plain text</label><textarea id="html-input" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:0.88rem;background:var(--paper);" placeholder="<h1>Title</h1><p>Your content here...</p>"></textarea>`;
+  field.innerHTML = `<label for="html-input">HTML or plain text</label><textarea id="html-input" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:0.88rem;background:var(--paper);" placeholder="<h1>Title</h1><p>Your content here...</p>"></textarea>`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -5687,7 +5703,7 @@ function toolComparePDF(){
   buildDropzone(zoneA, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileA=f[0]; pdfA = await getPdfDoc(await fileA.arrayBuffer()); }});
   buildDropzone(zoneB, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileB=f[0]; pdfB = await getPdfDoc(await fileB.arrayBuffer()); }});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Page to compare</label><input type="number" id="cmp-page" value="1" min="1">`;
+  field.innerHTML = `<label for="cmp-page">Page to compare</label><input type="number" id="cmp-page" value="1" min="1">`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Compare page'; body.appendChild(btn);
   const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
@@ -5885,12 +5901,12 @@ function toolLocalOCR(){
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Output</label>
+    <div class="field"><label for="locr-output">Output</label>
       <select id="locr-output" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="pdf">Searchable PDF (recommended)</option>
         <option value="text">Plain text (.txt)</option>
       </select></div>
-    <div class="field"><label>Language</label>
+    <div class="field"><label for="locr-lang">Language</label>
       <select id="locr-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="eng">English</option>
       </select></div>`;
@@ -6132,8 +6148,8 @@ function toolSlideshowVideo(){
   const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Seconds per picture</label><input type="number" id="ss-secs" value="3" min="1" max="30" step="0.5"></div>
-    <div class="field"><label>Size</label>
+    <div class="field"><label for="ss-secs">Seconds per picture</label><input type="number" id="ss-secs" value="3" min="1" max="30" step="0.5"></div>
+    <div class="field"><label for="ss-res">Size</label>
       <select id="ss-res" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="1280x720" selected>720p (1280×720)</option>
         <option value="1920x1080">1080p (1920×1080)</option>
@@ -6141,7 +6157,7 @@ function toolSlideshowVideo(){
       </select></div>`;
   body.appendChild(row);
   const fadeOpt=document.createElement('label'); fadeOpt.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
-  fadeOpt.innerHTML=`<input type="checkbox" id="ss-fade" checked> Crossfade between pictures`;
+  fadeOpt.innerHTML=`<input type="checkbox" id="ss-fade" checked><label for="ss-fade"> Crossfade between pictures</label>`;
   body.appendChild(fadeOpt);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create video ('+mimeExt(mime).toUpperCase()+')'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -6224,13 +6240,13 @@ function toolVideoToGIF(){
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Start at (seconds)</label><input type="number" id="vg-start" value="0" min="0" step="0.1"></div>
-    <div class="field"><label>End at (seconds)</label><input type="number" id="vg-end" value="3" min="0.1" step="0.1"></div>`;
+    <div class="field"><label for="vg-start">Start at (seconds)</label><input type="number" id="vg-start" value="0" min="0" step="0.1"></div>
+    <div class="field"><label for="vg-end">End at (seconds)</label><input type="number" id="vg-end" value="3" min="0.1" step="0.1"></div>`;
   body.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML = `
-    <div class="field"><label>Width (px)</label><input type="number" id="vg-width" value="480" min="64" max="1280"></div>
-    <div class="field"><label>Frames per second</label>
+    <div class="field"><label for="vg-width">Width (px)</label><input type="number" id="vg-width" value="480" min="64" max="1280"></div>
+    <div class="field"><label for="vg-fps">Frames per second</label>
       <select id="vg-fps" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="10" selected>10 (small file)</option><option value="15">15 (smoother)</option><option value="20">20 (smoothest)</option>
       </select></div>`;
@@ -6298,8 +6314,8 @@ function toolTrimVideo(){
   const previewWrap=document.createElement('div'); body.appendChild(previewWrap);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
-    <div class="field"><label>Keep from (seconds)</label><input type="number" id="tv-start" value="0" min="0" step="0.1"></div>
-    <div class="field"><label>Keep until (seconds)</label><input type="number" id="tv-end" value="10" min="0.1" step="0.1"></div>`;
+    <div class="field"><label for="tv-start">Keep from (seconds)</label><input type="number" id="tv-start" value="0" min="0" step="0.1"></div>
+    <div class="field"><label for="tv-end">Keep until (seconds)</label><input type="number" id="tv-end" value="10" min="0.1" step="0.1"></div>`;
   body.appendChild(row);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Trim & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -6354,7 +6370,7 @@ function toolScreenRecorder(){
   const mime = bestVideoMime();
   if(!mime || !navigator.mediaDevices?.getDisplayMedia){ body.innerHTML += '<div class="note">This browser cannot record the screen. Try Chrome, Edge, or Firefox on a computer.</div>'; return; }
   const micOpt=document.createElement('label'); micOpt.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
-  micOpt.innerHTML=`<input type="checkbox" id="sr-mic"> Also record my microphone (narration)`;
+  micOpt.innerHTML=`<input type="checkbox" id="sr-mic"><label for="sr-mic"> Also record my microphone (narration)</label>`;
   body.appendChild(micOpt);
   const btnStart=document.createElement('button'); btnStart.className='primary-btn'; btnStart.textContent='● Start recording'; body.appendChild(btnStart);
   const btnStop=document.createElement('button'); btnStop.className='primary-btn'; btnStop.textContent='■ Stop & download'; btnStop.style.cssText='display:none;background:#A6342A;'; body.appendChild(btnStop);
@@ -6639,13 +6655,13 @@ function toolImageConvert(){
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
-    <div class="field"><label>Convert to</label>
+    <div class="field"><label for="ic-format">Convert to</label>
       <select id="ic-format" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="image/jpeg">JPG — small, universal, no transparency</option>
         <option value="image/png">PNG — lossless, keeps transparency</option>
         <option value="image/webp">WebP — smallest, modern browsers/sites</option>
       </select></div>
-    <div class="field"><label>Quality (JPG/WebP) <span id="ic-qval">90</span>%</label><input type="range" id="ic-q" min="30" max="100" value="90"></div>`;
+    <div class="field"><label for="ic-q">Quality (JPG/WebP) <span id="ic-qval">90</span>%</label><input type="range" id="ic-q" min="30" max="100" value="90"></div>`;
   body.appendChild(row);
   body.addEventListener('input', e=>{ if(e.target.id==='ic-q') document.getElementById('ic-qval').textContent=e.target.value; });
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
@@ -6781,7 +6797,7 @@ function toolFaviconGenerator(){
 function toolMarkdownToPDF(){
   const body = panelShell({title:'Markdown to PDF', desc:'Write or paste Markdown, get a clean formatted PDF — headings, lists, bold, links, code.'});
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Markdown</label><textarea id="md-input" rows="10" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder="# Title&#10;&#10;Some **bold** text, a [link](https://example.com), and:&#10;&#10;- a list&#10;- of items"></textarea>`;
+  field.innerHTML = `<label for="md-input">Markdown</label><textarea id="md-input" rows="10" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder="# Title&#10;&#10;Some **bold** text, a [link](https://example.com), and:&#10;&#10;- a list&#10;- of items"></textarea>`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -6939,8 +6955,15 @@ function openTool(t){
   t.fn();
 }
 function makeCard(t, sectionId){
-  const card = document.createElement('button');
+  // A div with role=button rather than a real <button>, because the
+  // favourite star is itself a control and interactive content cannot be
+  // nested inside a button element. The star was previously a <span
+  // role="button"> with no tabindex, which put it outside the tab order
+  // entirely — a keyboard user could open any tool but could not pin one.
+  const card = document.createElement('div');
   card.className='tool-card';
+  card.setAttribute('role','button');
+  card.tabIndex = 0;
   card.dataset.tool = t.name;
   // Where a tool runs is a property of the tool, not of the row it happens
   // to be rendered in. Deciding it from sectionId alone made three
@@ -6950,11 +6973,17 @@ function makeCard(t, sectionId){
   card.dataset.where = isServer ? 'server' : 'device';
   card.dataset.cat = sectionId;
   card.innerHTML = `<span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="icons/tools.svg#i-tile"></use><use href="icons/tools.svg#i-${t.icon}"></use></svg></span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${isServer ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
-  const star=document.createElement('span');
+  const star=document.createElement('button');
+  star.type='button';
   star.className='fav-star'+(favs.has(t.name)?' faved':'');
   star.textContent = favs.has(t.name) ? '★' : '☆';
-  star.title = 'Pin this tool to the top';
-  star.setAttribute('role','button');
+  const describeStar = st=>{
+    const on = favs.has(t.name);
+    st.setAttribute('aria-pressed', on ? 'true' : 'false');
+    st.setAttribute('aria-label', (on ? 'Unpin ' : 'Pin ') + t.name);
+    st.title = on ? 'Unpin this tool' : 'Pin this tool to the top';
+  };
+  describeStar(star);
   star.onclick = (e)=>{
     e.stopPropagation();
     if(favs.has(t.name)) favs.delete(t.name); else favs.add(t.name);
@@ -6962,11 +6991,25 @@ function makeCard(t, sectionId){
     document.querySelectorAll(`.tool-card[data-tool="${CSS.escape(t.name)}"] .fav-star`).forEach(st=>{
       st.classList.toggle('faved', favs.has(t.name));
       st.textContent = favs.has(t.name) ? '★' : '☆';
+      describeStar(st);
     });
     renderHomeRows();
   };
   card.appendChild(star);
   card.onclick = ()=>openTool(t);
+  // role=button carries no built-in key handling, so it has to be supplied:
+  // Enter activates on keydown and Space on keyup, matching how a native
+  // button behaves. Space is also prevented from scrolling the page.
+  card.onkeydown = (e)=>{
+    if(e.target !== card) return;
+    if(e.key === 'Enter'){ e.preventDefault(); openTool(t); }
+    else if(e.key === ' ' || e.key === 'Spacebar'){ e.preventDefault(); }
+  };
+  card.onkeyup = (e)=>{
+    if(e.target === card && (e.key === ' ' || e.key === 'Spacebar')){
+      e.preventDefault(); openTool(t);
+    }
+  };
   return card;
 }
 function renderGrid(id, items){
@@ -7371,6 +7414,11 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
     let reg;
     try{ reg = await navigator.serviceWorker.register('sw.js'); }
     catch(e){ return; /* offline support unavailable in this context */ }
+    // register() resolves with undefined rather than rejecting where the
+    // API exists but registration is blocked — some enterprise policies,
+    // some private-browsing modes, and any automated browser run with
+    // service workers disabled. Reading reg.waiting then throws on load.
+    if(!reg) return;
 
     // A new service worker only takes over once the old one is released.
     // Without this prompt an installed app can sit on a previous build

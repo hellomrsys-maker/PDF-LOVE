@@ -94,8 +94,15 @@ jobs:
               sys.exit(1)
           print(f'Bundle OK: {len(names)} files, nothing dangling.')
           PY
+      - name: Publish SHA-256 checksum for the offline bundle
+        run: |
+          shasum -a 256 pdflove-offline.zip > SHA256SUMS-offline.txt
+          cat SHA256SUMS-offline.txt
+
       - name: Attach to release
         uses: softprops/action-gh-release@v2
         with:
-          files: pdflove-offline.zip
+          files: |
+            pdflove-offline.zip
+            SHA256SUMS-offline.txt
           generate_release_notes: true

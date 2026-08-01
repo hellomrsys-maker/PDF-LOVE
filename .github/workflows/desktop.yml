@@ -205,11 +205,27 @@ jobs:
             desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
           if-no-files-found: warn
 
+      - name: Publish SHA-256 checksums for these installers
+        # download.html tells people to check the checksum before running an
+        # installer. Nothing produced one, so that instruction could not be
+        # followed. Each build job publishes sums for what it built; the
+        # download page merges them across assets.
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle
+          find . -type f \( -name '*.msi' -o -name '*.exe' -o -name '*.dmg' \
+            -o -name '*.AppImage' -o -name '*.deb' \) -print0 |
+            xargs -0 -r shasum -a 256 |
+            sed 's| .*/| |' > "$GITHUB_WORKSPACE/SHA256SUMS-${{ matrix.target }}.txt"
+          cat "$GITHUB_WORKSPACE/SHA256SUMS-${{ matrix.target }}.txt"
+
       - name: Attach to the release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            SHA256SUMS-${{ matrix.target }}.txt
             desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi
             desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
             desktop/src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg

@@ -123,11 +123,40 @@
   </div>
 
   <h2>Verifying your download</h2>
-  <p>Every release publishes SHA-256 checksums alongside the installers. On
-  macOS and Windows the installers are code-signed; your OS will show the
-  publisher before installing. If a download is unsigned or the checksum does
-  not match, do not run it — get it from
-  <a href="https://github.com/hellomrsys-maker/Dockbench/releases">the official releases page</a>.</p>
+  <p>Every release publishes SHA-256 checksums in files named
+  <code>SHA256SUMS-*.txt</code>, next to the installers on
+  <a href="https://github.com/hellomrsys-maker/Dockbench/releases">the releases page</a>.
+  Download the one covering your platform, then check your file against it:</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Platform</th><th>Command</th></tr></thead>
+    <tbody>
+      <tr><td>Windows (PowerShell)</td><td><code>Get-FileHash .\PDFLove.msi -Algorithm SHA256</code></td></tr>
+      <tr><td>macOS</td><td><code>shasum -a 256 PDFLove.dmg</code></td></tr>
+      <tr><td>Linux</td><td><code>sha256sum PDFLove.AppImage</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>If the value does not match the one in the checksums file, do not run the
+  installer — the download was corrupted or it did not come from us.</p>
+
+  <h3>The installers are not code-signed yet</h3>
+  <p>We would rather tell you this here than have you discover it at the
+  security prompt. PDF Love is run by one person, and the certificates that
+  suppress those prompts cost several hundred dollars a year each. So:</p>
+  <ul>
+    <li><strong>Windows</strong> will show a SmartScreen warning
+    ("Windows protected your PC"). Click <em>More info</em> → <em>Run
+    anyway</em> if — and only if — the checksum matched.</li>
+    <li><strong>macOS</strong> will refuse to open the app on first launch.
+    Right-click it and choose <em>Open</em>, then confirm.</li>
+    <li><strong>Linux</strong> has no equivalent prompt; the AppImage needs
+    <code>chmod +x</code> before it will run.</li>
+  </ul>
+  <p>Until that changes, the checksum <em>is</em> your verification, which is
+  why it is published for every artifact in every release. The web app needs
+  none of this — it is served over HTTPS and runs in your browser's sandbox,
+  and it does the same 94 on-device jobs.</p>
 
   <h2>What the app sends</h2>
   <p>Nothing about your files, ever — not their contents, not their names,

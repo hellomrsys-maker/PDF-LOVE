@@ -82,19 +82,27 @@ def main():
                     break
 
         # Checksums, if the release publishes them.
+        #
+        # There is more than one file: the desktop, Android and offline-bundle
+        # workflows run independently and each publishes checksums for what it
+        # built, so every matching asset has to be read and merged. Stopping at
+        # the first one left two thirds of the installers unverifiable while
+        # the download page claimed all of them were.
         for a in assets:
-            if re.search(r"(checksums|SHA256SUMS)", a["name"], re.I):
-                try:
-                    with urllib.request.urlopen(a["browser_download_url"], timeout=20) as r:
-                        sums = r.read().decode()
-                    for e in entries.values():
-                        m = re.search(rf"^([0-9a-f]{{64}})\s+\*?{re.escape(e['name'])}$",
-                                      sums, re.M | re.I)
-                        if m:
-                            e["sha256"] = m.group(1)
-                except urllib.error.URLError:
-                    pass
-                break
+            if not re.search(r"(checksums|SHA256SUMS)", a["name"], re.I):
+                continue
+            try:
+                with urllib.request.urlopen(a["browser_download_url"], timeout=20) as r:
+                    sums = r.read().decode()
+            except (urllib.error.URLError, TimeoutError):
+                continue
+            for e in entries.values():
+                if "sha256" in e or "name" not in e:
+                    continue
+                m = re.search(rf"^([0-9a-f]{{64}})\s+\*?{re.escape(e['name'])}$",
+                              sums, re.M | re.I)
+                if m:
+                    e["sha256"] = m.group(1)
 
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
         # Not fatal: the page falls back to the releases URL for every entry.

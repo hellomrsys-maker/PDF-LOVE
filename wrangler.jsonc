@@ -6,7 +6,13 @@
     "enabled": true
   },
   "assets": {
-    "directory": "frontend"
+    "directory": "frontend",
+    // Without this, a typo'd URL returns 200 with an empty body — the worst
+    // of both worlds, since a visitor sees a blank page and a crawler
+    // records a valid, contentless URL. "404-page" serves frontend/404.html
+    // with a real 404 status, so search engines drop the address instead of
+    // indexing it.
+    "not_found_handling": "404-page"
   },
   "compatibility_flags": [
     "nodejs_compat"

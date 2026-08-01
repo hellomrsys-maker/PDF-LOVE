@@ -22,7 +22,18 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-COMPANY = os.path.join(ROOT, "frontend", "company")
+FRONTEND = os.path.join(ROOT, "frontend")
+COMPANY = os.path.join(FRONTEND, "company")
+
+# Pages outside frontend/company/ that carry the same kind of published
+# commitment. This check originally walked only the company folder, which
+# missed download.html — a page that promises SHA-256 checksums and states
+# terms for the desktop and Android builds. A placeholder is exactly as
+# visible there as it is in the privacy policy.
+EXTRA_PAGES = [
+    os.path.join(FRONTEND, "download.html"),
+    os.path.join(FRONTEND, "index.html"),
+]
 
 # Legal pages must be complete. The rest of the company pages are marketing
 # and are checked too, because a placeholder in the footer is just as visible.
@@ -44,10 +55,12 @@ def main():
         print(f"no company directory at {COMPANY}")
         return 1
 
-    for name in sorted(os.listdir(COMPANY)):
-        if not name.endswith(".html"):
-            continue
-        path = os.path.join(COMPANY, name)
+    paths = [os.path.join(COMPANY, n) for n in sorted(os.listdir(COMPANY))
+             if n.endswith(".html")]
+    paths += [p for p in EXTRA_PAGES if os.path.isfile(p)]
+
+    for path in paths:
+        name = os.path.relpath(path, FRONTEND)
         with open(path, encoding="utf-8") as f:
             text = f.read()
         checked += 1
@@ -67,7 +80,7 @@ def main():
         if not os.path.isfile(os.path.join(COMPANY, required)):
             problems.append(f"{required} is missing — run scripts/build-legal.py")
 
-    print(f"\n  checked {checked} company page(s)\n")
+    print(f"\n  checked {checked} published page(s)\n")
 
     if problems:
         # Same placeholder repeats a lot; show each distinct one once.
