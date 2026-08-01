@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this CSV to JSON converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my CSV file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the JSON file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Are commas inside quoted fields handled?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Quoted fields are parsed properly rather than split naively."}}, {"@type": "Question", "name": "Why are some numbers still strings?", "acceptedAnswer": {"@type": "Answer", "text": "Ambiguous values are left as strings deliberately \u2014 silently converting an ID or phone number to a float loses data."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert CSV to JSON", "item": "https://pdflove.co.in/tools/csv-to-json.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the JSON result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>Round-trips both ways without losing types. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>The first row is treated as the field names, and every subsequent row becomes an object keyed by them. Quoted fields containing commas are handled correctly, which is where naive conversions break. Types are inferred conservatively: numbers become numbers, but anything ambiguous stays a string rather than being guessed at, because a phone number silently turned into a float is worse than a string.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this CSV to JSON converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my CSV file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the JSON file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>Are commas inside quoted fields handled?</h3><p>Yes. Quoted fields are parsed properly rather than split naively.</p><h3>Why are some numbers still strings?</h3><p>Ambiguous values are left as strings deliberately — silently converting an ID or phone number to a float loses data.</p>
 
   <h2>Related tools</h2>
   <ul></ul>

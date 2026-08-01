@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this BMP to PDF converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my BMP file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the PDF file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why is the PDF so much smaller than the BMP?", "acceptedAnswer": {"@type": "Answer", "text": "BMP is essentially uncompressed. The PDF compresses the same pixels without a visible difference."}}, {"@type": "Question", "name": "Will quality drop?", "acceptedAnswer": {"@type": "Answer", "text": "Not perceptibly. What is removed is redundancy, not detail."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert BMP to PDF", "item": "https://pdflove.co.in/tools/bmp-to-pdf.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the PDF result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>Old bitmaps compress dramatically on the way in. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>BMP stores pixels with essentially no compression, which is why these files are enormous relative to what they contain — a scanned page can run to tens of megabytes. Converting to PDF compresses them dramatically, often by an order of magnitude, with no visible change. BMPs usually turn up from old scanners and Windows utilities, and converting them is as much about making the file manageable as about the format.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this BMP to PDF converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my BMP file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the PDF file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>Why is the PDF so much smaller than the BMP?</h3><p>BMP is essentially uncompressed. The PDF compresses the same pixels without a visible difference.</p><h3>Will quality drop?</h3><p>Not perceptibly. What is removed is redundancy, not detail.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/word-to-pdf.html">Word to PDF</a></li><li><a href="/tools/jpg-to-pdf.html">JPG to PDF</a></li><li><a href="/tools/png-to-pdf.html">PNG to PDF</a></li><li><a href="/tools/webp-to-pdf.html">WebP to PDF</a></li><li><a href="/tools/gif-to-pdf.html">GIF to PDF</a></li><li><a href="/tools/heic-to-pdf.html">HEIC to PDF</a></li></ul>

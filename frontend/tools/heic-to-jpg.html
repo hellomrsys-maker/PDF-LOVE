@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this HEIC to JPG converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my HEIC file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the JPG file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why will nothing open my iPhone photos?", "acceptedAnswer": {"@type": "Answer", "text": "They are HEIC, which is not widely supported outside Apple's software. JPEG opens everywhere."}}, {"@type": "Question", "name": "Is quality lost?", "acceptedAnswer": {"@type": "Answer", "text": "Slightly \u2014 JPEG is lossy. Keep the HEIC original for anything important."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert HEIC to JPG", "item": "https://pdflove.co.in/tools/heic-to-jpg.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the JPG result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>The format iPhones save in, turned into something everything can open. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>HEIC is what iPhones save by default, and it is the format that breaks when photos leave Apple's ecosystem — Windows, older Android, most upload forms and plenty of print shops will not open it. Conversion decodes the HEIC and re-encodes as JPEG, which is a lossy step, so keep the original if it is a photograph you care about. Support depends on your browser and operating system being able to decode HEIC at all; Safari and recent Chrome on Apple hardware handle it.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this HEIC to JPG converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my HEIC file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the JPG file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>Why will nothing open my iPhone photos?</h3><p>They are HEIC, which is not widely supported outside Apple&#x27;s software. JPEG opens everywhere.</p><h3>Is quality lost?</h3><p>Slightly — JPEG is lossy. Keep the HEIC original for anything important.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/heic-to-pdf.html">HEIC to PDF</a></li><li><a href="/tools/png-to-jpg.html">PNG to JPG</a></li><li><a href="/tools/webp-to-jpg.html">WebP to JPG</a></li></ul>

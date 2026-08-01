@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does this cost anything?", "acceptedAnswer": {"@type": "Answer", "text": "No. There is no account, no limit and no card."}}, {"@type": "Question", "name": "Is my file uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No \u2014 it is processed by your own browser and never transmitted."}}, {"@type": "Question", "name": "Does it work on a phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, and there is an Android app that works fully offline."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I undo flattening?", "acceptedAnswer": {"@type": "Answer", "text": "No. Work from the original file if you need the fields back."}}, {"@type": "Question", "name": "Does it make the file smaller?", "acceptedAnswer": {"@type": "Answer", "text": "Slightly, since the annotation structures go away, but that is not the reason to do it."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "How do I flatten a PDF?", "item": "https://pdflove.co.in/tools/how-to-flatten-a-pdf.html"}]}</script>
 </head>
 <body>
@@ -59,22 +59,19 @@
 
   <h2>The short answer</h2>
   <p>Bakes form fields and annotations into the page so they cannot be changed.</p>
+  <h2>What is actually going on</h2>
+  <p>A PDF can carry a second layer above the page: form fields, comments, highlights, stamps, a signature image. That layer is separate from the page content, which is what makes it editable — and also what makes it unreliable. Different viewers render annotations differently, some print them and some do not, and anyone who opens the file can move or delete them. Flattening merges the layer into the page, so what is on screen is the document itself. It is a one-way change: after flattening, a form cannot be re-edited and a signature cannot be moved. Keep the unflattened original if there is any chance an answer will need changing.</p>
   <h2>Step by step</h2>
   <ol>
-    <li>Open Flatten PDF.</li>
-    <li>Add your file — click, or drag it onto the page.</li>
-    <li>Adjust anything you need to.</li>
-    <li>Download the result.</li>
+    <li>Open Flatten PDF and load the file.</li>
+    <li>Confirm you no longer need to edit the fields or annotations.</li>
+    <li>Save a flattened copy under a new name.</li>
+    <li>Open it and check nothing that should be visible disappeared.</li>
   </ol>
-  <h2>Why not just use an online converter?</h2>
-  <p>You can, but almost all of them upload your file first. For a bank
-  statement, a passport scan or a contract, that means handing a copy to a
-  company you know nothing about. This does the same job without the upload —
-  which also means no queue, no size-limited free tier and no daily cap.</p>
 
 
   <h2>Common questions</h2>
-<h3>Does this cost anything?</h3><p>No. There is no account, no limit and no card.</p><h3>Is my file uploaded?</h3><p>No — it is processed by your own browser and never transmitted.</p><h3>Does it work on a phone?</h3><p>Yes, and there is an Android app that works fully offline.</p>
+<h3>Can I undo flattening?</h3><p>No. Work from the original file if you need the fields back.</p><h3>Does it make the file smaller?</h3><p>Slightly, since the annotation structures go away, but that is not the reason to do it.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/how-to-merge-pdf-files-for-free.html">How do I merge PDF files for free?</a></li><li><a href="/tools/how-to-reduce-pdf-file-size.html">How do I reduce a PDF&#x27;s file size?</a></li><li><a href="/tools/how-to-convert-pdf-to-word-without-losing-formatting.html">How do I convert PDF to Word without losing formatting?</a></li><li><a href="/tools/how-to-remove-pages-from-a-pdf.html">How do I remove pages from a PDF?</a></li><li><a href="/tools/how-to-rotate-a-pdf-permanently.html">How do I rotate a PDF permanently?</a></li><li><a href="/tools/how-to-add-a-password-to-a-pdf.html">How do I password-protect a PDF?</a></li></ul>

@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this HTML to PDF converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my HTML file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the PDF file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "My external CSS was ignored.", "acceptedAnswer": {"@type": "Answer", "text": "Only inline styling is applied. Nothing is fetched from the network, by design."}}, {"@type": "Question", "name": "Can I paste a whole web page?", "acceptedAnswer": {"@type": "Answer", "text": "You can, but linked images and stylesheets will not load. Inline whatever matters."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert HTML to PDF", "item": "https://pdflove.co.in/tools/html-to-pdf.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the PDF result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>Paste a page or type directly; styling is preserved. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>Inline styling is applied, so headings, lists, tables and basic layout carry across. External stylesheets and remote images are deliberately not fetched — nothing on this page reaches the network — so self-contained markup gives predictable results and a page pasted from the web will lose whatever it linked to. That constraint is the privacy guarantee, not an oversight.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this HTML to PDF converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my HTML file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the PDF file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>My external CSS was ignored.</h3><p>Only inline styling is applied. Nothing is fetched from the network, by design.</p><h3>Can I paste a whole web page?</h3><p>You can, but linked images and stylesheets will not load. Inline whatever matters.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/word-to-pdf.html">Word to PDF</a></li><li><a href="/tools/jpg-to-pdf.html">JPG to PDF</a></li><li><a href="/tools/png-to-pdf.html">PNG to PDF</a></li><li><a href="/tools/webp-to-pdf.html">WebP to PDF</a></li><li><a href="/tools/gif-to-pdf.html">GIF to PDF</a></li><li><a href="/tools/bmp-to-pdf.html">BMP to PDF</a></li></ul>

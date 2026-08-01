@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this PDF to Text converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my PDF file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the Text file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "I got an empty file.", "acceptedAnswer": {"@type": "Answer", "text": "The PDF is a scan. Run OCR first, then extract."}}, {"@type": "Question", "name": "The columns came out interleaved.", "acceptedAnswer": {"@type": "Answer", "text": "Multi-column pages store a reading order that does not always match the visual arrangement."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert PDF to Text", "item": "https://pdflove.co.in/tools/pdf-to-text.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the Text result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>Just the words, in reading order. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>Plain text strips every trace of layout, which is the point when you want the words for pasting, searching or feeding into another program. Text comes out in the reading order the document records — dependable for ordinary single-column pages, less so for newspaper-style columns where the stored order may not match what your eye does. A scan produces nothing, because there is no text in it to extract.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this PDF to Text converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my PDF file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the Text file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>I got an empty file.</h3><p>The PDF is a scan. Run OCR first, then extract.</p><h3>The columns came out interleaved.</h3><p>Multi-column pages store a reading order that does not always match the visual arrangement.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/pdf-to-word.html">PDF to Word</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/pdf-to-markdown.html">PDF to Markdown</a></li><li><a href="/tools/pdf-to-powerpoint.html">PDF to PowerPoint</a></li><li><a href="/tools/pdf-to-excel.html">PDF to Excel</a></li><li><a href="/tools/jpg-to-text.html">JPG to Text</a></li></ul>

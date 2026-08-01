@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does this cost anything?", "acceptedAnswer": {"@type": "Answer", "text": "No. There is no account, no limit and no card."}}, {"@type": "Question", "name": "Is my file uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No \u2014 it is processed by your own browser and never transmitted."}}, {"@type": "Question", "name": "Does it work on a phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, and there is an Android app that works fully offline."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can every broken PDF be recovered?", "acceptedAnswer": {"@type": "Answer", "text": "No. Structural damage is usually fixable; missing data from a truncated download is not."}}, {"@type": "Question", "name": "Will the repaired file lose anything?", "acceptedAnswer": {"@type": "Answer", "text": "Objects that survived are kept as they were. Anything unreadable cannot be reconstructed."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "How do I repair a corrupted PDF?", "item": "https://pdflove.co.in/tools/how-to-repair-a-corrupted-pdf.html"}]}</script>
 </head>
 <body>
@@ -59,22 +59,19 @@
 
   <h2>The short answer</h2>
   <p>Rebuilds a malformed file&#x27;s structure so viewers will open it again.</p>
+  <h2>What is actually going on</h2>
+  <p>A PDF that will not open is usually not damaged in its content — it is damaged in its index. Every PDF ends with a cross-reference table saying where each object lives in the file, and if a transfer was truncated, a program crashed mid-save or a disk hit a bad sector, that table stops matching reality and viewers give up. Repair works by ignoring the broken table, scanning the whole file for objects that are still intact, and building a fresh index from what it finds. That recovers a great many files completely. What it cannot do is invent bytes that never arrived: if a download stopped at 60%, the last pages are simply not there.</p>
   <h2>Step by step</h2>
   <ol>
-    <li>Open Repair PDF.</li>
-    <li>Add your file — click, or drag it onto the page.</li>
-    <li>Adjust anything you need to.</li>
-    <li>Download the result.</li>
+    <li>Open Repair PDF and load the damaged file.</li>
+    <li>Let it rebuild the structure from the objects it can find.</li>
+    <li>Open the result and check the page count against what you expected.</li>
+    <li>If pages are missing, get a fresh copy of the source file.</li>
   </ol>
-  <h2>Why not just use an online converter?</h2>
-  <p>You can, but almost all of them upload your file first. For a bank
-  statement, a passport scan or a contract, that means handing a copy to a
-  company you know nothing about. This does the same job without the upload —
-  which also means no queue, no size-limited free tier and no daily cap.</p>
 
 
   <h2>Common questions</h2>
-<h3>Does this cost anything?</h3><p>No. There is no account, no limit and no card.</p><h3>Is my file uploaded?</h3><p>No — it is processed by your own browser and never transmitted.</p><h3>Does it work on a phone?</h3><p>Yes, and there is an Android app that works fully offline.</p>
+<h3>Can every broken PDF be recovered?</h3><p>No. Structural damage is usually fixable; missing data from a truncated download is not.</p><h3>Will the repaired file lose anything?</h3><p>Objects that survived are kept as they were. Anything unreadable cannot be reconstructed.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/how-to-merge-pdf-files-for-free.html">How do I merge PDF files for free?</a></li><li><a href="/tools/how-to-reduce-pdf-file-size.html">How do I reduce a PDF&#x27;s file size?</a></li><li><a href="/tools/how-to-convert-pdf-to-word-without-losing-formatting.html">How do I convert PDF to Word without losing formatting?</a></li><li><a href="/tools/how-to-remove-pages-from-a-pdf.html">How do I remove pages from a PDF?</a></li><li><a href="/tools/how-to-rotate-a-pdf-permanently.html">How do I rotate a PDF permanently?</a></li><li><a href="/tools/how-to-add-a-password-to-a-pdf.html">How do I password-protect a PDF?</a></li></ul>

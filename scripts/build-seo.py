@@ -44,6 +44,7 @@ TODAY = date.today().isoformat()
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tool_content import CONTENT as TOOL_CONTENT  # noqa: E402
+from tool_content import PAIR_CONTENT, QUESTION_CONTENT  # noqa: E402
 
 # Tools whose pages exist for people who browse to them, but which should not
 # compete in search.
@@ -395,6 +396,16 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related,
 
 def build_pairs(index):
     pages = []
+    missing = [f"{a}-to-{b}" for a, b, _, _ in PAIRS
+               if f"{a}-to-{b}" not in PAIR_CONTENT]
+    if missing:
+        raise SystemExit(
+            f"\n{len(missing)} conversion page(s) have no entry in "
+            f"PAIR_CONTENT in scripts/tool_content.py:\n  " +
+            "\n  ".join(missing) +
+            "\n\nEvery conversion page needs format-specific copy — what "
+            "survives the conversion and what does not. A shared template "
+            "across 32 pages is what search engines read as scaled content.\n")
     for src, dst, tool, extra in PAIRS:
         s_name, s_desc = FORMATS[src]
         d_name, d_desc = FORMATS[dst]
@@ -404,6 +415,7 @@ def build_pairs(index):
         desc = f"Convert {s_name} to {d_name} free in your browser. No upload, no account, no watermark. {extra}"
         if len(desc) > 160:
             desc = f"Convert {s_name} to {d_name} free in your browser — no upload, no account, no watermark. {extra}"[:158].rsplit(" ", 1)[0] + "."
+        entry = PAIR_CONTENT[slug]
         lede = (f"Turn a {s_desc} into a {d_desc} without sending it anywhere. "
                 f"The conversion runs on your own device.")
         body = f"""
@@ -415,25 +427,10 @@ def build_pairs(index):
     <li>Download the {esc(d_name)} result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>{esc(extra)} Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>{entry["notes"]}</p>
 """
-        faq = [
-            (f"Is this {s_name} to {d_name} converter really free?",
-             "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."),
-            (f"Is my {s_name} file uploaded to a server?",
-             "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."),
-            (f"Will there be a watermark on the {d_name} file?",
-             "No watermark is added."),
-            ("What is the largest file I can convert?",
-             "In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."),
-        ]
+        faq = entry["faq"]
         related = [(f"{a}-to-{b}", f"{FORMATS[a][0]} to {FORMATS[b][0]}")
                    for a, b, _, _ in PAIRS
                    if (a, b) != (src, dst) and (a == src or b == dst)][:6]
@@ -513,30 +510,31 @@ def build_tools(index, tool_names):
 
 def build_questions(index):
     pages = []
+    missing = [s for s, _, _, _ in QUESTIONS if s not in QUESTION_CONTENT]
+    if missing:
+        raise SystemExit(
+            f"\n{len(missing)} question page(s) have no entry in "
+            f"QUESTION_CONTENT in scripts/tool_content.py:\n  " +
+            "\n  ".join(missing) +
+            "\n\nA question page that does not answer its question is filler. "
+            "Write why the problem happens and what to do when the obvious "
+            "fix fails, or drop the question.\n")
     for slug, question, tool, answer in QUESTIONS:
+        entry = QUESTION_CONTENT[slug]
         title = f"{question} | PDF Love"
         desc = f"{answer} Free, in your browser, with nothing uploaded."
+        steps = "\n".join(f"    <li>{s}</li>" for s in entry["steps"])
         body = f"""
   <h2>The short answer</h2>
   <p>{esc(answer)}</p>
+  <h2>What is actually going on</h2>
+  <p>{entry["why"]}</p>
   <h2>Step by step</h2>
   <ol>
-    <li>Open {esc(tool)}.</li>
-    <li>Add your file — click, or drag it onto the page.</li>
-    <li>Adjust anything you need to.</li>
-    <li>Download the result.</li>
+{steps}
   </ol>
-  <h2>Why not just use an online converter?</h2>
-  <p>You can, but almost all of them upload your file first. For a bank
-  statement, a passport scan or a contract, that means handing a copy to a
-  company you know nothing about. This does the same job without the upload —
-  which also means no queue, no size-limited free tier and no daily cap.</p>
 """
-        faq = [
-            ("Does this cost anything?", "No. There is no account, no limit and no card."),
-            ("Is my file uploaded?", "No — it is processed by your own browser and never transmitted."),
-            ("Does it work on a phone?", "Yes, and there is an Android app that works fully offline."),
-        ]
+        faq = entry["faq"]
         related = [(s, q) for s, q, _, _ in QUESTIONS if s != slug][:6]
         pages.append((slug, page(slug, title, desc, question, answer, body, faq, tool, related)))
         index.append((slug, question, desc, "Questions"))

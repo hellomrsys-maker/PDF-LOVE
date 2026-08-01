@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this PDF to Markdown converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my PDF file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the Markdown file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why did some headings come through as plain text?", "acceptedAnswer": {"@type": "Answer", "text": "They were not visually distinct in the PDF. Detection relies on size and weight."}}, {"@type": "Question", "name": "Do images come across?", "acceptedAnswer": {"@type": "Answer", "text": "No. Markdown references images rather than containing them \u2014 use Extract Images to pull them out."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert PDF to Markdown", "item": "https://pdflove.co.in/tools/pdf-to-markdown.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the Markdown result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>Headings, lists and emphasis are inferred from the layout. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>Structure is inferred from how the page looks: larger, bolder lines become headings, and lines starting with bullets or numbers become lists. A document with consistent typographic hierarchy converts cleanly. One where headings were styled by hand at body size gives the converter nothing to detect, and everything arrives as paragraphs. Expect to fix a few heading levels — quick, and far less work than retyping.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this PDF to Markdown converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my PDF file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the Markdown file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>Why did some headings come through as plain text?</h3><p>They were not visually distinct in the PDF. Detection relies on size and weight.</p><h3>Do images come across?</h3><p>No. Markdown references images rather than containing them — use Extract Images to pull them out.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/pdf-to-word.html">PDF to Word</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/pdf-to-text.html">PDF to Text</a></li><li><a href="/tools/pdf-to-powerpoint.html">PDF to PowerPoint</a></li><li><a href="/tools/pdf-to-excel.html">PDF to Excel</a></li><li><a href="/tools/pdf-to-csv.html">PDF to CSV</a></li></ul>

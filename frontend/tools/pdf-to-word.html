@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this PDF to Word converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my PDF file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the Word file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "The .docx opened empty.", "acceptedAnswer": {"@type": "Answer", "text": "Your PDF is a scan. Run OCR \u2014 Make Scans Searchable on it first, then convert the searchable version."}}, {"@type": "Question", "name": "Why did the table lose its structure?", "acceptedAnswer": {"@type": "Answer", "text": "PDFs draw lines and place text; they do not record that a table exists. Reconstruction is inference, not extraction."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert PDF to Word", "item": "https://pdflove.co.in/tools/pdf-to-word.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the Word result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>Keeps the layout, so headings and tables survive the trip. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>How well this goes is decided entirely by how the PDF was made. One exported from Word converts back cleanly, because the text and its reading order are still in the file. A scan converts to nothing at all, because there is no text in it — only a picture of text — so run OCR first. Multi-column layouts and tables are the hard cases: the words come across, but a PDF records where things were drawn rather than that they formed a table, so the arrangement has to be inferred.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this PDF to Word converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my PDF file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the Word file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>The .docx opened empty.</h3><p>Your PDF is a scan. Run OCR — Make Scans Searchable on it first, then convert the searchable version.</p><h3>Why did the table lose its structure?</h3><p>PDFs draw lines and place text; they do not record that a table exists. Reconstruction is inference, not extraction.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/pdf-to-markdown.html">PDF to Markdown</a></li><li><a href="/tools/pdf-to-text.html">PDF to Text</a></li><li><a href="/tools/pdf-to-powerpoint.html">PDF to PowerPoint</a></li><li><a href="/tools/pdf-to-excel.html">PDF to Excel</a></li><li><a href="/tools/pdf-to-csv.html">PDF to CSV</a></li></ul>

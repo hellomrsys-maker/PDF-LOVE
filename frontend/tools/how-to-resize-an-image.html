@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does this cost anything?", "acceptedAnswer": {"@type": "Answer", "text": "No. There is no account, no limit and no card."}}, {"@type": "Question", "name": "Is my file uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No \u2014 it is processed by your own browser and never transmitted."}}, {"@type": "Question", "name": "Does it work on a phone?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, and there is an Android app that works fully offline."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I make a small image bigger without it going blurry?", "acceptedAnswer": {"@type": "Answer", "text": "Not really. The detail was never recorded, so enlarging can only interpolate what might have been there."}}, {"@type": "Question", "name": "What size should a web image be?", "acceptedAnswer": {"@type": "Answer", "text": "Roughly twice the width it is displayed at, so it stays sharp on high-density screens, and no more."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "How do I resize an image?", "item": "https://pdflove.co.in/tools/how-to-resize-an-image.html"}]}</script>
 </head>
 <body>
@@ -59,22 +59,19 @@
 
   <h2>The short answer</h2>
   <p>By pixels or percentage, keeping the aspect ratio if you want.</p>
+  <h2>What is actually going on</h2>
+  <p>Making an image smaller is safe; making it larger is not. Shrinking discards pixels and the result stays sharp, which is why resizing before compressing is the most effective way to cut a file down. Enlarging has to invent pixels that were never captured, so a 500-pixel image stretched to 2000 is blurry no matter what software does it. The other thing to watch is aspect ratio: setting both width and height to values that do not match the original proportions stretches faces and text. Keep the ratio locked and set one dimension. If you need an exact frame that does not match the source shape, crop to it rather than distorting to it.</p>
   <h2>Step by step</h2>
   <ol>
-    <li>Open Resize Image.</li>
-    <li>Add your file — click, or drag it onto the page.</li>
-    <li>Adjust anything you need to.</li>
-    <li>Download the result.</li>
+    <li>Open Resize Image and load the file.</li>
+    <li>Enter a width in pixels, or a percentage.</li>
+    <li>Leave the aspect ratio locked unless you specifically want to crop.</li>
+    <li>Save. Keep the original if you may need a larger version later.</li>
   </ol>
-  <h2>Why not just use an online converter?</h2>
-  <p>You can, but almost all of them upload your file first. For a bank
-  statement, a passport scan or a contract, that means handing a copy to a
-  company you know nothing about. This does the same job without the upload —
-  which also means no queue, no size-limited free tier and no daily cap.</p>
 
 
   <h2>Common questions</h2>
-<h3>Does this cost anything?</h3><p>No. There is no account, no limit and no card.</p><h3>Is my file uploaded?</h3><p>No — it is processed by your own browser and never transmitted.</p><h3>Does it work on a phone?</h3><p>Yes, and there is an Android app that works fully offline.</p>
+<h3>Can I make a small image bigger without it going blurry?</h3><p>Not really. The detail was never recorded, so enlarging can only interpolate what might have been there.</p><h3>What size should a web image be?</h3><p>Roughly twice the width it is displayed at, so it stays sharp on high-density screens, and no more.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/how-to-merge-pdf-files-for-free.html">How do I merge PDF files for free?</a></li><li><a href="/tools/how-to-reduce-pdf-file-size.html">How do I reduce a PDF&#x27;s file size?</a></li><li><a href="/tools/how-to-convert-pdf-to-word-without-losing-formatting.html">How do I convert PDF to Word without losing formatting?</a></li><li><a href="/tools/how-to-remove-pages-from-a-pdf.html">How do I remove pages from a PDF?</a></li><li><a href="/tools/how-to-rotate-a-pdf-permanently.html">How do I rotate a PDF permanently?</a></li><li><a href="/tools/how-to-add-a-password-to-a-pdf.html">How do I password-protect a PDF?</a></li></ul>

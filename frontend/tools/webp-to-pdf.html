@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this WebP to PDF converter really free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on."}}, {"@type": "Question", "name": "Is my WebP file uploaded to a server?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser's developer tools."}}, {"@type": "Question", "name": "Will there be a watermark on the PDF file?", "acceptedAnswer": {"@type": "Answer", "text": "No watermark is added."}}, {"@type": "Question", "name": "What is the largest file I can convert?", "acceptedAnswer": {"@type": "Answer", "text": "In a browser, around 2 GB \u2014 browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is the WebP re-compressed on the way in?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is decoded once and embedded, so no second round of lossy compression is applied."}}, {"@type": "Question", "name": "Do animated WebP files work?", "acceptedAnswer": {"@type": "Answer", "text": "The first frame is used \u2014 a PDF page cannot animate."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Convert WebP to PDF", "item": "https://pdflove.co.in/tools/webp-to-pdf.html"}]}</script>
 </head>
 <body>
@@ -65,18 +65,12 @@
     <li>Download the PDF result. It saves straight to your downloads folder.</li>
   </ol>
 
-  <h2>Why this one is different</h2>
-  <p>WebP is decoded natively by your browser, so nothing is re-compressed twice. Most online converters upload your file to their server,
-  process it there, and hand you a download link — which means your document
-  sits on someone else's machine under a retention policy you have to take on
-  faith. This one does the work in the browser you are already running.</p>
-  <p>The practical differences: there is no daily limit, because each
-  conversion costs us nothing. There is no upload wait, because there is no
-  upload. And it keeps working with the network off.</p>
+  <h2>What survives the conversion</h2>
+  <p>WebP is decoded by your browser natively and then embedded, so the image passes through one decode rather than a lossy re-compression on top of the lossy compression it already had. That is the difference between this and a converter that silently re-encodes to JPEG on the way in. WebP files are typically 25-35% smaller than the equivalent JPEG, so a document built from them starts smaller too.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is this WebP to PDF converter really free?</h3><p>Yes, with no daily limit and no account. Your device does the work, so there is no per-use cost to pass on.</p><h3>Is my WebP file uploaded to a server?</h3><p>No. It is read by your browser, converted in memory, and saved back to your device. You can confirm this in the Network tab of your browser&#x27;s developer tools.</p><h3>Will there be a watermark on the PDF file?</h3><p>No watermark is added.</p><h3>What is the largest file I can convert?</h3><p>In a browser, around 2 GB — browsers cap a single buffer at roughly that. The desktop app streams from disk and handles far larger files.</p>
+<h3>Is the WebP re-compressed on the way in?</h3><p>No. It is decoded once and embedded, so no second round of lossy compression is applied.</p><h3>Do animated WebP files work?</h3><p>The first frame is used — a PDF page cannot animate.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/word-to-pdf.html">Word to PDF</a></li><li><a href="/tools/jpg-to-pdf.html">JPG to PDF</a></li><li><a href="/tools/png-to-pdf.html">PNG to PDF</a></li><li><a href="/tools/gif-to-pdf.html">GIF to PDF</a></li><li><a href="/tools/bmp-to-pdf.html">BMP to PDF</a></li><li><a href="/tools/heic-to-pdf.html">HEIC to PDF</a></li></ul>

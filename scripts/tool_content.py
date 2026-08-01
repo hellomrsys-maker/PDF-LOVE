@@ -2267,3 +2267,1403 @@ CONTENT = {
 },
 
 }
+
+
+# ====================================================================
+# Conversion pages, keyed by slug. Same problem as the tool pages: every
+# one shared a template whose only variable was the format name, leaving
+# them 56% identical to each other. What differs between conversions is
+# what survives them — so that is what these say.
+# ====================================================================
+
+PAIR_CONTENT = {
+
+"pdf-to-word": {
+    "notes": "How well this goes is decided entirely by how the PDF was made. "
+             "One exported from Word converts back cleanly, because the text "
+             "and its reading order are still in the file. A scan converts to "
+             "nothing at all, because there is no text in it — only a picture "
+             "of text — so run OCR first. Multi-column layouts and tables are "
+             "the hard cases: the words come across, but a PDF records where "
+             "things were drawn rather than that they formed a table, so the "
+             "arrangement has to be inferred.",
+    "faq": [
+        ("The .docx opened empty.",
+         "Your PDF is a scan. Run OCR — Make Scans Searchable on it first, "
+         "then convert the searchable version."),
+        ("Why did the table lose its structure?",
+         "PDFs draw lines and place text; they do not record that a table "
+         "exists. Reconstruction is inference, not extraction."),
+    ],
+},
+
+"word-to-pdf": {
+    "notes": "The point of sending a PDF rather than a .docx is that the "
+             "recipient cannot see a different document from the one you "
+             "wrote — no substituted fonts, no reflowed page breaks, no "
+             "version differences. The document is parsed and re-laid-out in "
+             "your browser, carrying headings, lists, tables and images. "
+             "Heavily designed files with floating text boxes or embedded "
+             "objects from other Office applications are where a browser "
+             "diverges most from Word's own renderer, so check those before "
+             "sending.",
+    "faq": [
+        ("Will it match Word exactly?",
+         "Very closely for ordinary documents. Complex layouts can shift — "
+         "worth checking anything important before you send it."),
+        ("Does .doc work as well as .docx?",
+         "Save older .doc files as .docx first; the modern format is what is "
+         "supported."),
+    ],
+},
+
+"pdf-to-jpg": {
+    "notes": "Resolution is the only setting that matters, and it is the one "
+             "most converters hide. Pages are re-rendered from the original "
+             "vector instructions rather than upscaled from a preview, so "
+             "text stays crisp at whatever DPI you choose. 150 DPI is right "
+             "for anything read on a screen; 300 DPI is print quality and "
+             "roughly four times the file size. A multi-page document arrives "
+             "as a numbered .zip so the pages stay in order.",
+    "faq": [
+        ("What DPI should I pick?",
+         "150 for screens, 300 for print. Beyond 300 the files grow fast with "
+         "little visible gain."),
+        ("Can I export a single page?",
+         "Split the page out first with Split PDF, then convert just that "
+         "file."),
+    ],
+},
+
+"jpg-to-pdf": {
+    "notes": "The choice that decides how this looks is page size. Matching "
+             "each photo gives borderless pages in the exact proportions of "
+             "your images, which suits receipts and screenshots. Fitting to "
+             "A4 or Letter centres each photo on a standard page, which is "
+             "what you want if anyone will print it. JPEGs are embedded as "
+             "their original bytes rather than re-encoded, so nothing is "
+             "compressed twice and quality is unchanged.",
+    "faq": [
+        ("Why do my pages have white borders?",
+         "You chose a fixed page size. Pick \"match each image\" for "
+         "borderless pages."),
+        ("Does converting reduce the photo quality?",
+         "No. JPEG data is embedded unchanged."),
+    ],
+},
+
+"png-to-pdf": {
+    "notes": "PNG supports transparency and PDF pages do not, so anything "
+             "transparent is flattened onto white — the same result you would "
+             "get printing it. That matters most for logos and diagrams "
+             "exported with a clear background, which will show a white "
+             "rectangle rather than blending into the page. PNGs are embedded "
+             "losslessly, so screenshots and line art stay pixel-exact, which "
+             "is exactly why PNG is the right source format for them.",
+    "faq": [
+        ("What happens to the transparent background?",
+         "It is flattened onto white, as a printer would render it."),
+        ("Is the image re-compressed?",
+         "No. PNG data is embedded losslessly, so screenshots stay sharp."),
+    ],
+},
+
+"webp-to-pdf": {
+    "notes": "WebP is decoded by your browser natively and then embedded, so "
+             "the image passes through one decode rather than a lossy "
+             "re-compression on top of the lossy compression it already had. "
+             "That is the difference between this and a converter that "
+             "silently re-encodes to JPEG on the way in. WebP files are "
+             "typically 25-35% smaller than the equivalent JPEG, so a "
+             "document built from them starts smaller too.",
+    "faq": [
+        ("Is the WebP re-compressed on the way in?",
+         "No. It is decoded once and embedded, so no second round of lossy "
+         "compression is applied."),
+        ("Do animated WebP files work?",
+         "The first frame is used — a PDF page cannot animate."),
+    ],
+},
+
+"gif-to-pdf": {
+    "notes": "A GIF may hold many frames and a PDF page holds one, so the "
+             "first frame is used for each animated file. For the static GIFs "
+             "that still circulate — old diagrams, screenshots from decades of "
+             "documentation — this is a straight embed. GIF's 256-colour "
+             "limit means the source is often already coarse, and converting "
+             "cannot restore what the palette discarded.",
+    "faq": [
+        ("What happens to the animation?",
+         "The first frame becomes the page. PDF pages are static."),
+        ("Why does my GIF look grainy in the PDF?",
+         "GIF stores at most 256 colours. That loss happened before "
+         "conversion and cannot be undone."),
+    ],
+},
+
+"bmp-to-pdf": {
+    "notes": "BMP stores pixels with essentially no compression, which is why "
+             "these files are enormous relative to what they contain — a "
+             "scanned page can run to tens of megabytes. Converting to PDF "
+             "compresses them dramatically, often by an order of magnitude, "
+             "with no visible change. BMPs usually turn up from old scanners "
+             "and Windows utilities, and converting them is as much about "
+             "making the file manageable as about the format.",
+    "faq": [
+        ("Why is the PDF so much smaller than the BMP?",
+         "BMP is essentially uncompressed. The PDF compresses the same pixels "
+         "without a visible difference."),
+        ("Will quality drop?",
+         "Not perceptibly. What is removed is redundancy, not detail."),
+    ],
+},
+
+"heic-to-jpg": {
+    "notes": "HEIC is what iPhones save by default, and it is the format that "
+             "breaks when photos leave Apple's ecosystem — Windows, older "
+             "Android, most upload forms and plenty of print shops will not "
+             "open it. Conversion decodes the HEIC and re-encodes as JPEG, "
+             "which is a lossy step, so keep the original if it is a "
+             "photograph you care about. Support depends on your browser and "
+             "operating system being able to decode HEIC at all; Safari and "
+             "recent Chrome on Apple hardware handle it.",
+    "faq": [
+        ("Why will nothing open my iPhone photos?",
+         "They are HEIC, which is not widely supported outside Apple's "
+         "software. JPEG opens everywhere."),
+        ("Is quality lost?",
+         "Slightly — JPEG is lossy. Keep the HEIC original for anything "
+         "important."),
+    ],
+},
+
+"heic-to-pdf": {
+    "notes": "This is the direct route from photographs taken on an iPhone to "
+             "a document someone else can open, without the intermediate step "
+             "of converting each image to JPEG first. It is the common case "
+             "for sending receipts, forms and signed pages photographed on a "
+             "phone. Decoding depends on your browser supporting HEIC — Apple "
+             "hardware does; other platforms vary, and converting to JPEG "
+             "first is the fallback.",
+    "faq": [
+        ("Do I need to convert to JPEG first?",
+         "No, if your browser decodes HEIC. If it cannot, convert to JPEG and "
+         "then build the PDF."),
+        ("Can I put several photos in one document?",
+         "Yes — add them all and arrange the order before converting."),
+    ],
+},
+
+"pdf-to-markdown": {
+    "notes": "Structure is inferred from how the page looks: larger, bolder "
+             "lines become headings, and lines starting with bullets or "
+             "numbers become lists. A document with consistent typographic "
+             "hierarchy converts cleanly. One where headings were styled by "
+             "hand at body size gives the converter nothing to detect, and "
+             "everything arrives as paragraphs. Expect to fix a few heading "
+             "levels — quick, and far less work than retyping.",
+    "faq": [
+        ("Why did some headings come through as plain text?",
+         "They were not visually distinct in the PDF. Detection relies on "
+         "size and weight."),
+        ("Do images come across?",
+         "No. Markdown references images rather than containing them — use "
+         "Extract Images to pull them out."),
+    ],
+},
+
+"markdown-to-pdf": {
+    "notes": "Standard Markdown is rendered properly rather than dumped as "
+             "plain text: headings, bold and italic, ordered and unordered "
+             "lists, links, blockquotes, fenced code blocks and pipe tables "
+             "all come out as they should. Code is set in a monospace face "
+             "and kept together where it fits on a page. Output is paginated "
+             "A4, which prints correctly on both A4 and Letter.",
+    "faq": [
+        ("Do tables render?",
+         "Yes — standard pipe tables become real tables."),
+        ("Is code syntax-highlighted?",
+         "Code is preserved exactly in monospace, without colouring."),
+    ],
+},
+
+"pdf-to-text": {
+    "notes": "Plain text strips every trace of layout, which is the point "
+             "when you want the words for pasting, searching or feeding into "
+             "another program. Text comes out in the reading order the "
+             "document records — dependable for ordinary single-column pages, "
+             "less so for newspaper-style columns where the stored order may "
+             "not match what your eye does. A scan produces nothing, because "
+             "there is no text in it to extract.",
+    "faq": [
+        ("I got an empty file.",
+         "The PDF is a scan. Run OCR first, then extract."),
+        ("The columns came out interleaved.",
+         "Multi-column pages store a reading order that does not always match "
+         "the visual arrangement."),
+    ],
+},
+
+"html-to-pdf": {
+    "notes": "Inline styling is applied, so headings, lists, tables and basic "
+             "layout carry across. External stylesheets and remote images are "
+             "deliberately not fetched — nothing on this page reaches the "
+             "network — so self-contained markup gives predictable results "
+             "and a page pasted from the web will lose whatever it linked to. "
+             "That constraint is the privacy guarantee, not an oversight.",
+    "faq": [
+        ("My external CSS was ignored.",
+         "Only inline styling is applied. Nothing is fetched from the "
+         "network, by design."),
+        ("Can I paste a whole web page?",
+         "You can, but linked images and stylesheets will not load. Inline "
+         "whatever matters."),
+    ],
+},
+
+"text-to-pdf": {
+    "notes": "Plain text becomes a properly paginated document with sensible "
+             "margins, rather than one continuous page that prints badly. "
+             "This is the quick route for logs, notes, transcripts and "
+             "anything that has to become an attachment rather than a pasted "
+             "block in an email. Line breaks are preserved as written, so "
+             "pre-formatted text keeps its shape.",
+    "faq": [
+        ("Are my line breaks preserved?",
+         "Yes — text is laid out as written, so pre-formatted content keeps "
+         "its shape."),
+        ("What page size is used?",
+         "A4, which prints correctly on both A4 and Letter paper."),
+    ],
+},
+
+"pdf-to-powerpoint": {
+    "notes": "This is one of the ten server-assisted tools, and the only ones "
+             "on this site that transmit your file: it needs a rendering "
+             "engine far too large to ship into a browser. It appears only "
+             "when a backend is configured, is labelled server-assisted in "
+             "the interface, and that backend can be one you run yourself. "
+             "Recovered text becomes editable text boxes; complex graphics "
+             "arrive as positioned images.",
+    "faq": [
+        ("Is my file uploaded for this?",
+         "Yes. Unlike the on-device tools, this one sends the file to the "
+         "configured backend — which may be your own."),
+        ("Will the slides be fully editable?",
+         "Text that can be recovered becomes editable. Graphics come across "
+         "as images."),
+    ],
+},
+
+"powerpoint-to-pdf": {
+    "notes": "This one runs entirely on your device. Slides are rendered one "
+             "per page at the deck's own aspect ratio, so a 16:9 presentation "
+             "does not arrive letterboxed onto A4. Animations and transitions "
+             "have no equivalent in a PDF and are dropped — slides appear in "
+             "their final state. Speaker notes are not included, which is "
+             "usually what you want when sending a deck onward.",
+    "faq": [
+        ("What happens to animations?",
+         "They are dropped. Each slide is rendered in its final state."),
+        ("Are speaker notes included?",
+         "No — only the slides themselves."),
+    ],
+},
+
+"pdf-to-excel": {
+    "notes": "A server-assisted tool, because reliable table detection across "
+             "a whole document needs more than a browser can carry — so this "
+             "one does transmit your file to the configured backend. If you "
+             "only need one table from one page, Table to CSV does that "
+             "entirely on your own device with nothing uploaded, and is "
+             "usually the better choice. Detected tables are written as "
+             "separate sheets in the workbook.",
+    "faq": [
+        ("Is there an on-device alternative?",
+         "Yes — Table to CSV handles a single table in your browser with no "
+         "upload at all."),
+        ("Is my file uploaded?",
+         "Yes, for this tool. It is labelled server-assisted."),
+    ],
+},
+
+"excel-to-pdf": {
+    "notes": "Cell values, formatting and column widths render as the sheet "
+             "defines them, with formulas shown as their computed results. "
+             "Wide sheets are the perennial difficulty in any "
+             "spreadsheet-to-PDF conversion: forty columns have to go "
+             "somewhere. Narrowing columns or setting a landscape print area "
+             "in the source before converting produces a far better result "
+             "than any converter can achieve on your behalf.",
+    "faq": [
+        ("My wide sheet was cut off.",
+         "Set a landscape print area or narrow the columns in the spreadsheet "
+         "first."),
+        ("Do I get formulas or values?",
+         "Values — the same numbers the sheet displays."),
+    ],
+},
+
+"csv-to-json": {
+    "notes": "The first row is treated as the field names, and every "
+             "subsequent row becomes an object keyed by them. Quoted fields "
+             "containing commas are handled correctly, which is where naive "
+             "conversions break. Types are inferred conservatively: numbers "
+             "become numbers, but anything ambiguous stays a string rather "
+             "than being guessed at, because a phone number silently turned "
+             "into a float is worse than a string.",
+    "faq": [
+        ("Are commas inside quoted fields handled?",
+         "Yes. Quoted fields are parsed properly rather than split naively."),
+        ("Why are some numbers still strings?",
+         "Ambiguous values are left as strings deliberately — silently "
+         "converting an ID or phone number to a float loses data."),
+    ],
+},
+
+"json-to-csv": {
+    "notes": "An array of objects maps cleanly onto rows and columns. Nested "
+             "objects are flattened into dotted column names, so "
+             "`address.city` becomes its own column rather than being dropped "
+             "or serialised into a cell. Records with differing keys produce "
+             "the union of all columns, with blanks where a record had no "
+             "value — which keeps the data honest rather than truncating it "
+             "to whatever the first record happened to contain.",
+    "faq": [
+        ("What happens to nested objects?",
+         "They are flattened into dotted column names, so nothing is lost."),
+        ("My records have different fields.",
+         "Every field becomes a column, with blanks where a record lacked "
+         "it."),
+    ],
+},
+
+"png-to-jpg": {
+    "notes": "This is the trade of transparency and lossless quality for "
+             "size. A PNG photograph is often several times larger than the "
+             "equivalent JPEG with no visible benefit, because PNG's lossless "
+             "compression is built for flat colour rather than continuous "
+             "tone. Any transparency is flattened onto white. For "
+             "screenshots, diagrams and anything with text or sharp edges, "
+             "staying with PNG is usually the better answer.",
+    "faq": [
+        ("What happens to transparency?",
+         "It is flattened onto white — JPEG has no alpha channel."),
+        ("Should I convert my screenshots?",
+         "Usually not. JPEG blurs sharp edges and text; PNG suits them."),
+    ],
+},
+
+"jpg-to-png": {
+    "notes": "Worth being clear about what this cannot do: converting to a "
+             "lossless format does not restore detail JPEG already discarded. "
+             "The result is larger, not better. It is the right move when you "
+             "need transparency, when a tool demands PNG, or when an image "
+             "will be edited and re-saved repeatedly and you want to stop "
+             "compounding compression loss from here on.",
+    "faq": [
+        ("Will this improve my JPEG's quality?",
+         "No. The lost detail is gone. PNG only preserves what remains, at a "
+         "larger size."),
+        ("When is this actually worth doing?",
+         "When you need transparency, a tool requires PNG, or the image will "
+         "be edited and re-saved repeatedly."),
+    ],
+},
+
+"jpg-to-webp": {
+    "notes": "WebP typically reaches the same visual quality as JPEG at 25-35% "
+             "of the size, which is the single easiest page-weight win "
+             "available on most websites. Support is now universal across "
+             "current browsers. The caveat is re-encoding: converting an "
+             "already-lossy JPEG applies a second lossy pass, so encode from "
+             "the original where you still have it.",
+    "faq": [
+        ("Is WebP widely supported now?",
+         "Yes — every current browser handles it."),
+        ("Does converting lose quality?",
+         "A little, since it is a second lossy pass. Encode from the original "
+         "if you have it."),
+    ],
+},
+
+"png-to-webp": {
+    "notes": "WebP has a lossless mode that keeps transparency, so this "
+             "usually gives a smaller file with no visual change at all — "
+             "unlike PNG to JPEG, which forces you to give up the alpha "
+             "channel. For logos, icons and interface graphics on a website "
+             "this is close to a free saving. Keep the PNG as the master if "
+             "anything still requires it.",
+    "faq": [
+        ("Is transparency kept?",
+         "Yes. WebP supports an alpha channel, unlike JPEG."),
+        ("Is anything lost?",
+         "In lossless mode, nothing — just a smaller file."),
+    ],
+},
+
+"webp-to-jpg": {
+    "notes": "Occasionally you meet software that still cannot read WebP — "
+             "older photo software, some print shops, a few upload forms and "
+             "plenty of embedded systems. JPEG is the safe answer for those. "
+             "This decodes the WebP and re-encodes as JPEG, which is a second "
+             "lossy pass, and any transparency is flattened onto white.",
+    "faq": [
+        ("Why would I convert away from WebP?",
+         "Compatibility. Some older software and print workflows still refuse "
+         "WebP entirely."),
+        ("What happens to transparency?",
+         "Flattened onto white, as JPEG has no alpha channel."),
+    ],
+},
+
+"webp-to-png": {
+    "notes": "The lossless route out of WebP, keeping transparency intact. "
+             "This is the right conversion when the image has an alpha "
+             "channel and the destination needs PNG — an editor, a "
+             "presentation tool, or a system that treats PNG as the "
+             "interchange format. The file will be larger than the WebP; that "
+             "is the cost of the wider compatibility.",
+    "faq": [
+        ("Is transparency preserved?",
+         "Yes — that is the main reason to choose PNG over JPEG here."),
+        ("Why is the PNG bigger?",
+         "PNG compresses less efficiently than WebP. You are paying size for "
+         "compatibility."),
+    ],
+},
+
+"video-to-gif": {
+    "notes": "GIF allows only 256 colours per frame, which is why filmed "
+             "footage bands while screen recordings and animation convert "
+             "beautifully — flat colour is what the format was built for. "
+             "File size grows with dimensions, frame rate and duration "
+             "together, so a 10-second clip at full resolution and 30fps "
+             "becomes enormous. Halving the width and dropping to 10-15fps "
+             "usually keeps it perfectly recognisable at a fraction of the "
+             "size. No watermark and no length cap.",
+    "faq": [
+        ("Why is my GIF enormous?",
+         "Size scales with width, frame rate and length at once. Halve the "
+         "width and try 10-15fps."),
+        ("Why does it look banded?",
+         "GIF stores 256 colours per frame. Screen recordings fare far better "
+         "than filmed video."),
+    ],
+},
+
+"video-to-mp3": {
+    "notes": "The usual reason is a recorded talk, lecture or interview you "
+             "want to listen to rather than watch, at a fraction of the file "
+             "size. Extraction pulls the existing audio track out; where the "
+             "source audio can be carried across without a second encode it "
+             "is, which avoids stacking compression loss on compression loss. "
+             "A video with no audio track produces nothing, and says so "
+             "rather than handing back an empty file.",
+    "faq": [
+        ("Is the audio re-compressed?",
+         "Avoided where the source track can be carried across directly."),
+        ("Can I extract only part of it?",
+         "Trim the video first, then extract from the trimmed clip."),
+    ],
+},
+
+"video-to-wav": {
+    "notes": "WAV is uncompressed, which is exactly what you want as input to "
+             "transcription software or an audio editor: compressing "
+             "already-compressed audio loses a little more each time, and "
+             "editing tools work better from a clean source. The cost is "
+             "size, at roughly 10 MB per minute. If you only intend to listen "
+             "to it, MP3 is the better target and a great deal smaller.",
+    "faq": [
+        ("Why choose WAV over MP3?",
+         "It is uncompressed, which is what transcription and editing want. "
+         "Choose MP3 if you just want to listen."),
+        ("Why is the file so large?",
+         "Uncompressed audio runs about 10 MB per minute."),
+    ],
+},
+
+"jpg-to-text": {
+    "notes": "This is optical character recognition: reading the shapes in a "
+             "photograph and returning actual characters. Accuracy is almost "
+             "entirely a function of the input — a straight, evenly lit "
+             "300 DPI scan is recognised nearly perfectly, while a phone "
+             "photo taken at an angle in poor light will contain mistakes. "
+             "Recognition runs in your browser, which matters because the "
+             "documents people most need to read are the ones they least want "
+             "to upload.",
+    "faq": [
+        ("How do I improve accuracy?",
+         "Get the page flat and square to the camera, evenly lit, at around "
+         "300 DPI. Input quality dominates everything else."),
+        ("Is my photo uploaded to be read?",
+         "No. The recognition engine downloads once and then runs entirely in "
+         "your browser."),
+    ],
+},
+
+"pdf-to-csv": {
+    "notes": "Table detection reads the geometry of the page — where text "
+             "sits relative to ruling lines and consistent column positions — "
+             "so a well-formed table with clear alignment extracts "
+             "accurately. Merged cells, entries wrapping onto two lines, and "
+             "tables drawn without ruling lines are the difficult cases and "
+             "are worth checking against the original before you rely on the "
+             "numbers. A scanned table has no text to read; run OCR first.",
+    "faq": [
+        ("The columns came out misaligned.",
+         "The table probably lacks consistent column positions or ruling "
+         "lines for the detector to work from."),
+        ("Nothing was found on a page with an obvious table.",
+         "The page is likely a scan. Run OCR on it first."),
+    ],
+},
+
+}
+
+
+# --- question pages -------------------------------------------------------
+#
+# Keyed by the slug in QUESTIONS in build-seo.py. A question page earns its
+# place by answering the question properly: why the problem happens, what to
+# check, and what to do when the obvious fix does not work. The generic
+# "open the tool, add your file, download" template these pages used to share
+# answered nothing, and 30 near-identical pages is precisely the shape
+# Google's scaled-content policy is written against.
+
+QUESTION_CONTENT = {
+
+"how-to-merge-pdf-files-for-free": {
+    "why": "Merging is the one PDF job that is genuinely simple — the pages "
+           "are copied across unchanged, so nothing is re-encoded and nothing "
+           "loses quality. What people actually get stuck on is order and "
+           "size. Files are combined in the order shown, not the order you "
+           "picked them in, which is why a folder of scans named "
+           "<em>page1, page10, page2</em> comes out shuffled; drag them into "
+           "place before saving. Size is the other surprise: merging ten 4 MB "
+           "files gives you a 40 MB file, because each page keeps its own "
+           "embedded images and fonts. If the result is for email, run it "
+           "through Make PDF Smaller afterwards rather than trying to "
+           "compress the parts first.",
+    "steps": [
+        "Open Merge PDF and add every file you want combined.",
+        "Drag the thumbnails until the order is the order you want.",
+        "Check the page count shown for the result matches what you expect.",
+        "Save. The originals are untouched.",
+    ],
+    "faq": [
+        ("Is there a limit on how many files I can merge?",
+         "No fixed limit. The practical ceiling is your device's memory, "
+         "which in a browser means a combined size of roughly 2 GB."),
+        ("Will merging reduce the quality?",
+         "No. Pages are copied, not re-rendered, so text stays text and "
+         "images keep their original data."),
+    ],
+},
+
+"how-to-reduce-pdf-file-size": {
+    "why": "Almost all of a large PDF's weight is images. A 40-page text "
+           "document is typically under a megabyte; a four-page scan can be "
+           "twenty. So compression works by re-encoding the images at a lower "
+           "resolution and quality, and the text is left alone. That is why "
+           "the outcome depends so much on what you started with: a scanned "
+           "document can often drop by 80% with no visible difference, while "
+           "a text-only file that is already small will barely move, because "
+           "there is nothing in it to compress. If you are hitting an email "
+           "limit and compression is not enough, the honest fix is usually to "
+           "split the file — a 25 MB attachment cap is not negotiable, but "
+           "two 12 MB files are.",
+    "steps": [
+        "Open Make PDF Smaller and load the file.",
+        "Pick a quality level and look at the estimated size before saving.",
+        "Compare a page of the preview against the original at full zoom.",
+        "Save when the trade looks right to you.",
+    ],
+    "faq": [
+        ("Why did my file barely get smaller?",
+         "It is probably already mostly text. There is very little to remove "
+         "from a PDF with no photographs or scans in it."),
+        ("Does compressing make the text blurry?",
+         "No. Text is stored as vectors and is not re-encoded — only images "
+         "are touched."),
+    ],
+},
+
+"how-to-convert-pdf-to-word-without-losing-formatting": {
+    "why": "The phrase &ldquo;without losing formatting&rdquo; is doing a lot "
+           "of work, because a PDF does not store formatting in the sense "
+           "Word means. It stores instructions: put this glyph at this "
+           "coordinate, draw this line here. There is no record that a group "
+           "of words was a heading, or that four lines formed a table row. "
+           "Converting means inferring all of that back, which works well for "
+           "PDFs exported from a word processor and less well for anything "
+           "with columns, sidebars or complex tables. The one case that never "
+           "works is a scan: it contains no text at all, only a photograph of "
+           "text, so run OCR first and convert the searchable version.",
+    "steps": [
+        "Check whether you can select text in the PDF. If not, run OCR first.",
+        "Open PDF to Word and load the file.",
+        "Save the .docx and open it before you rely on it.",
+        "Fix the two or three places a complex layout drifted.",
+    ],
+    "faq": [
+        ("Why did my table come out as loose lines of text?",
+         "Because the PDF never said it was a table. Reconstruction is "
+         "inference, and column detection is the hardest part of it."),
+        ("Can I convert a scanned contract to an editable Word file?",
+         "Yes, but in two steps: OCR it first so it contains real text, then "
+         "convert."),
+    ],
+},
+
+"how-to-remove-pages-from-a-pdf": {
+    "why": "Deleting pages is safe in a way most PDF editing is not — the "
+           "remaining pages are copied over untouched, so nothing is "
+           "re-compressed and no quality is lost. The catch is what removal "
+           "does <em>not</em> do. A page you delete takes its content with "
+           "it, but any bookmark or internal link that pointed at it now "
+           "points nowhere, and page numbers printed into the page artwork "
+           "will not renumber themselves. If the document has a table of "
+           "contents, expect to redo it. And if you are removing pages "
+           "because they contain something sensitive, deletion is the right "
+           "tool and redaction is the wrong one — but check the file has no "
+           "attachments or metadata still referring to what you cut.",
+    "steps": [
+        "Open Organize PDF and load the file.",
+        "Select the pages to remove, or select the ones to keep and invert.",
+        "Reorder anything else while you are here — it is the same operation.",
+        "Save as a new file so the original stays intact.",
+    ],
+    "faq": [
+        ("Does deleting a page make the file smaller?",
+         "Usually yes, roughly in proportion to what was on it. A deleted "
+         "scan page saves far more than a deleted text page."),
+        ("Can I get a deleted page back?",
+         "Only from the original file, which is why saving to a new name "
+         "matters."),
+    ],
+},
+
+"how-to-rotate-a-pdf-permanently": {
+    "why": "This is the question behind almost every rotation complaint: you "
+           "turned the page, it looked right, you sent it, and the recipient "
+           "saw it sideways again. That happens because most viewers rotate "
+           "the <em>view</em> without changing the file. A real rotation "
+           "writes a new value into the page's own rotation entry, so every "
+           "viewer, printer and phone shows it the same way. The other thing "
+           "worth knowing is that rotation is metadata, not a redraw — the "
+           "page content is not re-rendered, so a rotated scan is exactly as "
+           "sharp as it was. Scanned batches often need different pages "
+           "turned different ways, so rotate per page rather than applying "
+           "one angle to the whole document.",
+    "steps": [
+        "Open Rotate PDF and load the file.",
+        "Turn each page that needs it — they do not all have to match.",
+        "Save the file.",
+        "Reopen it in a different viewer to confirm the rotation stuck.",
+    ],
+    "faq": [
+        ("Why does my PDF keep going back to the wrong orientation?",
+         "Your viewer was rotating the display only. Saving a real rotation "
+         "into the file is what makes it stick everywhere."),
+        ("Does rotating reduce quality?",
+         "No. Nothing is re-rendered; only the page's rotation value changes."),
+    ],
+},
+
+"how-to-add-a-password-to-a-pdf": {
+    "why": "There are two different passwords in the PDF specification and "
+           "they are not equally serious. A <em>permissions</em> password "
+           "asks viewers politely not to print or copy, and any viewer is "
+           "free to ignore it — plenty do. A <em>user</em> password actually "
+           "encrypts the file: without it there is nothing to read, only "
+           "ciphertext. This applies the second kind, with AES-256. That "
+           "makes the password the whole of the security, so a short one is a "
+           "short lock. It also makes recovery impossible: there is no reset, "
+           "no backdoor, and nobody who can help you, because the encryption "
+           "happens on your device and the key was never sent anywhere. Write "
+           "it down before you save.",
+    "steps": [
+        "Open Protect PDF and load the file.",
+        "Set a password you can retrieve later — a manager entry, not memory.",
+        "Save the encrypted copy under a new name.",
+        "Close it, reopen it, and confirm it asks for the password.",
+    ],
+    "faq": [
+        ("What happens if I forget the password?",
+         "The file is unrecoverable. AES-256 has no reset path, and nothing "
+         "about your file ever left your device for anyone to recover it "
+         "from."),
+        ("Can I send the password in the same email as the file?",
+         "You can, but it defeats the point — anyone reading the message has "
+         "both halves."),
+    ],
+},
+
+"how-to-sign-a-pdf-electronically": {
+    "why": "An electronic signature and a digital signature are different "
+           "things, and knowing which you need saves an argument later. An "
+           "electronic signature is a picture of your signature placed on the "
+           "page — that is what most contracts, forms and consent letters ask "
+           "for, and it is what this does. A digital signature is a "
+           "cryptographic certificate that proves the document has not been "
+           "altered since signing, and it needs a certificate authority. For "
+           "the common case, what matters is that the signature looks right "
+           "and cannot be nudged around afterwards, so flatten the file once "
+           "you are done. Drawing with a finger on a phone gives a more "
+           "natural line than a mouse; typing a name in a script font is "
+           "accepted almost everywhere.",
+    "steps": [
+        "Open Sign PDF and load the document.",
+        "Draw, type or upload your signature.",
+        "Place and size it on the page — add a date field if the form has one.",
+        "Flatten before sending so it cannot be moved or deleted.",
+    ],
+    "faq": [
+        ("Is a drawn signature legally valid?",
+         "In most jurisdictions, for most everyday documents, yes. Anything "
+         "requiring a certificate-backed digital signature will say so "
+         "explicitly."),
+        ("Is my signature image stored anywhere?",
+         "No. It exists in your browser for the length of the session and is "
+         "never transmitted."),
+    ],
+},
+
+"how-to-add-page-numbers-to-a-pdf": {
+    "why": "Two different jobs share this name. Ordinary page numbering is "
+           "cosmetic — a number in a corner so a printed stack can be put "
+           "back in order. Bates numbering is a legal and discovery "
+           "convention: a fixed prefix, a running count with leading zeros, "
+           "and the guarantee that no two pages in a production share a "
+           "number, so a filing can be cited page by page. The details that "
+           "trip people up are start value and continuation. If this document "
+           "follows another in the same production, the numbering has to "
+           "continue rather than restart at one, and if it has a cover page "
+           "that should not count, the first numbered page is not the first "
+           "page.",
+    "steps": [
+        "Open Page Numbering & Document ID and load the file.",
+        "Choose plain numbering or a Bates prefix with a digit count.",
+        "Set the starting number and the first page to be stamped.",
+        "Check the corner position does not land on existing content.",
+    ],
+    "faq": [
+        ("Can I start numbering from something other than 1?",
+         "Yes — set any start value, which is what continuing a production "
+         "across several documents requires."),
+        ("Will the numbers cover text already on the page?",
+         "They can if the margins are tight. Preview a dense page before "
+         "committing to a position."),
+    ],
+},
+
+"how-to-add-a-watermark-to-a-pdf": {
+    "why": "A watermark is a deterrent, not a lock. It is drawn onto the page "
+           "as content, so a determined person with the right software can "
+           "take it off again — its job is to make casual reuse obviously "
+           "wrong, and to make a leaked copy traceable. That shapes how you "
+           "should place it. A faint mark tucked in a corner is easy to crop "
+           "out; one running diagonally across the middle at low opacity is "
+           "not, and stays readable underneath. If the point is confidentiality "
+           "rather than branding, put the recipient's name in the watermark, "
+           "so a copy that surfaces somewhere it should not have tells you "
+           "where it came from. Flatten afterwards if you do not want it "
+           "removed as a simple annotation.",
+    "steps": [
+        "Open Add Watermark and load the file.",
+        "Type the text, or load a logo image.",
+        "Set opacity low enough to read through and rotate it across the page.",
+        "Apply to every page, then check a dense one is still legible.",
+    ],
+    "faq": [
+        ("Can a watermark be removed by someone else?",
+         "With effort, yes. It discourages casual reuse and marks provenance; "
+         "it is not encryption."),
+        ("Can I watermark with an image instead of text?",
+         "Yes — a transparent PNG logo works best, since it will sit over the "
+         "page content."),
+    ],
+},
+
+"how-to-extract-images-from-a-pdf": {
+    "why": "There is a real difference between extracting images and "
+           "screenshotting pages, and it is the difference between the "
+           "original photograph and a picture of it. Extraction pulls the "
+           "embedded image objects straight out of the file at whatever "
+           "resolution they were stored — often much higher than what you see "
+           "on screen, because the page displays them scaled down. That is "
+           "why a screenshot of a 300 DPI scan looks so much worse than the "
+           "extracted file. Two things surprise people. A single visible "
+           "picture is sometimes stored as several tiled pieces, so you may "
+           "get more files than pages. And a page that is entirely one "
+           "scanned image yields exactly one image per page, which is "
+           "correct, not a bug.",
+    "steps": [
+        "Open Extract Images and load the PDF.",
+        "Let it scan the file for embedded image objects.",
+        "Download the zip.",
+        "Check dimensions — extracted files are often larger than they looked.",
+    ],
+    "faq": [
+        ("Why did I get more images than I could see on the pages?",
+         "Large pictures are often stored as tiles, and background elements "
+         "count as images too."),
+        ("Are the extracted images re-compressed?",
+         "No. The stored data is written out as it was, so nothing is lost a "
+         "second time."),
+    ],
+},
+
+"how-to-compress-an-image-without-losing-quality": {
+    "why": "Strictly, JPEG compression always loses something — the useful "
+           "question is whether you can see it. The answer is usually no, "
+           "because the format discards detail your eye is least sensitive "
+           "to first. Photographs survive aggressive compression well; flat "
+           "graphics, screenshots and anything with sharp text do not, "
+           "because compression artefacts cluster around hard edges and show "
+           "up as haloes. For those, PNG or WebP is the right format rather "
+           "than a higher JPEG quality. The other lever people forget is "
+           "dimensions: a 4000-pixel-wide photo displayed at 800 pixels is "
+           "carrying five times the data it needs, and resizing it costs "
+           "nothing visible while compression at that size costs a lot.",
+    "steps": [
+        "Open Make Image Smaller and load the picture.",
+        "Move the quality slider and watch the estimated size change.",
+        "Zoom to 100% on an edge or a face before you accept it.",
+        "Save — or resize the dimensions first if it is far larger than needed.",
+    ],
+    "faq": [
+        ("What quality setting should I use?",
+         "Around 80 is the usual sweet spot for photographs. Screenshots and "
+         "line art want a lossless format instead."),
+        ("Why does my screenshot look worse than my photo at the same "
+         "setting?",
+         "JPEG artefacts gather around sharp edges, and screenshots are "
+         "nothing but sharp edges."),
+    ],
+},
+
+"how-to-resize-an-image": {
+    "why": "Making an image smaller is safe; making it larger is not. "
+           "Shrinking discards pixels and the result stays sharp, which is "
+           "why resizing before compressing is the most effective way to cut "
+           "a file down. Enlarging has to invent pixels that were never "
+           "captured, so a 500-pixel image stretched to 2000 is blurry no "
+           "matter what software does it. The other thing to watch is aspect "
+           "ratio: setting both width and height to values that do not match "
+           "the original proportions stretches faces and text. Keep the ratio "
+           "locked and set one dimension. If you need an exact frame that "
+           "does not match the source shape, crop to it rather than "
+           "distorting to it.",
+    "steps": [
+        "Open Resize Image and load the file.",
+        "Enter a width in pixels, or a percentage.",
+        "Leave the aspect ratio locked unless you specifically want to crop.",
+        "Save. Keep the original if you may need a larger version later.",
+    ],
+    "faq": [
+        ("Can I make a small image bigger without it going blurry?",
+         "Not really. The detail was never recorded, so enlarging can only "
+         "interpolate what might have been there."),
+        ("What size should a web image be?",
+         "Roughly twice the width it is displayed at, so it stays sharp on "
+         "high-density screens, and no more."),
+    ],
+},
+
+"how-to-remove-the-background-from-an-image": {
+    "why": "Background removal is a segmentation model deciding, pixel by "
+           "pixel, what is subject and what is not. It is very good at the "
+           "case it was trained hardest on — one clear subject against a "
+           "background it contrasts with — and it struggles exactly where a "
+           "human would hesitate: hair against a busy scene, glass, "
+           "reflections, a subject the same colour as what is behind it. "
+           "Here the model runs in your browser rather than on a server, so "
+           "the first run downloads it once and then works offline, and the "
+           "photograph itself is never sent anywhere. Save the result as PNG "
+           "or WebP; JPEG has no transparency, so a cut-out saved as JPEG "
+           "comes back with a white box around it.",
+    "steps": [
+        "Open Remove Background and load the photo.",
+        "Wait for the model to load the first time — after that it is cached.",
+        "Check the edges, especially hair and anything semi-transparent.",
+        "Save as PNG or WebP to keep the transparency.",
+    ],
+    "faq": [
+        ("Why did it cut into the subject?",
+         "Low contrast between subject and background is the usual cause. A "
+         "differently lit shot of the same thing often works first time."),
+        ("Is my photo uploaded to run the AI?",
+         "No. The model is downloaded to your browser and runs there — the "
+         "photo never leaves your device."),
+    ],
+},
+
+"how-to-remove-exif-data-from-photos": {
+    "why": "Every photo your phone takes carries a hidden block of metadata: "
+           "the camera and lens, the exact time, and very often the GPS "
+           "coordinates of where you stood. Post that photo somewhere and you "
+           "may be publishing your home address without realising it. Some "
+           "platforms strip EXIF on upload and some do not, and the ones that "
+           "do strip it still received it. Stripping before you share is the "
+           "only version you control. Note what is lost along with it: "
+           "orientation is stored in EXIF too, so a stripped photo can appear "
+           "rotated in some viewers, and the timestamp your photo library "
+           "sorts by disappears. Strip the copy you are sharing, not your "
+           "archive.",
+    "steps": [
+        "Open Remove Photo Metadata (EXIF) and load the picture.",
+        "Look at what it found — the GPS line is the one that matters.",
+        "Save a stripped copy under a new name.",
+        "Keep the original for your own library.",
+    ],
+    "faq": [
+        ("Does removing EXIF change how the photo looks?",
+         "No. The image data is untouched; only the metadata block is "
+         "removed."),
+        ("Do social networks not already do this?",
+         "Most strip it before display, but they received the original with "
+         "the coordinates in it."),
+    ],
+},
+
+"how-to-scan-a-document-with-your-phone": {
+    "why": "A photograph of a page and a scan of a page are different things. "
+           "A photo is taken at an angle, so the page is a trapezoid, the "
+           "lighting falls off across it, and shadows from your own hand sit "
+           "in the corners. Scanning finds the four corners of the page, warps "
+           "the image so they become a rectangle, then normalises the "
+           "brightness so the paper reads as white everywhere. That is what "
+           "makes the result look filed rather than snapped — and it is also "
+           "what makes OCR work afterwards, because text recognition is far "
+           "more accurate on a flattened, evenly lit page. Get the whole page "
+           "in frame with a little margin, and avoid a light source directly "
+           "behind you casting your shadow onto it.",
+    "steps": [
+        "Open Scan Document and allow camera access.",
+        "Frame the whole page, roughly square-on, on a contrasting surface.",
+        "Confirm or drag the detected corners.",
+        "Capture further pages into the same document, then save as PDF.",
+    ],
+    "faq": [
+        ("Why can it not find the edges of my page?",
+         "White paper on a white desk gives it nothing to detect. Move to a "
+         "darker surface."),
+        ("Can I search the text afterwards?",
+         "Yes — run OCR on the saved PDF and the scan becomes selectable, "
+         "searchable text."),
+    ],
+},
+
+"how-to-make-a-scanned-pdf-searchable": {
+    "why": "A scanned PDF has no text in it. It looks like a document but it "
+           "is a photograph of one, which is why Ctrl-F finds nothing, why "
+           "you cannot copy a paragraph out, and why converting it to Word "
+           "produces an empty file. OCR fixes this by recognising the shapes "
+           "as characters and writing an invisible text layer behind the "
+           "image, so the page still looks exactly as scanned but the words "
+           "underneath are real. Accuracy depends almost entirely on the "
+           "input: 300 DPI, straight, evenly lit and printed gives near "
+           "perfect results, while a crooked phone photo of a faded fax does "
+           "not. If accuracy is poor, rescanning is far more effective than "
+           "running OCR again.",
+    "steps": [
+        "Open OCR — Make Scans Searchable and load the scanned PDF.",
+        "Select the language of the document.",
+        "Let it process — this is the slowest tool here, and that is the work.",
+        "Save, then search for a word you can see to confirm it worked.",
+    ],
+    "faq": [
+        ("Why is the recognised text full of mistakes?",
+         "Low resolution, skew or poor contrast. Rescan at 300 DPI square-on "
+         "before trying anything else."),
+        ("Does the page look different afterwards?",
+         "No. The text layer is invisible and sits behind the unchanged "
+         "image."),
+    ],
+},
+
+"how-to-convert-a-photo-to-pdf": {
+    "why": "The reason to put photographs into a PDF is almost always that "
+           "someone asked for one file — a landlord, a registrar, a claims "
+           "form. Twelve separate JPEGs are a nuisance to whoever receives "
+           "them; one paginated document is not. Two decisions shape the "
+           "result. Orientation: portrait photos in a landscape page get "
+           "letterboxed with wide margins, so match the page to the pictures "
+           "or let each page fit its image. And size: photographs are the "
+           "heaviest thing you can put in a PDF, so twenty phone pictures "
+           "make a document too big to email. Compress the images first, or "
+           "the finished PDF afterwards — the second is usually easier and "
+           "gives the same result.",
+    "steps": [
+        "Open Images to PDF and add every photo.",
+        "Drag them into the order you want them read in.",
+        "Choose page size and whether each image fills or fits its page.",
+        "Save, and compress the result if it needs to be emailed.",
+    ],
+    "faq": [
+        ("Can I mix JPEG, PNG and HEIC in one document?",
+         "Yes. They are all decoded and placed the same way."),
+        ("Why is my PDF so much bigger than the photos were?",
+         "It usually is not much bigger — the photos were simply large to "
+         "begin with. Compressing the PDF fixes it in one step."),
+    ],
+},
+
+"how-to-split-a-pdf-into-separate-pages": {
+    "why": "Splitting is worth understanding as three different jobs wearing "
+           "one name. Burst splitting gives one file per page, which is what "
+           "you want when a scanner has put fifty unrelated receipts into a "
+           "single document. Range splitting extracts pages 12 to 30 as one "
+           "file, which is what you want when pulling a chapter or an exhibit "
+           "out. And size splitting divides a document into parts small "
+           "enough to send, which is the honest answer when compression will "
+           "not get a file under an attachment limit. All three copy pages "
+           "rather than re-render them, so nothing loses quality, and the "
+           "original stays where it is.",
+    "steps": [
+        "Open Split PDF and load the document.",
+        "Choose one file per page, or type a range like 12-30.",
+        "Check the resulting file count before saving.",
+        "Download — multiple outputs arrive as a zip.",
+    ],
+    "faq": [
+        ("Can I extract just one page?",
+         "Yes — give a range with the same start and end, such as 7-7."),
+        ("Does splitting reduce quality?",
+         "No. Pages are copied intact into the new files."),
+    ],
+},
+
+"how-to-fill-in-a-pdf-form": {
+    "why": "Whether you can type into a PDF form depends on whether it is "
+           "really a form. Some PDFs contain proper interactive fields with "
+           "names and types, and those you click and fill. Many so-called "
+           "forms are just a printed layout with lines drawn on it — nothing "
+           "to click, because there are no fields, only pictures of boxes. "
+           "For those the answer is to place text on the page where the boxes "
+           "are, which looks identical once printed or emailed. The last step "
+           "matters either way: an unflattened form can be edited by whoever "
+           "receives it, and some viewers render filled fields "
+           "inconsistently. Flattening bakes your answers into the page so "
+           "what you see is what they get.",
+    "steps": [
+        "Open PDF Forms and load the document.",
+        "Fill any interactive fields it finds.",
+        "Where there are none, place text over the printed boxes.",
+        "Flatten, then reopen to check every answer is visible.",
+    ],
+    "faq": [
+        ("Nothing happens when I click a field.",
+         "The document has no interactive fields — it is a printed layout. "
+         "Place text on top of it instead."),
+        ("Should I flatten before sending?",
+         "Yes, unless the recipient needs to edit it. Flattening prevents "
+         "changes and viewer inconsistencies."),
+    ],
+},
+
+"how-to-flatten-a-pdf": {
+    "why": "A PDF can carry a second layer above the page: form fields, "
+           "comments, highlights, stamps, a signature image. That layer is "
+           "separate from the page content, which is what makes it editable — "
+           "and also what makes it unreliable. Different viewers render "
+           "annotations differently, some print them and some do not, and "
+           "anyone who opens the file can move or delete them. Flattening "
+           "merges the layer into the page, so what is on screen is the "
+           "document itself. It is a one-way change: after flattening, a form "
+           "cannot be re-edited and a signature cannot be moved. Keep the "
+           "unflattened original if there is any chance an answer will need "
+           "changing.",
+    "steps": [
+        "Open Flatten PDF and load the file.",
+        "Confirm you no longer need to edit the fields or annotations.",
+        "Save a flattened copy under a new name.",
+        "Open it and check nothing that should be visible disappeared.",
+    ],
+    "faq": [
+        ("Can I undo flattening?",
+         "No. Work from the original file if you need the fields back."),
+        ("Does it make the file smaller?",
+         "Slightly, since the annotation structures go away, but that is not "
+         "the reason to do it."),
+    ],
+},
+
+"how-to-convert-a-pdf-to-black-and-white": {
+    "why": "Two different requests hide behind this. Greyscale keeps every "
+           "shade between black and white, so photographs still look like "
+           "photographs — this is what you want for printing at a shop that "
+           "charges more for colour, or for a document that must not look "
+           "different in monochrome. True black-and-white, sometimes called "
+           "bitonal, keeps only two values and is what archival scanning "
+           "uses; it makes text extremely crisp and files tiny, but it "
+           "destroys photographs. The side effect people notice most is size: "
+           "dropping colour channels from a scanned document often cuts the "
+           "file by half or more, which makes this a legitimate compression "
+           "step for anything that was going to be printed in mono anyway.",
+    "steps": [
+        "Open Grayscale PDF and load the file.",
+        "Convert, then compare a page with photographs against the original.",
+        "Note the new file size — it is usually much smaller.",
+        "Save under a new name so the colour version survives.",
+    ],
+    "faq": [
+        ("Is this reversible?",
+         "No. The colour information is discarded, so keep the original."),
+        ("Will scanned text look better or worse?",
+         "Usually cleaner, because colour fringing from the scanner "
+         "disappears."),
+    ],
+},
+
+"how-to-compare-two-pdfs": {
+    "why": "Comparison answers a question people otherwise resolve by reading "
+           "both documents twice: what actually changed between the version I "
+           "sent and the version they returned. It works on the text, so it "
+           "catches an altered number, a deleted clause or a quietly reworded "
+           "sentence — the changes that matter in a contract and are easiest "
+           "to miss by eye. Two limits are worth knowing. If either document "
+           "is a scan, there is no text to compare, so OCR it first. And "
+           "differences of layout rather than wording — a reflowed paragraph, "
+           "a different font — can register as changes even when the words "
+           "are identical, so read what is highlighted rather than trusting "
+           "the count.",
+    "steps": [
+        "Open Compare PDF and load both versions.",
+        "Confirm both have selectable text; OCR either one that does not.",
+        "Step through the highlighted differences.",
+        "Check numbers and dates specifically — those are the costly ones.",
+    ],
+    "faq": [
+        ("Can I compare a scan against a digital original?",
+         "Only after running OCR on the scan, and expect recognition errors "
+         "to appear as differences."),
+        ("Does it compare images as well as text?",
+         "The comparison is text-based; a changed photograph will not be "
+         "reported as a difference."),
+    ],
+},
+
+"how-to-repair-a-corrupted-pdf": {
+    "why": "A PDF that will not open is usually not damaged in its content — "
+           "it is damaged in its index. Every PDF ends with a cross-reference "
+           "table saying where each object lives in the file, and if a "
+           "transfer was truncated, a program crashed mid-save or a disk hit "
+           "a bad sector, that table stops matching reality and viewers give "
+           "up. Repair works by ignoring the broken table, scanning the whole "
+           "file for objects that are still intact, and building a fresh "
+           "index from what it finds. That recovers a great many files "
+           "completely. What it cannot do is invent bytes that never arrived: "
+           "if a download stopped at 60%, the last pages are simply not "
+           "there.",
+    "steps": [
+        "Open Repair PDF and load the damaged file.",
+        "Let it rebuild the structure from the objects it can find.",
+        "Open the result and check the page count against what you expected.",
+        "If pages are missing, get a fresh copy of the source file.",
+    ],
+    "faq": [
+        ("Can every broken PDF be recovered?",
+         "No. Structural damage is usually fixable; missing data from a "
+         "truncated download is not."),
+        ("Will the repaired file lose anything?",
+         "Objects that survived are kept as they were. Anything unreadable "
+         "cannot be reconstructed."),
+    ],
+},
+
+"how-to-generate-a-qr-code": {
+    "why": "A QR code is just an encoding of text, which is why the same "
+           "square can hold a URL, a wifi password, a contact card or a "
+           "payment string. Two practical constraints govern whether it "
+           "actually scans. Length: more characters means a denser grid, and "
+           "a long tracking URL can become unreadable at the size you print "
+           "it — shorten the link rather than shrinking the code. And quiet "
+           "zone: the code needs clear space around it, so one placed hard "
+           "against a border or over a busy photograph fails on many phones. "
+           "Print at 2 cm minimum for a poster read at arm's length, use SVG "
+           "for anything that will be scaled, and test with two different "
+           "phones before printing five hundred.",
+    "steps": [
+        "Open QR Code Generator and enter the text or URL.",
+        "Choose PNG for screens, or SVG for print and signage.",
+        "Leave a clear margin around it in your layout.",
+        "Scan the finished artwork with two phones before it goes out.",
+    ],
+    "faq": [
+        ("Do these codes expire?",
+         "No. The code contains your text directly, so there is no "
+         "redirection service that could stop working."),
+        ("Why will my code not scan?",
+         "Usually too small for its data, too little quiet zone, or "
+         "insufficient contrast with what is behind it."),
+    ],
+},
+
+"how-to-create-an-invoice": {
+    "why": "What makes an invoice work is not design, it is the fields an "
+           "accounts department needs to process it: a unique invoice number, "
+           "the issue date, payment terms, a clear description per line, tax "
+           "shown separately, and bank details in a form the payer can act "
+           "on. Missing any of those is the usual reason an invoice sits "
+           "unpaid — nobody rejects it, it just stops. Sequential numbering "
+           "matters more than it looks, both for your own reconciliation and "
+           "because most tax regimes require invoices to be numbered "
+           "consecutively. Send PDF rather than a document file so the "
+           "totals cannot be edited in transit, and keep your own copy of "
+           "every number you issue.",
+    "steps": [
+        "Open Invoice Generator and fill in both parties' details.",
+        "Add a line per item, with tax shown separately if it applies.",
+        "Set a unique, sequential invoice number and clear payment terms.",
+        "Save as PDF and keep your copy.",
+    ],
+    "faq": [
+        ("Are my client's details saved anywhere?",
+         "No. The form lives in your browser for the session and nothing is "
+         "stored or transmitted."),
+        ("Can I add my logo?",
+         "Yes — upload an image and it is placed in the header."),
+    ],
+},
+
+"how-to-make-a-passport-photo": {
+    "why": "Passport photos are rejected on rules, not on looks, and the "
+           "rules differ by country: India wants 51&nbsp;&times;&nbsp;51&nbsp;mm, "
+           "the US 2&nbsp;&times;&nbsp;2&nbsp;inches, the UK and Schengen "
+           "35&nbsp;&times;&nbsp;45&nbsp;mm, each with its own requirement for "
+           "how much of the frame the head must fill. Beyond dimensions, the "
+           "consistent rejections are shadows on the background, glare on "
+           "glasses, a tilted head and a visible smile. So the photograph "
+           "matters more than the cropping: face a window, stand a good arm's "
+           "length from a plain wall so you cast no shadow on it, look "
+           "straight at the lens, and keep a neutral expression. Then set the "
+           "country and let the crop and head sizing follow the specification.",
+    "steps": [
+        "Take the photo square-on against a plain light wall, in even light.",
+        "Open Passport & ID Photo Maker and select the country.",
+        "Position the guides over the crown and chin.",
+        "Save, or export a print sheet if you are using a photo service.",
+    ],
+    "faq": [
+        ("Can I wear glasses?",
+         "Many countries now say no, and nearly all reject any glare or "
+         "frames crossing the eyes. Taking them off is the safe choice."),
+        ("Is my photo uploaded anywhere?",
+         "No. The cropping happens in your browser and the image is never "
+         "transmitted."),
+    ],
+},
+
+"how-to-convert-a-video-to-gif": {
+    "why": "GIF is a poor video format that survives because it plays "
+           "everywhere without a player. It is limited to 256 colours per "
+           "frame and has no real compression between frames, so a few "
+           "seconds of video becomes enormous — a 10 MB clip can turn into a "
+           "40 MB GIF at full size and frame rate. Everything about making a "
+           "usable GIF is therefore subtraction: keep the clip to a few "
+           "seconds, drop the frame rate to 10-15, and reduce the width to "
+           "somewhere around 480 pixels. Gradients and film footage fare "
+           "worst under the colour limit and come out banded; screen "
+           "recordings and animation, which use few colours anyway, come out "
+           "almost perfect.",
+    "steps": [
+        "Open Video to GIF and load the clip.",
+        "Set the start and end — a few seconds is the working range.",
+        "Lower the frame rate and width until the estimated size is sane.",
+        "Export, and check it against the size limit wherever it is going.",
+    ],
+    "faq": [
+        ("Why is my GIF larger than the video was?",
+         "GIF cannot compress across frames the way video codecs do. Fewer "
+         "frames and fewer pixels are the only levers."),
+        ("Can I keep the audio?",
+         "No — GIF has no audio track. Use a short MP4 if sound matters."),
+    ],
+},
+
+"how-to-trim-a-video": {
+    "why": "There are two ways to cut a video and the difference is worth a "
+           "minute of your attention. A stream copy keeps the existing "
+           "compressed data and only changes where playback starts and stops. "
+           "It is nearly instant and loses nothing — but it can only cut at "
+           "keyframes, so your cut may land a fraction of a second from where "
+           "you set it. Re-encoding cuts exactly where you asked, at the cost "
+           "of decoding and recompressing everything, which takes time and "
+           "loses a little quality. For trimming dead air off the front of a "
+           "recording, the fast path is right. For a precise cut in the "
+           "middle of speech, take the slower one.",
+    "steps": [
+        "Open Trim Video and load the file.",
+        "Set the in and out points on the timeline.",
+        "Choose the fast copy, or exact cutting if the frame matters.",
+        "Export and play the result through the joins.",
+    ],
+    "faq": [
+        ("Why did my cut land slightly off?",
+         "A fast trim snaps to the nearest keyframe. Exact cutting re-encodes "
+         "and lands where you asked."),
+        ("Is the audio kept?",
+         "Yes, trimmed in step with the picture."),
+    ],
+},
+
+"how-to-record-your-screen": {
+    "why": "Browser screen recording uses the same capture permission a video "
+           "call does, which is why the browser — not this page — shows the "
+           "picker asking which screen, window or tab to share. That "
+           "separation is the security model: the page only ever receives the "
+           "surface you explicitly chose. Audio is where people get caught "
+           "out. Microphone and system sound are separate permissions, and "
+           "capturing what is playing on your computer is only offered for a "
+           "tab on some platforms, so test a ten-second clip before recording "
+           "anything long. The file is written to your machine as you go and "
+           "nothing is streamed anywhere — this is a recorder, not a "
+           "broadcast tool, and there is no server involved to send it to.",
+    "steps": [
+        "Open Screen Recorder and choose what to capture.",
+        "Decide on microphone and system audio before you start.",
+        "Record a ten-second test and play it back.",
+        "Record for real, then stop and save to your machine.",
+    ],
+    "faq": [
+        ("Is my recording uploaded?",
+         "No. It is written to your own device and never transmitted."),
+        ("Why is there no sound from the video I was playing?",
+         "System audio capture is a separate permission and is not offered on "
+         "every platform or for every surface."),
+    ],
+},
+
+"how-to-redact-text-in-a-pdf": {
+    "why": "This is the mistake that has embarrassed governments and law "
+           "firms repeatedly: a black rectangle drawn over a name is an "
+           "annotation sitting <em>above</em> the text, and the text is still "
+           "in the file underneath. Select the page, paste it into a text "
+           "editor, and the redacted names come straight out. Proper "
+           "redaction deletes the characters from the content stream and then "
+           "draws the box, so there is nothing left to recover. Two things to "
+           "check afterwards. Metadata and attachments are separate from page "
+           "content, and a document title or embedded file can leak what you "
+           "just removed. And on a scanned page there is no text to delete, "
+           "so the black box must cover the image itself.",
+    "steps": [
+        "Open Search & Redact and load the document.",
+        "Search for the term, or select the passages by hand.",
+        "Apply the redaction so the text is removed, not covered.",
+        "Reopen, select all, and paste elsewhere to confirm nothing survives.",
+    ],
+    "faq": [
+        ("Is drawing a black box in a PDF editor good enough?",
+         "No. That is the single most common redaction failure — the text "
+         "stays in the file and can be copied straight out."),
+        ("Does it clean the metadata too?",
+         "Check it separately. Document properties and attachments are stored "
+         "outside the page content."),
+    ],
+},
+
+}
