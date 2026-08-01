@@ -152,6 +152,16 @@ jobs:
             exit 1
           fi
           node scripts/seo-audit.js
+      - name: Generated pages are not near-duplicates of each other
+        # Unique titles are not the same as unique pages. Every generator
+        # here once stamped out one template per family whose only variable
+        # was a name, leaving roughly thirty distinct words per page — the
+        # profile Google's scaled-content-abuse policy targets, and the
+        # commonest reason an AdSense application is refused. The audit above
+        # could not see it, because every page had its own title. This
+        # measures the body text, within each family, and fails on median
+        # 5-gram overlap above 20% or any single pair above 45%.
+        run: python3 scripts/check-content-similarity.py
       - name: Canonical host resolves
         # A canonical tag naming a host with no DNS record points every
         # crawler at an address that does not exist. The generator cannot

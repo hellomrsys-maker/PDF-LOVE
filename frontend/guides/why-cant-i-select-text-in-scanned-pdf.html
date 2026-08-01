@@ -39,6 +39,16 @@ footer a{color:var(--copper-deep);}
 .footer-nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
 .footer-nav a{color:var(--ink-soft);text-decoration:none;}
 .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
+main h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.28rem;
+margin:34px 0 12px;letter-spacing:-0.01em;}
+main h3{font-weight:600;font-size:1rem;margin:22px 0 8px;color:var(--ink);}
+main > .wrap > p{margin:0 0 16px;}
+main ul{margin:0 0 18px;padding-left:22px;}
+main ul li{margin-bottom:8px;}
+.note{background:var(--paper-raised);border:1px solid var(--line);
+border-left:3px solid var(--copper);border-radius:8px;padding:16px 20px;
+margin:4px 0 24px;font-size:0.95rem;}
+.note strong{color:var(--copper-deep);}
 </style>
 </head>
 <body>
@@ -55,6 +65,76 @@ footer a{color:var(--copper-deep);}
     </ol>
   </div>
   <a class="cta" href="../index.html?ask=make%20this%20scan%20searchable">Open PDF Love and try it →</a>
+
+  <h2>Why a scan has no text in it</h2>
+  <p>When a scanner or a phone camera captures a page, it records brightness
+  values — a grid of pixels. It has no idea that some of those pixels form the
+  word <em>invoice</em>. Wrapping that image in a PDF container changes the
+  file extension and nothing else: you now have a photograph in a document
+  wrapper. Every symptom follows from that. Ctrl-F finds nothing because there
+  is nothing to find. You cannot copy a paragraph because there are no
+  characters to copy. Converting the file to Word produces an empty document,
+  which is the single most common "the converter is broken" report we see and
+  is not a converter problem at all.</p>
+  <p>A PDF exported from Word, by contrast, contains real character codes and
+  the font information needed to draw them. That is why one PDF behaves like a
+  document and another behaves like a picture, even though both open in the
+  same reader and look much the same on screen.</p>
+  <h2>How to tell which kind you have, in five seconds</h2>
+  <p>Try to select a line of text with your cursor. If a neat blue highlight
+  follows the words, the text is real. If you instead get a rectangular
+  selection box that ignores where the words are — or nothing happens at all —
+  it is an image. A second check: zoom in to 400%. Real text stays crisp at
+  any zoom because it is drawn from vector outlines; a scan turns into visible
+  squares.</p>
+  <h2>What OCR actually does</h2>
+  <p>Optical character recognition looks at the shapes in the image, decides
+  which characters they are, and writes those characters into the PDF as an
+  invisible layer positioned exactly behind what you see. The page looks
+  completely unchanged — the original scan is still what is displayed — but
+  underneath it there is now selectable, searchable, copyable text. This is
+  why a searchable PDF is sometimes called a "sandwich": image on top, text
+  below.</p>
+  <p>It also means OCR is a recognition step, not a magic one. It is guessing
+  at characters from pixels, and the quality of the guess depends almost
+  entirely on the quality of the pixels.</p>
+  <h2>What goes wrong, and how to tell</h2>
+  <ul>
+    <li><strong>Garbled output.</strong> Words come out as
+      <em>1nv0lce</em> or <em>rn</em> where <em>m</em> should be. That is low
+      resolution. OCR wants around 300 DPI; a phone photo held close and
+      cropped is often effectively 150 and the engine has too few pixels per
+      character to work with.</li>
+    <li><strong>Whole lines missing.</strong> Usually skew. A page scanned a
+      few degrees off straight breaks line detection, because the engine looks
+      for horizontal rows of characters.</li>
+    <li><strong>Only part of the page recognised.</strong> Uneven lighting.
+      A shadow across one half drops the contrast below what the engine can
+      threshold, and it treats that region as blank.</li>
+    <li><strong>Wrong language entirely.</strong> Accented characters and
+      non-Latin scripts need the right language model selected; running
+      Devanagari through the English model produces confident nonsense.</li>
+  </ul>
+  <p>In every one of those cases, rescanning is far more effective than
+  running OCR again with different settings. Recognition cannot recover
+  information the scan never captured. Put the page flat, square to the
+  camera, on a contrasting surface, with light coming from the side rather
+  than over your shoulder — and if your scanner offers a DPI setting, use
+  300.</p>
+  <h2>Checking that it worked</h2>
+  <p>Open the finished PDF and search for a word you can see near the middle
+  of the page. If the reader jumps to it and highlights it, the text layer is
+  there and aligned. Then select a whole paragraph and paste it into a text
+  editor: that tells you the recognition quality, which searching alone does
+  not. Expect a small number of errors on any real-world scan — OCR at 98%
+  accuracy still means roughly one wrong character per two lines, which is
+  perfectly usable for searching and needs a proofread before you rely on it
+  as a quotation.</p>
+  <div class="note"><strong>Worth knowing:</strong> the engine here is
+  Tesseract, compiled to WebAssembly. It is the same open-source engine behind
+  a great deal of desktop scanning software — the difference is only that it
+  is running in your browser tab instead of on a server, so the document never
+  leaves your machine.</div>
   <p class="alt">Adobe Acrobat and cloud scanning apps offer this too, but usually as a paid feature or a cloud round-trip that takes your document off your device. PDF Love's OCR runs entirely on-device, so a private document (a contract, a medical form) never has to leave your computer to become searchable.</p>
 </div></main>
 <footer><div class="wrap">

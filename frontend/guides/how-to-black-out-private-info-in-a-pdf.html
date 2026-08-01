@@ -39,6 +39,16 @@ footer a{color:var(--copper-deep);}
 .footer-nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
 .footer-nav a{color:var(--ink-soft);text-decoration:none;}
 .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
+main h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.28rem;
+margin:34px 0 12px;letter-spacing:-0.01em;}
+main h3{font-weight:600;font-size:1rem;margin:22px 0 8px;color:var(--ink);}
+main > .wrap > p{margin:0 0 16px;}
+main ul{margin:0 0 18px;padding-left:22px;}
+main ul li{margin-bottom:8px;}
+.note{background:var(--paper-raised);border:1px solid var(--line);
+border-left:3px solid var(--copper);border-radius:8px;padding:16px 20px;
+margin:4px 0 24px;font-size:0.95rem;}
+.note strong{color:var(--copper-deep);}
 </style>
 </head>
 <body>
@@ -55,6 +65,67 @@ footer a{color:var(--copper-deep);}
     </ol>
   </div>
   <a class="cta" href="../index.html?ask=black%20out%20private%20details">Open PDF Love and try it →</a>
+
+  <h2>Why the black rectangle does not work</h2>
+  <p>This is the mistake that has embarrassed law firms, government
+  departments and newspapers, repeatedly and publicly. A PDF is built in
+  layers. The page content — the characters, their positions, the images — is
+  one thing. Annotations drawn on top, including that black rectangle, are
+  another. Drawing a box changes what is <em>displayed</em>; it does not
+  remove what is <em>stored</em>. The name is still in the file, sitting
+  underneath the rectangle in full.</p>
+  <p>Recovering it takes no skill at all. Select the region and copy: the text
+  comes out. Run any text extraction tool and the redacted passages appear in
+  the output. Some readers will even let you drag the annotation aside. If the
+  document has been filed, published or emailed, everyone who has a copy has
+  the original information, and there is nothing you can do about it
+  afterwards.</p>
+  <h2>What real redaction does instead</h2>
+  <p>Proper redaction deletes the characters from the page's content stream —
+  they stop existing in the file — and then draws the covering box so the page
+  still reads as deliberately redacted rather than mysteriously blank. The
+  order matters: remove first, cover second. Because the text is genuinely
+  gone, there is nothing left to select, copy, extract or recover, and the
+  file is safe to hand to someone whose interests differ from yours.</p>
+  <h2>Finding everything that needs to go</h2>
+  <p>Manual selection misses things — that is the normal failure, not an
+  unusual one. A national insurance number appears in the header of page one
+  and again in a table on page fourteen. An email address is in the body and
+  also in a signature block. Searching for a pattern catches every instance,
+  which is why pattern search over hand-marking is the right default for
+  identifiers with a known shape: account numbers, phone numbers, email
+  addresses, dates of birth.</p>
+  <p>Then read the document again for the things a pattern cannot find.
+  Names, addresses and job titles have no fixed format. Neither does the
+  detail that identifies someone by combination rather than directly — "the
+  only left-handed surveyor in the district office" needs no name attached.</p>
+  <h2>The three places redaction leaks</h2>
+  <ul>
+    <li><strong>Metadata.</strong> Document properties carry an author, a
+      title and often the original filename. Redacting the body of
+      <em>Smith-termination-draft.pdf</em> while the title field still says so
+      accomplishes nothing.</li>
+    <li><strong>Attachments and layers.</strong> A PDF can carry embedded
+      files and optional content groups that are not visible on the page you
+      are looking at but travel with the document.</li>
+    <li><strong>Scanned pages.</strong> There is no text to delete on a scan —
+      the information is in the pixels. The covering box has to be applied to
+      the image itself. And if the scan has been through OCR, there is also a
+      hidden text layer holding a transcript of exactly what you are trying to
+      remove, which must go too.</li>
+  </ul>
+  <h2>Verifying before you send</h2>
+  <p>Do not trust the appearance. Open the finished file, select the entire
+  document, copy, and paste into a plain text editor. Then read what comes
+  out. If a redacted name appears anywhere in that paste, the redaction
+  failed and you have found it in the only way that reliably works. Search
+  the extracted text for each removed term specifically as well — it takes a
+  minute and it is the difference between a redaction and a mistake.</p>
+  <div class="note"><strong>Worth knowing:</strong> for genuinely sensitive
+  material, some organisations still print, black out with a marker, and
+  rescan. That works because it destroys the information physically. Real
+  digital redaction achieves the same result without the loss of quality —
+  provided you verify it, which is the step people skip.</div>
   <p class="alt">This is exactly the kind of task where uploading to a cloud service is the wrong move — the whole point of redaction is removing sensitive information, not sending it to a third party first. PDF Love redacts locally, so the sensitive data only ever exists on your own device.</p>
 </div></main>
 <footer><div class="wrap">

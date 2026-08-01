@@ -39,6 +39,16 @@ footer a{color:var(--copper-deep);}
 .footer-nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
 .footer-nav a{color:var(--ink-soft);text-decoration:none;}
 .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
+main h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.28rem;
+margin:34px 0 12px;letter-spacing:-0.01em;}
+main h3{font-weight:600;font-size:1rem;margin:22px 0 8px;color:var(--ink);}
+main > .wrap > p{margin:0 0 16px;}
+main ul{margin:0 0 18px;padding-left:22px;}
+main ul li{margin-bottom:8px;}
+.note{background:var(--paper-raised);border:1px solid var(--line);
+border-left:3px solid var(--copper);border-radius:8px;padding:16px 20px;
+margin:4px 0 24px;font-size:0.95rem;}
+.note strong{color:var(--copper-deep);}
 </style>
 </head>
 <body>
@@ -55,6 +65,65 @@ footer a{color:var(--copper-deep);}
     </ol>
   </div>
   <a class="cta" href="../index.html?ask=repair%20this%20broken%20pdf">Open PDF Love and try it →</a>
+
+  <h2>What "damaged" usually means</h2>
+  <p>Very often the content of the file is completely fine and its index is
+  not. Every PDF ends with a cross-reference table: a directory recording the
+  byte offset of every object in the document, so a reader can jump straight
+  to page 90 without parsing the first 89. Readers trust that table
+  absolutely. If the offsets no longer match where things actually are, the
+  reader cannot find the page tree, concludes the file is unreadable, and
+  shows you an error — while the pages themselves sit in the file, intact and
+  entirely recoverable.</p>
+  <p>The usual causes are dull and mechanical: a download that stopped short,
+  a program that crashed while saving, a USB drive pulled out mid-write, a
+  file transferred in text mode instead of binary, or a sync client that
+  uploaded a half-written file. In each case the damage is structural rather
+  than to the content.</p>
+  <h2>How repair works</h2>
+  <p>A repair pass ignores the broken index entirely. It scans the file from
+  the beginning looking for object definitions — they have a recognisable
+  shape — collects everything still parseable, works out which objects form
+  the page tree, and writes a fresh cross-reference table describing where
+  things really are. The output is a new file whose index matches its
+  contents, which readers will open normally.</p>
+  <p>What repair cannot do is invent data. If a download stopped at 60%, the
+  last 40% of the objects are not in the file and no tool of any kind will
+  produce them. Recovering the first 60% is the best available outcome, and
+  frequently a good one.</p>
+  <h2>Check these before repairing</h2>
+  <ul>
+    <li><strong>Is it actually a PDF?</strong> Some downloads save an HTML
+      error page under a .pdf name. Open it in a text editor: a real PDF
+      begins with <code>%PDF-</code> in the first few bytes.</li>
+    <li><strong>Is it complete?</strong> Compare the size against the source.
+      A file noticeably smaller than expected is truncated, and repair will
+      recover only what arrived.</li>
+    <li><strong>Is it zero bytes?</strong> Then there is nothing there. Get
+      it again from the source.</li>
+    <li><strong>Does another reader open it?</strong> Browsers, phone readers
+      and desktop applications tolerate different faults. A file one refuses
+      may open elsewhere, and if it does, printing it to a new PDF from that
+      reader is a repair in itself.</li>
+  </ul>
+  <h2>Reading the result honestly</h2>
+  <p>After a repair, check the page count first — it is the fastest signal.
+  Matching the original means the structure was the whole problem and you are
+  done. Fewer pages means some objects were unrecoverable, and the missing
+  ones are almost always at the end, consistent with a truncated file. Then
+  page through and look for blank pages or missing images, which indicate
+  individual objects that could not be salvaged even though the page around
+  them survived.</p>
+  <p>If the recovery is partial and the document matters, go back to the
+  source before settling for it: re-download it, ask the sender to resend it,
+  or check whether your backup or version history has an earlier copy. A
+  complete original always beats a good repair.</p>
+  <div class="note"><strong>Worth knowing:</strong> if the file came from
+  someone you do not know and will not open, be a little careful where you
+  take it. "Free PDF repair" sites want you to upload a document that may
+  well be confidential, to a server you know nothing about, to fix a problem
+  that is mostly bookkeeping. Repairing on your own device avoids the
+  question entirely.</div>
   <p class="alt">This isn't magic — if the underlying data is truly gone, no tool (cloud or local) can bring it back. But for the common case of a broken internal structure (an interrupted download, a bad save), a repair pass often recovers the file. Doing this on-device means a possibly-sensitive document isn't uploaded to a random "PDF repair" website in the process.</p>
 </div></main>
 <footer><div class="wrap">

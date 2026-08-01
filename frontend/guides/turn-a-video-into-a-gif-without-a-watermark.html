@@ -39,6 +39,16 @@ footer a{color:var(--copper-deep);}
 .footer-nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
 .footer-nav a{color:var(--ink-soft);text-decoration:none;}
 .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
+main h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.28rem;
+margin:34px 0 12px;letter-spacing:-0.01em;}
+main h3{font-weight:600;font-size:1rem;margin:22px 0 8px;color:var(--ink);}
+main > .wrap > p{margin:0 0 16px;}
+main ul{margin:0 0 18px;padding-left:22px;}
+main ul li{margin-bottom:8px;}
+.note{background:var(--paper-raised);border:1px solid var(--line);
+border-left:3px solid var(--copper);border-radius:8px;padding:16px 20px;
+margin:4px 0 24px;font-size:0.95rem;}
+.note strong{color:var(--copper-deep);}
 </style>
 </head>
 <body>
@@ -55,6 +65,60 @@ footer a{color:var(--copper-deep);}
     </ol>
   </div>
   <a class="cta" href="../index.html?ask=turn%20this%20video%20into%20a%20gif">Open PDF Love and try it →</a>
+
+  <h2>Why GIFs get so large</h2>
+  <p>GIF is a 1987 format that has outlived far better ones for a single
+  reason: it plays anywhere, with no player, no controls and no autoplay
+  policy to negotiate. Everything else about it is a limitation. It allows a
+  palette of 256 colours per frame, and it has no interframe compression worth
+  the name — where a modern video codec stores "this frame is the last one
+  with these forty pixels changed", GIF largely stores each frame afresh.</p>
+  <p>That is why a 10 MB video clip becomes a 40 MB GIF at full size and frame
+  rate, and why the answer is always subtraction. Three levers, in order of
+  effect:</p>
+  <ul>
+    <li><strong>Length.</strong> Size scales linearly with duration. Three
+      seconds instead of ten is a two-thirds saving before anything else.</li>
+    <li><strong>Dimensions.</strong> Halving the width quarters the pixel
+      count. 480 pixels wide is plenty for something viewed inline in a
+      message or a document.</li>
+    <li><strong>Frame rate.</strong> Video runs at 30 frames per second; GIFs
+      read fine at 10 to 15. That alone is a halving.</li>
+  </ul>
+  <h2>Why the watermark is there in the first place</h2>
+  <p>A cloud converter pays for CPU time and bandwidth on every clip it
+  processes, so the free tier has to lead somewhere — hence the watermark, the
+  clip-length cap and the daily limit. When the encoding happens in your own
+  browser, each conversion costs the site nothing, which removes the reason
+  for all three. The trade is that your device does the work: a long clip
+  takes longer on a phone than it would on a server farm, and you can watch it
+  happening.</p>
+  <h2>What will look bad, and why</h2>
+  <p>The 256-colour palette decides this. Content with few distinct colours
+  survives beautifully — screen recordings, UI demonstrations, animation, line
+  art. Content with smooth gradients does not: a sunset, a shallow-focus
+  background or a subtle lighting change gets quantised into visible bands,
+  because there simply are not enough palette entries to describe a gradient
+  smoothly. Dithering hides banding by scattering pixels between two available
+  colours, which looks better but compresses worse, so it costs size.</p>
+  <p>Film footage with grain is the worst case: the grain changes every pixel
+  every frame, defeating what little interframe compression GIF has, and the
+  file balloons.</p>
+  <h2>Where it is going matters</h2>
+  <p>Check the limit at the destination before you start. Many chat and forum
+  platforms cap inline GIFs at a few megabytes and will silently refuse or
+  re-encode anything larger — and their re-encode will look worse than the one
+  you would have chosen. Slack, Discord, GitHub and most issue trackers all
+  have their own ceiling, and the number is easy to look up in advance.</p>
+  <h2>Checking the result</h2>
+  <p>Play it through twice at the size it will actually be shown. Look for
+  banding in any smooth areas, confirm the loop point does not jump
+  distractingly, and check the start and end are where you meant them to be.
+  If the file is too large, go back to length first — it is nearly always the
+  cheapest cut and the least visible.</p>
+  <div class="note"><strong>Worth knowing:</strong> GIF has no audio track at
+  all. If the clip needs sound, a short MP4 is the right format — smaller,
+  better looking, and supported everywhere GIFs are these days.</div>
   <p class="alt">Cloud GIF makers are convenient but usually watermark free results or cap clip length. PDF Love's on-device conversion has no watermark and no daily limit, though very long clips will take longer since your own device is doing the encoding work.</p>
 </div></main>
 <footer><div class="wrap">

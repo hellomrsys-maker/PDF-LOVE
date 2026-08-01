@@ -39,6 +39,16 @@ footer a{color:var(--copper-deep);}
 .footer-nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
 .footer-nav a{color:var(--ink-soft);text-decoration:none;}
 .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
+main h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.28rem;
+margin:34px 0 12px;letter-spacing:-0.01em;}
+main h3{font-weight:600;font-size:1rem;margin:22px 0 8px;color:var(--ink);}
+main > .wrap > p{margin:0 0 16px;}
+main ul{margin:0 0 18px;padding-left:22px;}
+main ul li{margin-bottom:8px;}
+.note{background:var(--paper-raised);border:1px solid var(--line);
+border-left:3px solid var(--copper);border-radius:8px;padding:16px 20px;
+margin:4px 0 24px;font-size:0.95rem;}
+.note strong{color:var(--copper-deep);}
 </style>
 </head>
 <body>
@@ -55,6 +65,66 @@ footer a{color:var(--copper-deep);}
     </ol>
   </div>
   <a class="cta" href="../index.html?ask=turn%20my%20photos%20into%20one%20PDF">Open PDF Love and try it →</a>
+
+  <h2>Why one PDF instead of twelve attachments</h2>
+  <p>The reason is almost always that someone on the other end asked for it. A
+  landlord wants the deposit paperwork as one document. An expense system
+  accepts a single receipt file per claim. A registrar wants the certified
+  copies together and in order. Twelve loose JPEGs make that person do the
+  assembly work, and files sent loose arrive out of order, get separated in a
+  reply chain, and lose the sequence you carefully photographed them in.</p>
+  <p>A PDF fixes all of that in one step: fixed page order, one file to
+  forward, one thing to print, and a format every device on earth can
+  open.</p>
+  <h2>Getting the order right first</h2>
+  <p>This is where most of the frustration lives, and the cause is file
+  naming. Sorted alphabetically, <em>page1, page10, page11, page2</em> is
+  correct behaviour and never what you wanted. Phone photos sort by capture
+  time, which is usually right — but not if you went back and rephotographed
+  page three at the end. Arrange the thumbnails by eye before converting
+  rather than trusting the order they arrived in, because reordering
+  afterwards means redoing the whole thing.</p>
+  <h2>Page size and orientation</h2>
+  <p>Photographs and paper have different shapes. A portrait phone photo
+  placed on an A4 page leaves wide white bands top and bottom; a landscape
+  photo on a portrait page leaves them at the sides. If the document will be
+  printed, that is fine and often preferable. If it will only ever be read on
+  screen, letting each page take the shape of its image looks considerably
+  better and wastes nothing.</p>
+  <p>Mixed orientations in one document — some receipts photographed
+  portrait, some landscape — will always be a compromise. Rotating the odd
+  ones before converting is worth the minute it takes.</p>
+  <h2>The size problem, and the fix</h2>
+  <p>Photographs are the heaviest thing you can put in a PDF. Twenty pictures
+  from a modern phone camera are comfortably 80 MB, which will bounce off
+  every email server it meets. There are two ways to deal with it and one is
+  clearly easier: compress the finished PDF in a single pass, rather than
+  shrinking twenty images individually first. The result is the same and you
+  can see the quality trade-off on real pages instead of guessing.</p>
+  <p>For receipts and documents, you can go much further than instinct
+  suggests. The text needs to be legible; the paper texture does not. A
+  receipt scan is perfectly usable at a fraction of its original size.</p>
+  <h2>Making the pages readable</h2>
+  <ul>
+    <li><strong>Photographed at an angle</strong> — pages come out as
+      trapezoids with shadows in the corners. Use the document scanner rather
+      than the camera; it finds the corners and flattens the page.</li>
+    <li><strong>Your own shadow across the page</strong> — the light source is
+      behind you. Move so it comes from the side.</li>
+    <li><strong>Sideways pages</strong> — a photo's rotation lives in its EXIF
+      data and not every tool honours it. Rotate before converting, then check
+      the finished document.</li>
+  </ul>
+  <h2>Checking the result</h2>
+  <p>Page through the whole document once. Confirm the count matches the
+  number of photographs, that the order is the order you intended, that
+  nothing is rotated, and that the smallest text on the busiest page is
+  readable at 100% zoom. Then check the file size against wherever it is
+  going. Five minutes here saves the email that starts "sorry, resending".</p>
+  <div class="note"><strong>Worth knowing:</strong> if the photographs are of
+  text — receipts, letters, forms — running OCR on the finished PDF makes the
+  whole thing searchable. For an expense claim or a records archive, being
+  able to find a supplier's name months later is worth the extra step.</div>
   <p class="alt">Your phone's built-in "print to PDF" trick works for one photo at a time but is clumsy for many. Cloud converters work, but require an upload for something that's often personal (receipts, ID photos, medical scans). PDF Love keeps every photo on your device the whole time.</p>
 </div></main>
 <footer><div class="wrap">

@@ -39,6 +39,16 @@ footer a{color:var(--copper-deep);}
 .footer-nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
 .footer-nav a{color:var(--ink-soft);text-decoration:none;}
 .footer-nav a:hover{color:var(--copper-deep);text-decoration:underline;}
+main h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.28rem;
+margin:34px 0 12px;letter-spacing:-0.01em;}
+main h3{font-weight:600;font-size:1rem;margin:22px 0 8px;color:var(--ink);}
+main > .wrap > p{margin:0 0 16px;}
+main ul{margin:0 0 18px;padding-left:22px;}
+main ul li{margin-bottom:8px;}
+.note{background:var(--paper-raised);border:1px solid var(--line);
+border-left:3px solid var(--copper);border-radius:8px;padding:16px 20px;
+margin:4px 0 24px;font-size:0.95rem;}
+.note strong{color:var(--copper-deep);}
 </style>
 </head>
 <body>
@@ -55,6 +65,64 @@ footer a{color:var(--copper-deep);}
     </ol>
   </div>
   <a class="cta" href="../index.html?ask=make%20this%20PDF%20small%20enough%20to%20email">Open PDF Love and try it →</a>
+
+  <h2>Where the size actually is</h2>
+  <p>Text weighs almost nothing. A forty-page contract, all words, is
+  typically well under a megabyte, because the file stores character codes and
+  a font rather than a picture of every letter. Images are where the size
+  lives. A single scanned page at 300 DPI in colour is several megabytes on
+  its own, which is why a four-page scan can be larger than a two-hundred-page
+  novel.</p>
+  <p>That one fact predicts almost everything about compression. If your file
+  is big because it is a scan or full of photographs, it will shrink a lot. If
+  it is big for some other reason — hundreds of pages of text, embedded fonts,
+  a huge attachment — compression will barely move it, and the honest answer
+  is a different approach.</p>
+  <h2>What compression is trading away</h2>
+  <p>Compressing a PDF means re-encoding the images inside it: fewer pixels,
+  more aggressive JPEG quality, colour reduced where it adds nothing. Text is
+  not touched, so it stays perfectly crisp no matter how far you push the
+  setting. What degrades is photographic detail and, on scans, the sharpness
+  of the letterforms — pushed too far, scanned text develops soft edges and a
+  faint mottling around each character.</p>
+  <p>This is why the preview matters more than the number. Look at a page with
+  the smallest text in the document, at 100% zoom, and decide whether it is
+  still comfortable to read. A file at 3 MB you can read beats one at 1.5 MB
+  you cannot.</p>
+  <h2>When compression is not the answer</h2>
+  <ul>
+    <li><strong>It is already small and still too big.</strong> A 60 MB
+      text-only PDF is usually carrying embedded attachments or full font
+      sets. Compression has nothing to work on. Split it instead.</li>
+    <li><strong>You need the resolution.</strong> Anything going to a printer,
+      a court filing, or an archive should not be compressed to fit an email.
+      Send a link instead, or split it.</li>
+    <li><strong>You are 10% over.</strong> Removing a couple of pages that do
+      not need to be there is faster and lossless.</li>
+  </ul>
+  <p>Splitting is underrated here. Attachment limits are per message, not per
+  day, so two emails carrying 12 MB each will arrive when one 24 MB message
+  bounces. It costs the recipient one extra click and costs you no quality at
+  all.</p>
+  <h2>The limits you are actually up against</h2>
+  <p>Gmail and Outlook both refuse attachments over roughly 25 MB, and that
+  figure is measured after encoding, which adds about a third — so a 20 MB
+  file is nearer 27 MB on the wire and can bounce even though it looks like it
+  should fit. Aim for 15 MB if you want it to arrive without thinking about
+  it. Corporate mail servers frequently set lower limits than the consumer
+  services, often 10 MB, and the bounce message may take hours to come
+  back.</p>
+  <h2>Checking the result</h2>
+  <p>Open the compressed file, not just its size in the file listing. Check a
+  page with photographs, a page with the smallest text, and any page with a
+  signature or a stamp on it — those are where over-compression shows first.
+  Then confirm the page count matches the original. Finally, keep the
+  uncompressed version: compression is one-way, and the day someone asks for
+  the print-quality original is the day you will want it.</p>
+  <div class="note"><strong>Worth knowing:</strong> greyscale is a legitimate
+  compression step for anything that was going to be read or printed in black
+  and white anyway. Dropping the colour channels from a scanned document
+  routinely halves it before you touch the quality setting at all.</div>
   <p class="alt">Cloud tools (iLovePDF, Smallpdf) do the same job but require uploading your file to their servers first, and most cap you at 1–2 free compressions a day before asking for a subscription. PDF Love compresses on your device, so there's no upload wait and no daily limit.</p>
 </div></main>
 <footer><div class="wrap">
