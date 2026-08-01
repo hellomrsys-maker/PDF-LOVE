@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is OCR \u2014 Make Scans Searchable free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why is the first run slow?", "acceptedAnswer": {"@type": "Answer", "text": "The recognition engine and language model download once, around 15 MB. After that it is cached and works with no connection."}}, {"@type": "Question", "name": "The text has mistakes. Can I improve it?", "acceptedAnswer": {"@type": "Answer", "text": "Rescan at 300 DPI, keep the page flat and square to the camera, and get even lighting. OCR accuracy is mostly input quality."}}, {"@type": "Question", "name": "Does the searchable PDF look different?", "acceptedAnswer": {"@type": "Answer", "text": "No. The text layer is invisible and sits over your original image."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "OCR \u2014 Make Scans Searchable", "item": "https://pdflove.co.in/tools/ocr-make-scans-searchable.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / OCR — Make Scans Searchable</p>
   <h1>OCR — Make Scans Searchable</h1>
-  <p class="lede">OCR — Make Scans Searchable, running entirely on your own device.</p>
+  <p class="lede">A scanned page looks like text but is a photograph of text, which is why Ctrl+F finds nothing in it. OCR reads the shapes and produces real characters — and this runs the recognition on your own device, which matters because scans are usually the most sensitive documents people own.</p>
 
   <div id="tool-mount" data-tool="OCR — Make Scans Searchable"></div>
   <noscript><p><a class="cta" href="../index.html?tool=OCR — Make Scans Searchable">Open OCR — Make Scans Searchable</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using OCR — Make Scans Searchable</h2>
+  <h2>How to use OCR — Make Scans Searchable</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
+    <li>Choose a scanned PDF or a photo of a page.</li>
+    <li>Pick the output: selectable text, or a searchable PDF that looks identical but has a hidden text layer.</li>
+    <li>Click Run OCR. The first run downloads the recognition engine, then works offline.</li>
     <li>Download the result.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>The searchable-PDF output keeps your original page image and draws the recognised words invisibly on top, positioned where they appear. The page looks exactly as it did, but text can be selected, copied and searched. Accuracy depends on the scan: 300 DPI, straight, and evenly lit gives near-perfect results, while a phone photo at an angle in poor light will produce mistakes. Recognition happens entirely in your browser — no page image is uploaded.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is OCR — Make Scans Searchable free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Why is the first run slow?</h3><p>The recognition engine and language model download once, around 15 MB. After that it is cached and works with no connection.</p><h3>The text has mistakes. Can I improve it?</h3><p>Rescan at 300 DPI, keep the page flat and square to the camera, and get even lighting. OCR accuracy is mostly input quality.</p><h3>Does the searchable PDF look different?</h3><p>No. The text layer is invisible and sits over your original image.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Rotate PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why did my viewer's rotate button not stick?", "acceptedAnswer": {"@type": "Answer", "text": "Most viewers rotate the display only and never write to the file. This changes the document itself, so it opens correctly everywhere."}}, {"@type": "Question", "name": "Can I rotate only page 3?", "acceptedAnswer": {"@type": "Answer", "text": "Not here \u2014 this turns every page. Organize PDF handles per-page rotation."}}, {"@type": "Question", "name": "Does rotating reduce quality?", "acceptedAnswer": {"@type": "Answer", "text": "No. It sets a flag on the page; the content is untouched."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Rotate PDF", "item": "https://pdflove.co.in/tools/rotate-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Rotate PDF</p>
   <h1>Rotate PDF</h1>
-  <p class="lede">Rotate PDF, running entirely on your own device.</p>
+  <p class="lede">A PDF that opens sideways is almost always a scanner or phone that recorded the wrong orientation. Viewers let you turn the page on screen, but that setting is not saved — the next person to open it sees it sideways again. This writes the rotation into the file.</p>
 
   <div id="tool-mount" data-tool="Rotate PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Rotate PDF">Open Rotate PDF</a></p></noscript>
@@ -57,21 +57,19 @@
   </div>
 
 
-  <h2>Using Rotate PDF</h2>
+  <h2>How to use Rotate PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF.</li>
+    <li>Pick 90° clockwise, 180°, or 90° anticlockwise.</li>
+    <li>Click Rotate &amp; download.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Rotation is stored as a page attribute, not by re-drawing the page, so nothing is re-encoded and the file size barely moves. Every page is turned by the same amount; if only some pages are sideways, use Organize PDF, which rotates pages individually.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Rotate PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Why did my viewer&#x27;s rotate button not stick?</h3><p>Most viewers rotate the display only and never write to the file. This changes the document itself, so it opens correctly everywhere.</p><h3>Can I rotate only page 3?</h3><p>Not here — this turns every page. Organize PDF handles per-page rotation.</p><h3>Does rotating reduce quality?</h3><p>No. It sets a flag on the page; the content is untouched.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li><li><a href="/tools/crop-pdf.html">Crop PDF</a></li></ul>

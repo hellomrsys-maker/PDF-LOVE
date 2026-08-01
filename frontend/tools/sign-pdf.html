@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Sign PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this legally binding?", "acceptedAnswer": {"@type": "Answer", "text": "In most jurisdictions an electronic signature is binding for ordinary agreements, but this is not legal advice \u2014 check what your document and country require."}}, {"@type": "Question", "name": "Is it a digital certificate signature?", "acceptedAnswer": {"@type": "Answer", "text": "No. It is a visible signature. Certificate-based signing needs a trust provider."}}, {"@type": "Question", "name": "Can I reuse the same signature?", "acceptedAnswer": {"@type": "Answer", "text": "Draw it once and save the image, then upload that image next time."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Sign PDF", "item": "https://pdflove.co.in/tools/sign-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Sign PDF</p>
   <h1>Sign PDF</h1>
-  <p class="lede">Sign PDF, running entirely on your own device.</p>
+  <p class="lede">Most documents that ask for a signature just need a visible one — a lease, a form, a letter of consent. Printing, signing and rescanning is the ritual people go through to avoid uploading a contract to a website. Here, nothing is uploaded.</p>
 
   <div id="tool-mount" data-tool="Sign PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Sign PDF">Open Sign PDF</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Sign PDF</h2>
+  <h2>How to use Sign PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF.</li>
+    <li>Draw your signature with a mouse or finger, type it, or upload an image of it.</li>
+    <li>Drag it onto the right spot and size it.</li>
+    <li>Click Save &amp; download.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>This produces a visible signature, which is what the vast majority of documents ask for. It is not a cryptographic digital signature — that is a different thing, requiring a certificate from a trust provider, and is only needed where a recipient specifically demands it. The signature image is composited into the page, so it survives printing and cannot be dragged off in a viewer. Your contract never leaves the device, which is the entire reason to do it this way.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Sign PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Is this legally binding?</h3><p>In most jurisdictions an electronic signature is binding for ordinary agreements, but this is not legal advice — check what your document and country require.</p><h3>Is it a digital certificate signature?</h3><p>No. It is a visible signature. Certificate-based signing needs a trust provider.</p><h3>Can I reuse the same signature?</h3><p>Draw it once and save the image, then upload that image next time.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

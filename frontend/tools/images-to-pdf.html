@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Images to PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Which image formats can I use?", "acceptedAnswer": {"@type": "Answer", "text": "Anything your browser can decode: JPG, PNG, WebP, GIF, BMP, and HEIC on devices that support it. You can mix formats freely."}}, {"@type": "Question", "name": "Why do my pages have white borders?", "acceptedAnswer": {"@type": "Answer", "text": "You chose A4 or Letter, which fits the image onto a fixed page. Pick \"match each image\" for borderless pages."}}, {"@type": "Question", "name": "Are animated GIFs supported?", "acceptedAnswer": {"@type": "Answer", "text": "The first frame is used. A PDF page cannot animate."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Images to PDF", "item": "https://pdflove.co.in/tools/images-to-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Images to PDF</p>
   <h1>Images to PDF</h1>
-  <p class="lede">Images to PDF, running entirely on your own device.</p>
+  <p class="lede">Turning a folder of photos into one document is the usual way people send receipts to an accountant or homework to a teacher. The awkward part is page size: photos come in whatever shape the camera produced, and a PDF wants consistent pages.</p>
 
   <div id="tool-mount" data-tool="Images to PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Images to PDF">Open Images to PDF</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Images to PDF</h2>
+  <h2>How to use Images to PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Add your images — JPG, PNG, WebP, GIF, BMP and HEIC all work.</li>
+    <li>Reorder the rows so the pages come out in the sequence you want.</li>
+    <li>Choose a page size: match each image exactly, or fit everything to A4 or US Letter.</li>
+    <li>Click Convert &amp; download to get a single PDF, one image per page.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Match-each-image produces pages the exact proportions of your photos, with no white borders — best for screenshots and receipts. A4 or Letter centres each image on a standard page and is what you want if anyone will print it. Formats the browser cannot hand directly to the PDF writer, such as WebP and HEIC, are decoded through a canvas first; JPG and PNG are embedded as-is, with no quality loss.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Images to PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Which image formats can I use?</h3><p>Anything your browser can decode: JPG, PNG, WebP, GIF, BMP, and HEIC on devices that support it. You can mix formats freely.</p><h3>Why do my pages have white borders?</h3><p>You chose A4 or Letter, which fits the image onto a fixed page. Pick &quot;match each image&quot; for borderless pages.</p><h3>Are animated GIFs supported?</h3><p>The first frame is used. A PDF page cannot animate.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li><li><a href="/tools/crop-pdf.html">Crop PDF</a></li></ul>

@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Extract Audio from Video free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why WAV and not MP3?", "acceptedAnswer": {"@type": "Answer", "text": "WAV is uncompressed, which is what transcription and editing want. Convert afterwards if you just want to listen."}}, {"@type": "Question", "name": "Why is the file so big?", "acceptedAnswer": {"@type": "Answer", "text": "Uncompressed audio is around 10 MB per minute."}}, {"@type": "Question", "name": "Can I extract just part of it?", "acceptedAnswer": {"@type": "Answer", "text": "Trim the video first, then extract from the trimmed clip."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Extract Audio from Video", "item": "https://pdflove.co.in/tools/extract-audio-from-video.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Extract Audio from Video</p>
   <h1>Extract Audio from Video</h1>
-  <p class="lede">Extract Audio from Video, running entirely on your own device.</p>
+  <p class="lede">Pulling the sound out of a video is what you need for a recorded talk you want to listen to, an interview to transcribe, or a soundtrack to reuse.</p>
 
   <div id="tool-mount" data-tool="Extract Audio from Video"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Extract Audio from Video">Open Extract Audio from Video</a></p></noscript>
@@ -57,21 +57,19 @@
   </div>
 
 
-  <h2>Using Extract Audio from Video</h2>
+  <h2>How to use Extract Audio from Video</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the video.</li>
+    <li>Click Extract.</li>
+    <li>Download the audio file.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Output is uncompressed WAV, which is deliberately the highest-quality option: it is the right input for transcription and for editing, because compressing already-compressed audio loses more each time. WAV is large — roughly 10 MB a minute — so convert to MP3 afterwards if you only want to listen to it. A video with no audio track produces nothing, and says so.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Extract Audio from Video free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Why WAV and not MP3?</h3><p>WAV is uncompressed, which is what transcription and editing want. Convert afterwards if you just want to listen.</p><h3>Why is the file so big?</h3><p>Uncompressed audio is around 10 MB per minute.</p><h3>Can I extract just part of it?</h3><p>Trim the video first, then extract from the trimmed clip.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

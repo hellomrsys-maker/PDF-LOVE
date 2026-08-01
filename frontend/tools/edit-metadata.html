@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Edit Metadata free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Where does a viewer show the title?", "acceptedAnswer": {"@type": "Answer", "text": "In the window or tab, and often as the suggested filename when someone saves it. The visible first page is unrelated."}}, {"@type": "Question", "name": "Does this remove hidden data too?", "acceptedAnswer": {"@type": "Answer", "text": "It edits the standard document fields. Use Sanitize PDF to strip scripts, attachments and embedded metadata as well."}}, {"@type": "Question", "name": "Can I clear a field completely?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 empty it and save. The entry is written out as blank."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Edit Metadata", "item": "https://pdflove.co.in/tools/edit-metadata.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Edit Metadata</p>
   <h1>Edit Metadata</h1>
-  <p class="lede">Edit Metadata, running entirely on your own device.</p>
+  <p class="lede">A PDF carries a title, author, keywords and the name of the software that made it — and that metadata often says something you did not intend, like the previous client&#x27;s name in a template you reused, or your full name on an anonymous submission.</p>
 
   <div id="tool-mount" data-tool="Edit Metadata"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Edit Metadata">Open Edit Metadata</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Edit Metadata</h2>
+  <h2>How to use Edit Metadata</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF. The current metadata is shown.</li>
+    <li>Edit the title, author, subject or keywords.</li>
+    <li>Clear any field entirely to remove it.</li>
+    <li>Click Save &amp; download.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>The document title is what most viewers show in the window bar and what many sites use as the default filename, so it is worth setting deliberately rather than leaving as "Microsoft Word - draft3.docx". If your aim is to remove everything rather than correct it, Sanitize PDF strips metadata along with embedded scripts and attachments in one pass.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Edit Metadata free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Where does a viewer show the title?</h3><p>In the window or tab, and often as the suggested filename when someone saves it. The visible first page is unrelated.</p><h3>Does this remove hidden data too?</h3><p>It edits the standard document fields. Use Sanitize PDF to strip scripts, attachments and embedded metadata as well.</p><h3>Can I clear a field completely?</h3><p>Yes — empty it and save. The entry is written out as blank.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

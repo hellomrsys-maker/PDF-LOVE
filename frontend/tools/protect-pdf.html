@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Protect PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What if I forget the password?", "acceptedAnswer": {"@type": "Answer", "text": "The document is unrecoverable. That is what real encryption means \u2014 there is no reset."}}, {"@type": "Question", "name": "Is this the same as a viewer's 'restrict editing' setting?", "acceptedAnswer": {"@type": "Answer", "text": "No. Those are requests readers can ignore. This is AES-256 encryption of the file's contents."}}, {"@type": "Question", "name": "How should I send the password?", "acceptedAnswer": {"@type": "Answer", "text": "Separately from the file \u2014 a message or a call, not the same email as the attachment."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Protect PDF", "item": "https://pdflove.co.in/tools/protect-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Protect PDF</p>
   <h1>Protect PDF</h1>
-  <p class="lede">Protect PDF, running entirely on your own device.</p>
+  <p class="lede">Password-protecting a document is the one job where uploading it to a website is most obviously self-defeating: you are sending the very file you are trying to secure to a stranger, unprotected, so they can protect it. This encrypts it on your own machine.</p>
 
   <div id="tool-mount" data-tool="Protect PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Protect PDF">Open Protect PDF</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Protect PDF</h2>
+  <h2>How to use Protect PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF.</li>
+    <li>Set a password. Longer matters far more than more punctuation.</li>
+    <li>Click Protect &amp; download.</li>
+    <li>Test the result by opening it — you should be asked for the password.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>This is real AES-256 encryption, performed by qpdf compiled to WebAssembly and running in your browser — the same engine command-line users rely on, not a viewer flag that merely asks readers to behave. The file cannot be opened without the password by anyone, including us. That cuts both ways: there is no recovery, no reset and no back door, so a forgotten password means a lost document. Send the password by a different channel from the file.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Protect PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>What if I forget the password?</h3><p>The document is unrecoverable. That is what real encryption means — there is no reset.</p><h3>Is this the same as a viewer&#x27;s &#x27;restrict editing&#x27; setting?</h3><p>No. Those are requests readers can ignore. This is AES-256 encryption of the file&#x27;s contents.</p><h3>How should I send the password?</h3><p>Separately from the file — a message or a call, not the same email as the attachment.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

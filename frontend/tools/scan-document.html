@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Scan Document free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "The corners were detected in the wrong place.", "acceptedAnswer": {"@type": "Answer", "text": "Drag them onto the page corners yourself. Detection is a starting point, not the final answer."}}, {"@type": "Question", "name": "Should I use colour or black and white?", "acceptedAnswer": {"@type": "Answer", "text": "Black and white for printed text \u2014 smaller and sharper. Colour only if the page has photographs or coloured markings that matter."}}, {"@type": "Question", "name": "Can I scan several pages into one PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Capture each page in turn; they are collected in order and saved as a single document."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Scan Document", "item": "https://pdflove.co.in/tools/scan-document.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Scan Document</p>
   <h1>Scan Document</h1>
-  <p class="lede">Scan Document, running entirely on your own device.</p>
+  <p class="lede">A phone photo of a page is not a scan: it is taken at an angle, lit unevenly, and surrounded by whatever your desk looks like. This finds the page edges, corrects the perspective, and flattens the lighting — the job a dedicated scanner app does, without installing one.</p>
 
   <div id="tool-mount" data-tool="Scan Document"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Scan Document">Open Scan Document</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Scan Document</h2>
+  <h2>How to use Scan Document</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Point your camera at the page, or choose a photo you already took.</li>
+    <li>Check the detected corners and drag any that landed wrong.</li>
+    <li>Pick an output: colour, greyscale, or high-contrast black and white.</li>
+    <li>Add more pages if you have them, then download the finished PDF.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Corner detection looks for the strongest quadrilateral in the frame, so a page on a contrasting surface is found reliably while a white page on a white desk may need manual adjustment. The perspective correction maps your four corners onto a true rectangle, which is what removes the trapezoid look. High-contrast mode is the right choice for printed text: it drops the paper to pure white and typically cuts the file size by an order of magnitude compared with a colour photo.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Scan Document free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>The corners were detected in the wrong place.</h3><p>Drag them onto the page corners yourself. Detection is a starting point, not the final answer.</p><h3>Should I use colour or black and white?</h3><p>Black and white for printed text — smaller and sharper. Colour only if the page has photographs or coloured markings that matter.</p><h3>Can I scan several pages into one PDF?</h3><p>Yes. Capture each page in turn; they are collected in order and saved as a single document.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

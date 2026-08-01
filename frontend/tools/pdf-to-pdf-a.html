@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is PDF to PDF/A free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why does an archive need a special format?", "acceptedAnswer": {"@type": "Answer", "text": "PDF/A forbids anything that might not resolve in future \u2014 unembedded fonts, external references, encryption."}}, {"@type": "Question", "name": "Will it look different?", "acceptedAnswer": {"@type": "Answer", "text": "No. The visible document is unchanged; what changes is what the file depends on."}}, {"@type": "Question", "name": "Is my file uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. This is a server-assisted tool and is labelled as such."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "PDF to PDF/A", "item": "https://pdflove.co.in/tools/pdf-to-pdf-a.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / PDF to PDF/A</p>
   <h1>PDF to PDF/A</h1>
-  <p class="lede">PDF to PDF/A, running entirely on your own device.</p>
+  <p class="lede">PDF/A is the ISO archival format, and some institutions — courts, journals, government records offices — will not accept anything else. The requirement is that the file be readable decades from now without external dependencies.</p>
 
   <div id="tool-mount" data-tool="PDF to PDF/A"></div>
   <noscript><p><a class="cta" href="../index.html?tool=PDF to PDF/A">Open PDF to PDF/A</a></p></noscript>
@@ -57,21 +57,19 @@
   </div>
 
 
-  <h2>Using PDF to PDF/A</h2>
+  <h2>How to use PDF to PDF/A</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF.</li>
+    <li>Click Convert.</li>
+    <li>Download the PDF/A-compliant file.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Compliance mainly means self-containment: every font embedded rather than referenced, no encryption, no external links required to render the page, colour spaces defined explicitly. This is one of the ten server-assisted tools, because the validation and font-embedding machinery is too large for a browser — so it appears only with a backend configured and does transmit your file.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is PDF to PDF/A free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Why does an archive need a special format?</h3><p>PDF/A forbids anything that might not resolve in future — unembedded fonts, external references, encryption.</p><h3>Will it look different?</h3><p>No. The visible document is unchanged; what changes is what the file depends on.</p><h3>Is my file uploaded?</h3><p>Yes. This is a server-assisted tool and is labelled as such.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

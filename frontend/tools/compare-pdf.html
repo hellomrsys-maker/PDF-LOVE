@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Compare PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Nothing was highlighted, but I know the documents differ.", "acceptedAnswer": {"@type": "Answer", "text": "One of them is probably a scan with no text layer. Run OCR on it first, then compare."}}, {"@type": "Question", "name": "Does it detect moved paragraphs?", "acceptedAnswer": {"@type": "Answer", "text": "A moved block shows as a removal in one place and an addition in another, rather than as a single move."}}, {"@type": "Question", "name": "Can I compare a PDF against a Word file?", "acceptedAnswer": {"@type": "Answer", "text": "Convert the Word file to PDF first, then compare the two PDFs."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Compare PDF", "item": "https://pdflove.co.in/tools/compare-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Compare PDF</p>
   <h1>Compare PDF</h1>
-  <p class="lede">Compare PDF, running entirely on your own device.</p>
+  <p class="lede">Finding what changed between two versions of a contract is slow and error-prone by eye, and the differences that matter are usually the small ones — a number, a date, a negation. This lines the two documents up and marks what moved.</p>
 
   <div id="tool-mount" data-tool="Compare PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Compare PDF">Open Compare PDF</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Compare PDF</h2>
+  <h2>How to use Compare PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the original document.</li>
+    <li>Choose the revised one.</li>
+    <li>Click Compare. Differences are highlighted page by page.</li>
+    <li>Read through the marked regions to see what was added or removed.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Comparison works on the extracted text of each page, so it is reliable on documents with a real text layer and unreliable on scans, which have none — run those through OCR first. Because both files stay on your device, this is usable on material you could not upload to a comparison service, which is most of the material anyone actually needs to compare.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Compare PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Nothing was highlighted, but I know the documents differ.</h3><p>One of them is probably a scan with no text layer. Run OCR on it first, then compare.</p><h3>Does it detect moved paragraphs?</h3><p>A moved block shows as a removal in one place and an addition in another, rather than as a single move.</p><h3>Can I compare a PDF against a Word file?</h3><p>Convert the Word file to PDF first, then compare the two PDFs.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

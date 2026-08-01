@@ -42,6 +42,32 @@ OUT_DIR = os.path.join(FRONTEND, "tools")
 SITE = os.environ.get("SITE_ORIGIN", "https://pdflove.co.in").rstrip("/")
 TODAY = date.today().isoformat()
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from tool_content import CONTENT as TOOL_CONTENT  # noqa: E402
+
+# Tools whose pages exist for people who browse to them, but which should not
+# compete in search.
+#
+# The rule is not guessed search volume — it is whether this product's actual
+# claim means anything for that tool. "Runs on your device, nothing is
+# uploaded" matters enormously when you hand over a bank statement. It means
+# nothing when you roll a die. For the tools below we have no advantage worth
+# writing 200 words about, and a page 70% identical to its 85 siblings would
+# never have ranked anyway — it would only have dragged on the domain.
+#
+# noindex,follow rather than nofollow: these pages should still pass link
+# equity through to the ones that matter.
+NOINDEX_TOOLS = {
+    "Word & Character Counter", "Change Text Case", "Compare Two Texts",
+    "Remove Duplicate Lines", "Placeholder Text Generator", "Unit Converter",
+    "JSON Formatter & Checker", "Base64 Encode / Decode", "Hash Generator",
+    "Date & Timestamp Converter", "URL Encode / Decode", "Age Calculator",
+    "BMI Calculator", "Color Converter & Palette", "CSV ↔ JSON Converter",
+    "Stopwatch & Countdown Timer", "Random Number, Dice & Coin",
+    "Barcode Generator", "Pattern (Regex) Tester", "Loan / EMI Calculator",
+    "Simple vs. Compound Interest", "Currency Converter",
+}
+
 
 # --------------------------------------------------------------------
 # Source data: real conversions, with the phrasing people actually search.
@@ -178,7 +204,8 @@ def esc(s):
     return html.escape(s, quote=True)
 
 
-def page(slug, title, description, h1, lede, body_html, faq, tool_name, related):
+def page(slug, title, description, h1, lede, body_html, faq, tool_name, related,
+         noindex=False):
     """Render one landing page.
 
     The page mounts its one named tool in place via #tool-mount (see
@@ -223,6 +250,13 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
     # path is #tool-mount below, filled in by panelShell() in app.js.
     deep_link = f"../index.html?tool={esc(tool_name)}"
 
+    # noindex,follow keeps the page usable and still passing link equity,
+    # while keeping it out of the index. Paired with exclusion from
+    # sitemap.xml in build_sitemap — a sitemap listing a noindexed URL
+    # tells crawlers two contradictory things.
+    robots = ("noindex, follow" if noindex else
+              "index, follow, max-image-preview:large, max-snippet:-1")
+
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -231,7 +265,7 @@ def page(slug, title, description, h1, lede, body_html, faq, tool_name, related)
 <title>{esc(title)}</title>
 <meta name="description" content="{esc(description)}">
 <link rel="canonical" href="{canonical}">
-<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="robots" content="{robots}">
 <meta property="og:type" content="article">
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(description)}">
@@ -410,6 +444,7 @@ def build_pairs(index):
 
 def build_tools(index, tool_names):
     pages = []
+    missing = []
     for name in tool_names:
         slug = slugify(name)
         # Some tool names are long ("Describe a Photo / Alt-Text (On Your
@@ -422,8 +457,17 @@ def build_tools(index, tool_names):
         desc = (f"{name}, free in your browser. Runs on your own device — no upload, "
                 f"no account, no daily limit. Works offline.")
         h1 = name
-        lede = f"{name}, running entirely on your own device."
-        body = f"""
+        noindex = name in NOINDEX_TOOLS
+
+        entry = TOOL_CONTENT.get(name)
+        if entry is None:
+            if not noindex:
+                missing.append(name)
+            # Noindexed pages keep the short generic body on purpose: they
+            # are not competing in search, so unique prose there would be
+            # writing nobody reads.
+            lede = f"{name}, running entirely on your own device."
+            body = f"""
   <h2>Using {esc(name)}</h2>
   <ol>
     <li>Open the tool.</li>
@@ -431,21 +475,39 @@ def build_tools(index, tool_names):
     <li>Set the options you need.</li>
     <li>Download the result.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
 """
-        faq = [
-            (f"Is {name} free?", "Yes — no account, no daily limit, no card."),
-            ("Does it work offline?",
-             "Yes. After the first visit the app is cached, so it keeps working with no connection."),
-            ("Are my files uploaded?",
-             "No. Everything happens in your browser, on your own device."),
-        ]
+            faq = [
+                (f"Is {name} free?", "Yes — no account, no daily limit, no card."),
+                ("Are my files uploaded?",
+                 "No. Everything happens in your browser, on your own device."),
+            ]
+        else:
+            lede = entry["intro"]
+            steps = "\n".join(f"    <li>{s}</li>" for s in entry["steps"])
+            body = f"""
+  <h2>How to use {esc(name)}</h2>
+  <ol>
+{steps}
+  </ol>
+
+  <h2>What to know</h2>
+  <p>{entry["notes"]}</p>
+"""
+            faq = entry["faq"]
+
         related = [(slugify(n), n) for n in tool_names if n != name][:6]
-        pages.append((slug, page(slug, title, desc, h1, lede, body, faq, name, related)))
-        index.append((slug, h1, desc, "Tools"))
+        pages.append((slug, page(slug, title, desc, h1, lede, body, faq, name,
+                                 related, noindex=noindex)))
+        if not noindex:
+            index.append((slug, h1, desc, "Tools"))
+
+    if missing:
+        raise SystemExit(
+            f"\n{len(missing)} indexed tool(s) have no entry in "
+            f"scripts/tool_content.py:\n  " + "\n  ".join(missing) +
+            "\n\nEvery indexed page needs its own content — a generic page is "
+            "what got us into this. Add an entry, or add the tool to "
+            "NOINDEX_TOOLS if it genuinely should not compete in search.\n")
     return pages
 
 
@@ -595,14 +657,20 @@ def main():
     for slug, content in pages:
         if slug in seen:
             continue          # a tool serving two pairs shares one page
-        seen[slug] = True
+        # Derived from what the page actually says rather than recomputed
+        # from NOINDEX_TOOLS, so the sitemap cannot drift from the robots
+        # tag. A slug can be produced by more than one generator — the first
+        # wins — and only that surviving page's own tag should decide this.
+        seen[slug] = "noindex" not in content.split("</head>")[0]
         with open(os.path.join(OUT_DIR, slug + ".html"), "w") as f:
             f.write(content)
 
     with open(os.path.join(OUT_DIR, "index.html"), "w") as f:
         f.write(build_index(index))
 
-    sitemap, n_urls = build_sitemap(seen.keys())
+    indexable = [s for s, ok in seen.items() if ok]
+    print(f"  {len(seen) - len(indexable)} page(s) noindexed and kept out of the sitemap")
+    sitemap, n_urls = build_sitemap(indexable)
     with open(os.path.join(FRONTEND, "sitemap.xml"), "w") as f:
         f.write(sitemap)
 

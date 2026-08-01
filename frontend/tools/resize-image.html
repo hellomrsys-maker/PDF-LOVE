@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Resize Image free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I make a small image bigger?", "acceptedAnswer": {"@type": "Answer", "text": "You can, but it will look soft. The detail is not there to recover \u2014 always start from the largest original available."}}, {"@type": "Question", "name": "Should I keep the aspect ratio?", "acceptedAnswer": {"@type": "Answer", "text": "Almost always. Unlocking it distorts the image."}}, {"@type": "Question", "name": "Does this reduce the file size too?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, as a side effect. Use Make Image Smaller if size is the actual goal."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Resize Image", "item": "https://pdflove.co.in/tools/resize-image.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Resize Image</p>
   <h1>Resize Image</h1>
-  <p class="lede">Resize Image, running entirely on your own device.</p>
+  <p class="lede">Resizing is about dimensions rather than file size, and it is what you need when something has an explicit pixel requirement — a profile picture, a product photo, an upload that rejects anything over 2000 pixels wide.</p>
 
   <div id="tool-mount" data-tool="Resize Image"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Resize Image">Open Resize Image</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Resize Image</h2>
+  <h2>How to use Resize Image</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the image. Its current dimensions are shown.</li>
+    <li>Enter a width or a height.</li>
+    <li>Keep the aspect ratio locked unless you deliberately want to distort it.</li>
+    <li>Download the resized image.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Reducing size is safe; enlarging is not. There is no additional detail in a small image to recover, so scaling up produces a soft, blocky result no matter what tool does it — start from the largest original you have. With the ratio locked, entering either dimension computes the other, which is almost always what you want: unlocking it stretches faces and logos in ways everyone notices.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Resize Image free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Can I make a small image bigger?</h3><p>You can, but it will look soft. The detail is not there to recover — always start from the largest original available.</p><h3>Should I keep the aspect ratio?</h3><p>Almost always. Unlocking it distorts the image.</p><h3>Does this reduce the file size too?</h3><p>Yes, as a side effect. Use Make Image Smaller if size is the actual goal.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

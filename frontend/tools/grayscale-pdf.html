@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Grayscale PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Will the text still be selectable?", "acceptedAnswer": {"@type": "Answer", "text": "No. Pages are re-rendered, so the result is images. Use your printer's greyscale setting if you need to keep the text layer."}}, {"@type": "Question", "name": "How much smaller will it get?", "acceptedAnswer": {"@type": "Answer", "text": "Colour photographs shrink a great deal; documents that were already mostly black text barely change."}}, {"@type": "Question", "name": "Can I convert only some pages?", "acceptedAnswer": {"@type": "Answer", "text": "Split the document, convert the pages you want, and merge them back."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Grayscale PDF", "item": "https://pdflove.co.in/tools/grayscale-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Grayscale PDF</p>
   <h1>Grayscale PDF</h1>
-  <p class="lede">Grayscale PDF, running entirely on your own device.</p>
+  <p class="lede">Converting to greyscale is usually about cost or consistency: a print shop charging per colour page, or a document that has to look the same coming out of any printer. It often shrinks the file substantially as a side effect.</p>
 
   <div id="tool-mount" data-tool="Grayscale PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Grayscale PDF">Open Grayscale PDF</a></p></noscript>
@@ -57,21 +57,18 @@
   </div>
 
 
-  <h2>Using Grayscale PDF</h2>
+  <h2>How to use Grayscale PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF.</li>
+    <li>Click Convert &amp; download.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Every page is rendered and rewritten with colour information discarded, which is why the saving can be large on image-heavy documents. Because pages are re-rendered, the output is images rather than text — if you need the text to stay selectable, this is the wrong tool, and you should set greyscale in your printer driver instead. For documents heading to a print shop, that trade is usually worth making.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Grayscale PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Will the text still be selectable?</h3><p>No. Pages are re-rendered, so the result is images. Use your printer&#x27;s greyscale setting if you need to keep the text layer.</p><h3>How much smaller will it get?</h3><p>Colour photographs shrink a great deal; documents that were already mostly black text barely change.</p><h3>Can I convert only some pages?</h3><p>Split the document, convert the pages you want, and merge them back.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

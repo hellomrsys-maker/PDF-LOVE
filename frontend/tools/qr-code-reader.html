@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is QR Code Reader free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why read a code instead of scanning it with my phone?", "acceptedAnswer": {"@type": "Answer", "text": "Because you see the destination before opening it. Phone scanners often open the link immediately."}}, {"@type": "Question", "name": "It could not find a code.", "acceptedAnswer": {"@type": "Answer", "text": "Crop the image tightly around the code and retry. Blur and steep angles defeat decoding."}}, {"@type": "Question", "name": "Is the image uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Decoding happens in your browser."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "QR Code Reader", "item": "https://pdflove.co.in/tools/qr-code-reader.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / QR Code Reader</p>
   <h1>QR Code Reader</h1>
-  <p class="lede">QR Code Reader, running entirely on your own device.</p>
+  <p class="lede">Reading a QR code from a picture — a screenshot, a photo of a poster, a code embedded in a PDF — is awkward when the code is not in front of your camera. This decodes it from the image.</p>
 
   <div id="tool-mount" data-tool="QR Code Reader"></div>
   <noscript><p><a class="cta" href="../index.html?tool=QR Code Reader">Open QR Code Reader</a></p></noscript>
@@ -57,21 +57,19 @@
   </div>
 
 
-  <h2>Using QR Code Reader</h2>
+  <h2>How to use QR Code Reader</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the image containing the code.</li>
+    <li>The code is found and decoded.</li>
+    <li>Read the decoded content before you act on it.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Seeing the destination before opening it is the security point: a QR code is opaque by design, and malicious codes rely on people scanning and tapping without ever reading the URL. Decoding happens in your browser, so the image is not sent anywhere. Codes that are blurred, at a steep angle, or partially obscured may not decode — crop to the code and try again.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is QR Code Reader free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Why read a code instead of scanning it with my phone?</h3><p>Because you see the destination before opening it. Phone scanners often open the link immediately.</p><h3>It could not find a code.</h3><p>Crop the image tightly around the code and retry. Blur and steep angles defeat decoding.</p><h3>Is the image uploaded?</h3><p>No. Decoding happens in your browser.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

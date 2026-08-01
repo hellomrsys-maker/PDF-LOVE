@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Bookmarks / TOC free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "It shows nothing, but the document has a contents page.", "acceptedAnswer": {"@type": "Answer", "text": "A printed contents page is just text. The bookmark outline is separate data, and this document has none."}}, {"@type": "Question", "name": "Can I edit the bookmarks here?", "acceptedAnswer": {"@type": "Answer", "text": "This view is read-only. It tells you what structure exists."}}, {"@type": "Question", "name": "What is this useful for?", "acceptedAnswer": {"@type": "Answer", "text": "Checking whether Split by Bookmark will work, and seeing how a long document is organised before reading it."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Bookmarks / TOC", "item": "https://pdflove.co.in/tools/bookmarks-toc.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Bookmarks / TOC</p>
   <h1>Bookmarks / TOC</h1>
-  <p class="lede">Bookmarks / TOC, running entirely on your own device.</p>
+  <p class="lede">A PDF&#x27;s bookmark outline is the table of contents your viewer shows in the sidebar. It is worth inspecting before you rely on it, because plenty of documents that look structured have no outline at all.</p>
 
   <div id="tool-mount" data-tool="Bookmarks / TOC"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Bookmarks / TOC">Open Bookmarks / TOC</a></p></noscript>
@@ -57,21 +57,19 @@
   </div>
 
 
-  <h2>Using Bookmarks / TOC</h2>
+  <h2>How to use Bookmarks / TOC</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF.</li>
+    <li>The outline is read and shown as a tree with page numbers.</li>
+    <li>Expand levels to see how deep the structure goes.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>This reads the outline rather than the visible contents page, which is why a document can have a printed table of contents and still show nothing here — they are unrelated. If there is an outline, Split by Bookmark can use it to break the document into sections automatically, which is usually the reason people check.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Bookmarks / TOC free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>It shows nothing, but the document has a contents page.</h3><p>A printed contents page is just text. The bookmark outline is separate data, and this document has none.</p><h3>Can I edit the bookmarks here?</h3><p>This view is read-only. It tells you what structure exists.</p><h3>What is this useful for?</h3><p>Checking whether Split by Bookmark will work, and seeing how a long document is organised before reading it.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

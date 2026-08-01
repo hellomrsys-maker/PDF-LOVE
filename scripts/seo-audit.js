@@ -114,6 +114,11 @@ if (!fs.existsSync(sitemapPath)) {
   const listed = new Set(locs.map(l => l.replace(SITE, '').replace(/^\//, '') || 'index.html'));
   for (const file of files) {
     const rel = path.relative(FRONTEND, file).split(path.sep).join('/');
+    // A deliberately noindexed page must NOT be in the sitemap — listing a
+    // URL you have told crawlers to ignore is a contradiction, so its
+    // absence here is correct rather than an omission.
+    const head = fs.readFileSync(file, 'utf8').split('</head>')[0];
+    if (/name="robots"[^>]*noindex/.test(head)) continue;
     // Directory index pages appear in the sitemap as a trailing slash.
     const alt = rel.replace(/index\.html$/, '');
     if (!listed.has(rel) && !listed.has(alt) && !listed.has(alt + 'index.html')) {

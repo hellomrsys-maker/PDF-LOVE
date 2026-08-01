@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Crop PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does cropping delete what is outside the box?", "acceptedAnswer": {"@type": "Answer", "text": "No. It changes the visible area only. Use Search &amp; Redact if the material must actually be gone."}}, {"@type": "Question", "name": "Will cropping shrink the file?", "acceptedAnswer": {"@type": "Answer", "text": "Barely \u2014 the hidden content is still stored. Run Make PDF Smaller afterwards if size is the goal."}}, {"@type": "Question", "name": "Can pages have different crops?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, if you apply the crop to the current page rather than all pages, then move to the next page and repeat."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Crop PDF", "item": "https://pdflove.co.in/tools/crop-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Crop PDF</p>
   <h1>Crop PDF</h1>
-  <p class="lede">Crop PDF, running entirely on your own device.</p>
+  <p class="lede">Cropping is what you need when a scan has a black border, a page has enormous margins that waste paper, or a slide deck printed with a footer nobody wants. It changes the visible area, not the content.</p>
 
   <div id="tool-mount" data-tool="Crop PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Crop PDF">Open Crop PDF</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Crop PDF</h2>
+  <h2>How to use Crop PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF. The first page is shown as a preview.</li>
+    <li>Drag the crop handles to set the area you want to keep.</li>
+    <li>Apply the same crop to every page, or only to the page you are on.</li>
+    <li>Click Crop &amp; download.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Cropping sets the page's CropBox, the rectangle a viewer draws. The content outside it is still in the file and can be revealed by re-cropping — this is a presentation change, not a redaction. If your intent is to remove sensitive material at the edge of a page, use Search &amp; Redact, which destroys the content rather than hiding it.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Crop PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Does cropping delete what is outside the box?</h3><p>No. It changes the visible area only. Use Search &amp;amp; Redact if the material must actually be gone.</p><h3>Will cropping shrink the file?</h3><p>Barely — the hidden content is still stored. Run Make PDF Smaller afterwards if size is the goal.</p><h3>Can pages have different crops?</h3><p>Yes, if you apply the crop to the current page rather than all pages, then move to the next page and repeat.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

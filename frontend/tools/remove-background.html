@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Remove Background free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Why is the first use slow?", "acceptedAnswer": {"@type": "Answer", "text": "The AI model downloads once, around 44 MB. After that it runs offline and instantly."}}, {"@type": "Question", "name": "The edges around hair are rough.", "acceptedAnswer": {"@type": "Answer", "text": "Fine strands are the hard case for any automatic cut-out. A plain, contrasting background helps a great deal."}}, {"@type": "Question", "name": "Why is the result a PNG?", "acceptedAnswer": {"@type": "Answer", "text": "Transparency requires an alpha channel. JPEG has none, so it cannot hold a cut-out."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Remove Background", "item": "https://pdflove.co.in/tools/remove-background.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Remove Background</p>
   <h1>Remove Background</h1>
-  <p class="lede">Remove Background, running entirely on your own device.</p>
+  <p class="lede">Cutting a subject out of its background is the most requested photo edit there is, and until recently it meant either careful manual work or uploading the photo to a service. A real AI model now does it on your own device.</p>
 
   <div id="tool-mount" data-tool="Remove Background"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Remove Background">Open Remove Background</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Remove Background</h2>
+  <h2>How to use Remove Background</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the photo.</li>
+    <li>Wait for the model on first use — it downloads once, then works offline.</li>
+    <li>Check the cut-out edges in the preview.</li>
+    <li>Download a PNG with a transparent background.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>The model is around 44 MB and downloads once, after which the tool works with no connection at all. It is strongest on clearly separated subjects — a person, a product against a contrasting background — and weakest on fine detail like flyaway hair or foliage, and on subjects the same colour as what is behind them. Output is PNG because transparency needs an alpha channel, which JPEG does not have.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Remove Background free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Why is the first use slow?</h3><p>The AI model downloads once, around 44 MB. After that it runs offline and instantly.</p><h3>The edges around hair are rough.</h3><p>Fine strands are the hard case for any automatic cut-out. A plain, contrasting background helps a great deal.</p><h3>Why is the result a PNG?</h3><p>Transparency requires an alpha channel. JPEG has none, so it cannot hold a cut-out.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

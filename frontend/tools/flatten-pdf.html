@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Flatten PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I unflatten it later?", "acceptedAnswer": {"@type": "Answer", "text": "No. Keep the unfilled original if you need to produce more copies."}}, {"@type": "Question", "name": "Does it change how the document looks?", "acceptedAnswer": {"@type": "Answer", "text": "No. The values are drawn where the fields displayed them."}}, {"@type": "Question", "name": "Does this stop someone editing the file altogether?", "acceptedAnswer": {"@type": "Answer", "text": "It stops form editing. Anyone with a full PDF editor can still alter page content \u2014 add a password with Protect PDF if that matters."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Flatten PDF", "item": "https://pdflove.co.in/tools/flatten-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Flatten PDF</p>
   <h1>Flatten PDF</h1>
-  <p class="lede">Flatten PDF, running entirely on your own device.</p>
+  <p class="lede">A filled form is still a form: the fields remain editable, and whoever receives it can change your answers. Flattening turns the filled values into permanent page content, which is what you want before sending a signed or completed document.</p>
 
   <div id="tool-mount" data-tool="Flatten PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Flatten PDF">Open Flatten PDF</a></p></noscript>
@@ -57,21 +57,19 @@
   </div>
 
 
-  <h2>Using Flatten PDF</h2>
+  <h2>How to use Flatten PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the filled PDF.</li>
+    <li>Click Flatten.</li>
+    <li>Download the result — the values are now part of the page.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Flattening draws each field's current value onto the page and removes the interactive field itself, so the document looks identical and can no longer be edited through the form layer. Do this after filling, never before — once flattened the fields are gone and cannot be filled again, so keep the blank original if you will need it.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Flatten PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Can I unflatten it later?</h3><p>No. Keep the unfilled original if you need to produce more copies.</p><h3>Does it change how the document looks?</h3><p>No. The values are drawn where the fields displayed them.</p><h3>Does this stop someone editing the file altogether?</h3><p>It stops form editing. Anyone with a full PDF editor can still alter page content — add a password with Protect PDF if that matters.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

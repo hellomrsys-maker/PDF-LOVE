@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Extract Images free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "I got more images than the page appeared to have.", "acceptedAnswer": {"@type": "Answer", "text": "Large images are sometimes stored as tiles. The pieces are all there and can be reassembled."}}, {"@type": "Question", "name": "Are the images the same quality as in the PDF?", "acceptedAnswer": {"@type": "Answer", "text": "Yes for JPEGs, which come out byte-identical. Others are converted to PNG, which is lossless."}}, {"@type": "Question", "name": "It found nothing in a document full of pictures.", "acceptedAnswer": {"@type": "Answer", "text": "The pages are probably vector drawings rather than embedded photographs. Use PDF to JPG to render them instead."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Extract Images", "item": "https://pdflove.co.in/tools/extract-images.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Extract Images</p>
   <h1>Extract Images</h1>
-  <p class="lede">Extract Images, running entirely on your own device.</p>
+  <p class="lede">Pulling the photographs out of a PDF is normally done by screenshotting them, which throws away resolution and quality. The images are stored inside the file at full size, and this takes them out as they were stored.</p>
 
   <div id="tool-mount" data-tool="Extract Images"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Extract Images">Open Extract Images</a></p></noscript>
@@ -57,21 +57,19 @@
   </div>
 
 
-  <h2>Using Extract Images</h2>
+  <h2>How to use Extract Images</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF.</li>
+    <li>Click Extract. Every embedded image is found and listed.</li>
+    <li>Download the .zip of everything it recovered.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Images are read out of the page resource dictionaries rather than captured from a rendered page, which is the difference between getting the original file and getting a screenshot. JPEGs are written back as the original JPEG bytes, so nothing is re-encoded and no quality is lost. Other formats are converted to PNG, which is lossless. A page that looks like it contains a photo may contain several tiled fragments — that is how some tools write large images, and you will see them separately.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Extract Images free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>I got more images than the page appeared to have.</h3><p>Large images are sometimes stored as tiles. The pieces are all there and can be reassembled.</p><h3>Are the images the same quality as in the PDF?</h3><p>Yes for JPEGs, which come out byte-identical. Others are converted to PNG, which is lossless.</p><h3>It found nothing in a document full of pictures.</h3><p>The pages are probably vector drawings rather than embedded photographs. Use PDF to JPG to render them instead.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li></ul>

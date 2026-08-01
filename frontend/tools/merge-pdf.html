@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Merge PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does the order of the files matter?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 the list order is the page order in the result. Drag the rows to rearrange before you merge."}}, {"@type": "Question", "name": "Will merging make the file bigger than the originals added together?", "acceptedAnswer": {"@type": "Answer", "text": "Rarely. Pages are copied rather than re-encoded, and shared resources such as repeated fonts are written once."}}, {"@type": "Question", "name": "How many PDFs can I combine at once?", "acceptedAnswer": {"@type": "Answer", "text": "There is no imposed limit. In a browser the practical ceiling is memory: tens of thousands of pages will strain a phone long before a desktop."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Merge PDF", "item": "https://pdflove.co.in/tools/merge-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Merge PDF</p>
   <h1>Merge PDF</h1>
-  <p class="lede">Merge PDF, running entirely on your own device.</p>
+  <p class="lede">Combining PDFs is the job people most often reach for a paid tool to do, and it is also the one most often broken by page order — a scanned appendix ends up in front of the contract it belongs to. This merges in exactly the order you arrange the files, and lets you reorder before committing.</p>
 
   <div id="tool-mount" data-tool="Merge PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Merge PDF">Open Merge PDF</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Merge PDF</h2>
+  <h2>How to use Merge PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Add two or more PDFs, by clicking or dragging them in together.</li>
+    <li>Drag the rows to set the order — the list is the final page order.</li>
+    <li>Remove anything you added by mistake with the remove button on its row.</li>
+    <li>Click Merge &amp; download. The combined file saves straight to your downloads.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Bookmarks and page labels from each source are carried into the result where they exist. Merging does not re-encode anything: pages are copied object-by-object, so text stays selectable, images keep their original quality, and the output is usually close to the sum of the inputs rather than larger. Very large merges are limited by memory rather than file size — the page count is what matters, because the writer holds a page-tree entry for every page until it finishes.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Merge PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Does the order of the files matter?</h3><p>Yes — the list order is the page order in the result. Drag the rows to rearrange before you merge.</p><h3>Will merging make the file bigger than the originals added together?</h3><p>Rarely. Pages are copied rather than re-encoded, and shared resources such as repeated fonts are written once.</p><h3>How many PDFs can I combine at once?</h3><p>There is no imposed limit. In a browser the practical ceiling is memory: tens of thousands of pages will strain a phone long before a desktop.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/split-pdf.html">Split PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li><li><a href="/tools/crop-pdf.html">Crop PDF</a></li></ul>

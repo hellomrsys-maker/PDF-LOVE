@@ -17,7 +17,7 @@
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <link href="company/company.css" rel="stylesheet">
 <link href="app.css" rel="stylesheet">
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is Split PDF free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes \u2014 no account, no daily limit, no card."}}, {"@type": "Question", "name": "Does it work offline?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. After the first visit the app is cached, so it keeps working with no connection."}}, {"@type": "Question", "name": "Are my files uploaded?", "acceptedAnswer": {"@type": "Answer", "text": "No. Everything happens in your browser, on your own device."}}]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I take out several separate ranges at once?", "acceptedAnswer": {"@type": "Answer", "text": "Not in one pass. Run the range mode once per section, or split into single pages and keep the ones you want."}}, {"@type": "Question", "name": "Why are my files named page-001 rather than page-1?", "acceptedAnswer": {"@type": "Answer", "text": "So they sort in the right order. Without padding, page-10 sorts before page-2 in most file managers."}}, {"@type": "Question", "name": "Does splitting lose quality?", "acceptedAnswer": {"@type": "Answer", "text": "No. Pages are copied whole, not re-rendered, so the extracted file is identical to those pages of the original."}}]}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "PDF Love", "item": "https://pdflove.co.in/"}, {"@type": "ListItem", "position": 2, "name": "Tools", "item": "https://pdflove.co.in/tools/"}, {"@type": "ListItem", "position": 3, "name": "Split PDF", "item": "https://pdflove.co.in/tools/split-pdf.html"}]}</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
 <main><div class="wrap">
   <p class="breadcrumb"><a href="../index.html">Home</a> / <a href="/tools/index.html">Tools</a> / Split PDF</p>
   <h1>Split PDF</h1>
-  <p class="lede">Split PDF, running entirely on your own device.</p>
+  <p class="lede">Splitting is two different jobs that tools tend to conflate: pulling one section out of a long document, and breaking a document into its individual pages. Both are here, as separate modes, because picking the wrong one wastes a lot of time on a 300-page file.</p>
 
   <div id="tool-mount" data-tool="Split PDF"></div>
   <noscript><p><a class="cta" href="../index.html?tool=Split PDF">Open Split PDF</a></p></noscript>
@@ -57,21 +57,20 @@
   </div>
 
 
-  <h2>Using Split PDF</h2>
+  <h2>How to use Split PDF</h2>
   <ol>
-    <li>Open the tool.</li>
-    <li>Choose your file, or drag it onto the page.</li>
-    <li>Set the options you need.</li>
-    <li>Download the result.</li>
+    <li>Choose the PDF. The page count appears once it has been read.</li>
+    <li>Pick a mode: extract a page range, or one file per page.</li>
+    <li>For a range, set the first and last page you want to keep.</li>
+    <li>Click Split &amp; download — a single PDF for a range, or a .zip of numbered files for one-per-page.</li>
   </ol>
-  <h2>What happens to your file</h2>
-  <p>Nothing leaves this device. The file is read with the browser's File API,
-  processed in page memory, and handed back through the browser's own download
-  mechanism. There is no request to send, because there is nothing to send.</p>
+
+  <h2>What to know</h2>
+  <p>Page numbers are the ones printed in your viewer, counting from one. The one-file-per-page mode zero-pads its filenames to the width of the total, so page 7 of 200 becomes page-007.pdf and the files sort correctly in any file manager. Extracted pages keep their original size, rotation and embedded fonts.</p>
 
 
   <h2>Common questions</h2>
-<h3>Is Split PDF free?</h3><p>Yes — no account, no daily limit, no card.</p><h3>Does it work offline?</h3><p>Yes. After the first visit the app is cached, so it keeps working with no connection.</p><h3>Are my files uploaded?</h3><p>No. Everything happens in your browser, on your own device.</p>
+<h3>Can I take out several separate ranges at once?</h3><p>Not in one pass. Run the range mode once per section, or split into single pages and keep the ones you want.</p><h3>Why are my files named page-001 rather than page-1?</h3><p>So they sort in the right order. Without padding, page-10 sorts before page-2 in most file managers.</p><h3>Does splitting lose quality?</h3><p>No. Pages are copied whole, not re-rendered, so the extracted file is identical to those pages of the original.</p>
 
   <h2>Related tools</h2>
   <ul><li><a href="/tools/merge-pdf.html">Merge PDF</a></li><li><a href="/tools/images-to-pdf.html">Images to PDF</a></li><li><a href="/tools/pdf-to-jpg.html">PDF to JPG</a></li><li><a href="/tools/rotate-pdf.html">Rotate PDF</a></li><li><a href="/tools/organize-pdf.html">Organize PDF</a></li><li><a href="/tools/crop-pdf.html">Crop PDF</a></li></ul>
