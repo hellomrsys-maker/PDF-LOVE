@@ -94,9 +94,43 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install minimal deps for import check
-        run: pip install fastapi slowapi uvicorn python-multipart Pillow pikepdf
+        run: pip install fastapi slowapi uvicorn python-multipart Pillow pikepdf httpx arq pyflakes
       - name: Python syntax check
-        run: python3 -m py_compile backend/main.py backend/native_ops.py
+        run: python3 -m py_compile backend/*.py
+      - name: No undefined names (pyflakes)
+        run: |
+          cd backend
+          python3 -m pyflakes --version   # fail loudly rather than silently skipping
+          # "imported but unused" is style; undefined names are real bugs.
+          python3 -m pyflakes *.py \
+            | grep -v 'imported but unused' \
+            | grep -v 'redefinition of unused' > /tmp/pyflakes.txt || true
+          if [ -s /tmp/pyflakes.txt ]; then echo "pyflakes findings:"; cat /tmp/pyflakes.txt; exit 1; fi
+          echo "No undefined names."
+      - name: Every backend module imports standalone
+        run: |
+          # Catches import cycles: the app must not depend on main.py
+          # happening to import engines before premium_pdf.
+          cd backend
+          for m in errors native_ops engines premium_pdf batch_pdf ai_helper worker main; do
+            python3 -c "import $m" || { echo "FAILED to import $m standalone"; exit 1; }
+            echo "  $m OK"
+          done
+      - name: Dockerfile copies every module the app imports
+        run: |
+          python3 - <<'PY'
+          import re, pathlib
+          df = pathlib.Path("backend/Dockerfile").read_text()
+          copied = set()
+          for line in df.splitlines():
+              if line.startswith("COPY") and line.rstrip().endswith("./"):
+                  copied.update(p for p in line.split()[1:-1] if p.endswith(".py"))
+          on_disk = {p.name for p in pathlib.Path("backend").glob("*.py")} - {"setup.py"}
+          missing = on_disk - copied
+          if missing:
+              raise SystemExit(f"Dockerfile COPY is missing: {sorted(missing)}")
+          print("Dockerfile copies all", len(on_disk), "backend modules.")
+          PY
       - name: Compile the native C image kernel
         run: |
           cd backend
@@ -127,6 +161,121 @@ jobs:
               ci = collections.Counter(native_ops.enhance_for_ocr(inv).tobytes())
               assert ci[255] > ci[0], f"{name}: inverted scan not corrected"
               print(name, "path OK")
+          PY
+      - name: PDF engines end-to-end, with the network hard-blocked
+        run: |
+          cd backend
+          python3 - <<'PY'
+          import io, socket, zipfile
+
+          # Dockbench must work air-gapped (README: "no server involved
+          # before or after, ever"). Any outbound socket here is a bug.
+          class Phoned(Exception): pass
+          def deny(*a, **k): raise Phoned("engine attempted a network call")
+          socket.socket = deny
+          socket.create_connection = deny
+
+          import pikepdf, premium_pdf, batch_pdf
+          from errors import EngineError
+
+          def mkpdf(n):
+              p = pikepdf.Pdf.new()
+              for _ in range(n):
+                  p.add_blank_page(page_size=(200, 200))
+              b = io.BytesIO(); p.save(b); return b.getvalue()
+
+          def npages(data):
+              with pikepdf.open(io.BytesIO(data)) as d:
+                  return len(d.pages)
+
+          a, b = mkpdf(2), mkpdf(3)
+
+          out, mt = premium_pdf.run_merge_pdf([a, b])
+          assert npages(out) == 5 and mt == "application/pdf", "merge"
+          out, mt = premium_pdf.run_split_pdf(a)
+          assert len(zipfile.ZipFile(io.BytesIO(out)).namelist()) == 2, "split"
+          # a page with no /Rotate key must rotate, not raise
+          out, _ = premium_pdf.run_rotate_pdf(a, 90)
+          with pikepdf.open(io.BytesIO(out)) as d:
+              assert int(d.pages[0].obj.get("/Rotate", 0)) == 90, "rotate"
+          out, _ = premium_pdf.run_watermark_pdf(a, mkpdf(1))
+          assert npages(out) == 2, "watermark"
+          out, _ = premium_pdf.run_split_pdf_range(b, 1, 2)
+          assert zipfile.ZipFile(io.BytesIO(out)).namelist(), "split range"
+          out, _ = batch_pdf.run_batch_pdf("merge", [a, b])
+          assert npages(out) == 5, "batch merge"
+
+          # Bad input must raise EngineError (-> 4xx), never bubble up as a 500.
+          for label, fn in (
+              ("bad job",     lambda: batch_pdf.run_batch_pdf("nope", [a])),
+              ("bad angle",   lambda: premium_pdf.run_rotate_pdf(a, 45)),
+              ("corrupt pdf", lambda: premium_pdf.run_rotate_pdf(b"notapdf", 90)),
+              ("empty merge", lambda: premium_pdf.run_merge_pdf([])),
+          ):
+              try:
+                  fn()
+              except EngineError as e:
+                  assert 400 <= e.status < 500, f"{label}: status {e.status}"
+              else:
+                  raise SystemExit(f"{label}: expected EngineError")
+
+          print("All PDF engines OK offline; error paths return 4xx.")
+          PY
+      - name: HTTP layer end-to-end
+        run: |
+          cd backend
+          python3 - <<'PY'
+          import io, pikepdf
+          from fastapi.testclient import TestClient
+          import main
+
+          c = TestClient(main.app)
+
+          def mkpdf(n):
+              p = pikepdf.Pdf.new()
+              for _ in range(n):
+                  p.add_blank_page(page_size=(200, 200))
+              b = io.BytesIO(); p.save(b); return b.getvalue()
+
+          a, b = mkpdf(2), mkpdf(3)
+          pdf = "application/pdf"
+
+          assert c.get("/health").status_code == 200
+          assert c.get("/capabilities").status_code == 200
+
+          # /video-process regression guard: it was once nested inside pdfa()
+          # after a return, so the route silently did not exist.
+          paths = {r.path for r in main.app.routes if hasattr(r, "methods")}
+          for p in ("/merge-pdf", "/split-pdf", "/rotate-pdf", "/watermark-pdf",
+                    "/batch-pdf", "/video-process", "/ocr", "/convert"):
+              assert p in paths, f"route missing: {p}"
+
+          r = c.post("/merge-pdf", files=[("files", ("a.pdf", a, pdf)),
+                                          ("files", ("b.pdf", b, pdf))])
+          assert r.status_code == 200, r.text
+          with pikepdf.open(io.BytesIO(r.content)) as d:
+              assert len(d.pages) == 5
+
+          r = c.post("/rotate-pdf", files={"file": ("a.pdf", a, pdf)}, data={"angle": "90"})
+          assert r.status_code == 200, r.text
+          r = c.post("/split-pdf", files={"file": ("a.pdf", a, pdf)})
+          assert r.status_code == 200, r.text
+          r = c.post("/watermark-pdf", files={"file": ("a.pdf", a, pdf),
+                                              "watermark": ("w.pdf", mkpdf(1), pdf)})
+          assert r.status_code == 200, r.text
+
+          # Engine failures must be 4xx, never an unhandled 500.
+          for label, r in (
+              ("bad batch job", c.post("/batch-pdf", files=[("files", ("a.pdf", a, pdf))],
+                                       data={"job": "nope"})),
+              ("bad angle",     c.post("/rotate-pdf", files={"file": ("a.pdf", a, pdf)},
+                                       data={"angle": "45"})),
+              ("corrupt pdf",   c.post("/rotate-pdf", files={"file": ("x.pdf", b"notapdf", pdf)},
+                                       data={"angle": "90"})),
+          ):
+              assert 400 <= r.status_code < 500, f"{label}: got {r.status_code}"
+
+          print("HTTP layer OK: routes registered, failures return 4xx.")
           PY
 
   compose-config:
