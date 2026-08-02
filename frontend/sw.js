@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdflove-v8';
+const CACHE_NAME = 'pdflove-v10';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Browser/OS favicons — declared in index.html, so precache them or an
@@ -70,13 +70,35 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Cache-first with background refresh for GET requests. Everything else —
-// POSTs to the backend, uploads — must never touch the cache (the Cache API
-// rejects non-GET entries, and stale API responses would be wrong anyway).
+// OFFLINE-FIRST, and that is meant literally: if a request is in the cache
+// it is served from the cache and NO network request is made at all.
+//
+// This used to be "cache-first with background refresh", which returned the
+// cached copy but had already fired fetch() for every asset — so an
+// installed app still put ~17 requests on the wire on every single load,
+// even fully cached. An installed PDFLove must be able to sit on an
+// air-gapped machine and phone nobody. The network is touched only when
+// something genuinely is not cached, or when the user explicitly asks to
+// check for an update (see the 'CHECK_UPDATE' message below).
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET') return;               // let the network handle it
   const url = new URL(req.url);
+
+  // The page probes for local vendor files with HEAD before falling back to
+  // a CDN. HEAD is not GET, so without this it skipped the worker entirely
+  // and put a request on the wire for a file we already hold. Answer from
+  // the cache (headers only, as HEAD requires).
+  if (req.method === 'HEAD') {
+    if (url.origin !== location.origin) return;
+    event.respondWith(
+      caches.match(req, { ignoreMethod: true }).then((cached) =>
+        cached ? new Response(null, { status: 200, headers: cached.headers })
+               : fetch(req))
+    );
+    return;
+  }
+
+  if (req.method !== 'GET') return;               // let the network handle it
   // Only ever cache our own static assets. A cross-origin request is the
   // backend (pdflove.apiBase pointed at a separate host — the normal
   // setup when the frontend is on Cloudflare and the API is elsewhere).
@@ -94,19 +116,56 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(req, matchOpts).then((cached) => {
-      const fetchPromise = fetch(req)
-        .then((res) => {
-          // Don't store one copy of the document per ?tool=… URL — that is
-          // the same index.html 80-odd times over. The shell is precached.
-          const skipStore = isNavigation && url.search;
-          if (res && res.status === 200 && !skipStore) {
-            const resClone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || fetchPromise;
+      // Cached: answer from disk and stop. No fetch is issued.
+      if (cached) return cached;
+
+      // Not cached: this is the only path that touches the network.
+      return fetch(req).then((res) => {
+        // Don't store one copy of the document per ?tool=… URL — that is
+        // the same index.html 80-odd times over. The shell is precached.
+        const skipStore = isNavigation && url.search;
+        if (res && res.status === 200 && !skipStore) {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
+        }
+        return res;
+      }).catch((err) => {
+        // Offline and genuinely uncached — fall back to the app shell for a
+        // navigation so the user lands in the app rather than a browser
+        // error page.
+        if (isNavigation) return caches.match('./index.html');
+        throw err;
+      });
     })
   );
+});
+
+// Explicit, user-initiated update check. Nothing here runs on its own: the
+// page posts {type:'CHECK_UPDATE'} only when the user presses the button,
+// which is the single moment an installed PDFLove is allowed to reach the
+// network for its own sake.
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+  if (data.type !== 'CHECK_UPDATE') return;
+  event.waitUntil((async () => {
+    const reply = (payload) => {
+      if (event.source) event.source.postMessage({ type: 'UPDATE_RESULT', ...payload });
+    };
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      // Compare the shell against the server, bypassing the HTTP cache.
+      const res = await fetch('./index.html', { cache: 'reload' });
+      if (!res || !res.ok) return reply({ ok: false, reason: 'unreachable' });
+      const fresh = await res.clone().text();
+      const cachedRes = await cache.match('./index.html');
+      const current = cachedRes ? await cachedRes.text() : '';
+      if (fresh === current) return reply({ ok: true, updated: false });
+      // Something changed: refresh the whole shell in one go, so we never
+      // end up with a half-updated app.
+      await cache.addAll(APP_SHELL);
+      reply({ ok: true, updated: true });
+    } catch (e) {
+      reply({ ok: false, reason: 'offline' });
+    }
+  })());
 });

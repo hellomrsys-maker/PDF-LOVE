@@ -642,11 +642,15 @@
 
     <div class="foot-bottom">
       <div class="foot-note">
-        Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate,
-        opt-in backend — see <code>/backend</code> for the self-hosted, open-source API. PDFLove never checks for
-        one automatically.
+        Once installed, PDFLove works with no internet at all — every tool runs on your own device and the app
+        makes <strong>no network requests of its own</strong>. It reaches the network only when you press
+        “Check for updates”. Server-assisted tools (OCR, Office conversion, deep compression, background
+        removal, chat) are a separate, opt-in backend — see <code>/backend</code> for the self-hosted,
+        open-source API. PDFLove never looks for one automatically.
       </div>
       <div class="foot-actions">
+        <button class="small-btn" id="check-update-btn">Check for updates →</button>
+        <span id="check-update-status" style="font-size:0.85rem;"></span>
         <button class="small-btn" id="check-backend-btn">Have a self-hosted backend? Check for it →</button>
         <span id="check-backend-status" style="font-size:0.85rem;"></span>
         <button class="small-btn" id="license-btn">Have a license key? Manage it →</button>
@@ -6872,6 +6876,47 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape' && !toolView.hidden) closePanel();
 });
 
+/* ---------- update check (the only self-initiated network access) ----------
+   The service worker never revalidates in the background, so an installed
+   PDFLove is silent on the wire. Updates are therefore a deliberate act:
+   this button asks the worker to compare the shell against the server and
+   refetch it only if it actually changed. */
+(function initUpdateCheck(){
+  const btn = document.getElementById('check-update-btn');
+  const status = document.getElementById('check-update-status');
+  if(!btn) return;
+  if(IS_FILE || !('serviceWorker' in navigator) || !location.protocol.startsWith('http')){
+    btn.style.display = 'none';   // nothing to update against
+    return;
+  }
+  btn.onclick = async ()=>{
+    const reg = await navigator.serviceWorker.getRegistration();
+    if(!reg || !reg.active){ status.textContent = 'Offline copy not ready yet — reload once, then try again.'; return; }
+    if(navigator.onLine === false){
+      status.textContent = 'You are offline — the app keeps working as-is.';
+      return;
+    }
+    btn.disabled = true;
+    status.textContent = 'Checking…';
+    const done = (msg)=>{ status.textContent = msg; btn.disabled = false; };
+    const timer = setTimeout(()=>done('No answer — you may be offline.'), 15000);
+    navigator.serviceWorker.addEventListener('message', function onMsg(e){
+      if(!e.data || e.data.type !== 'UPDATE_RESULT') return;
+      navigator.serviceWorker.removeEventListener('message', onMsg);
+      clearTimeout(timer);
+      if(!e.data.ok){
+        done(e.data.reason === 'offline' ? 'You are offline — the app keeps working as-is.' : 'Could not reach the server.');
+      } else if(e.data.updated){
+        done('Update downloaded. Reloading…');
+        setTimeout(()=>location.reload(), 900);
+      } else {
+        done('You are on the latest version.');
+      }
+    });
+    reg.active.postMessage({type:'CHECK_UPDATE'});
+  };
+})();
+
 // Backend check is manual, not automatic — PDFLove makes zero network
 // requests of its own accord, on load or otherwise (installed app or plain
 // browser tab, same rule). Clicking the footer button is the only thing
@@ -6997,7 +7042,11 @@ document.addEventListener('db-result-delivered', ()=>{
 // only works when served over http(s), not opened directly as a file://.
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{ /* offline support unavailable in this context */ });
+    // updateViaCache:'all' stops the browser re-fetching sw.js on every
+    // navigation. Updates are explicit here (the footer button), so an
+    // installed app has no reason to poll for a new worker on its own.
+    navigator.serviceWorker.register('sw.js', {updateViaCache:'all'})
+      .catch(()=>{ /* offline support unavailable in this context */ });
   });
 }
 
