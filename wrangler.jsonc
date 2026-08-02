@@ -10,5 +10,16 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  // Binds pdflove.co.in to this Worker declaratively, so the custom domain
+  // is guaranteed on every deploy instead of depending on a one-off manual
+  // step in the dashboard (Settings > Domains & Routes > Add > Custom
+  // Domain) that a future change could silently undo. Requires the domain
+  // to already be an active zone in this Cloudflare account.
+  "routes": [
+    {
+      "pattern": "pdflove.co.in",
+      "custom_domain": true
+    }
   ]
 }
