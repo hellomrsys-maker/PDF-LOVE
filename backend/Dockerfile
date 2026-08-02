@@ -5,6 +5,7 @@ FROM python:3.11-slim
 #   ghostscript             PDF/A conversion + deep PDF compression
 #   libreoffice (nogui)     Office <-> PDF conversion, headless
 #   qpdf                    merge/split PDF CLI used by premium_pdf.py
+#   ffmpeg                  video transcode + audio extraction
 #   gcc                     compiles our native scan-cleanup kernel below
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
@@ -14,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-calc-nogui \
     fonts-liberation \
     qpdf \
+    ffmpeg \
     gcc \
     libgl1 \
     libglib2.0-0 \
@@ -30,7 +32,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY native/ native/
 RUN gcc -O3 -shared -fPIC -o native/imgproc.so native/imgproc.c
 
-COPY native_ops.py engines.py worker.py main.py connectivity.py premium_pdf.py batch_pdf.py ai_helper.py ./
+COPY native_ops.py engines.py worker.py main.py errors.py premium_pdf.py batch_pdf.py ai_helper.py ./
 
 # Run as a non-root user; HOME is writable for engine caches (LibreOffice
 # profiles go to per-request temp dirs, rembg models to ~/.u2net).

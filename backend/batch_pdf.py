@@ -4,10 +4,8 @@ Implements merging, splitting, rotating, and watermarking of multiple PDFs in a 
 User requested no size caps.
 """
 from typing import List
-import pikepdf
-import io
-import zipfile
 
+from errors import EngineError
 from premium_pdf import (
     run_merge_pdf,
     run_split_pdf,
@@ -32,16 +30,16 @@ def run_batch_pdf(job: str, files: List[bytes], **kwargs):
     if job == "split":
         # Split expects a single PDF
         if not files:
-            raise ValueError("No PDF provided for split job")
+            raise EngineError(422, "No PDF provided for split job")
         return run_split_pdf(files[0])
     if job == "rotate":
         if not files:
-            raise ValueError("No PDF provided for rotate job")
+            raise EngineError(422, "No PDF provided for rotate job")
         angle = kwargs.get("angle", 0)
         return run_rotate_pdf(files[0], angle)
     if job == "watermark":
         if len(files) < 2:
-            raise ValueError("Watermark job requires base PDF and watermark PDF")
+            raise EngineError(422, "Watermark job requires base PDF and watermark PDF")
         base_pdf, wm_pdf = files[0], files[1]
         return run_watermark_pdf(base_pdf, wm_pdf)
-    raise ValueError(f"Unsupported batch PDF job: {job}")
+    raise EngineError(422, f"Unsupported batch PDF job: {job}")

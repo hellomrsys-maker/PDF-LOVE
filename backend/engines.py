@@ -23,14 +23,12 @@ import native_ops
 import logging
 from typing import List, Tuple
 import pikepdf
-from connectivity import is_online
 
 
-class EngineError(Exception):
-    def __init__(self, status: int, detail: str):
-        super().__init__(detail)
-        self.status = status
-        self.detail = detail
+# Defined in errors.py (a leaf module) to keep engines/premium_pdf/ai_helper
+# from importing each other in a cycle; re-exported here so the existing
+# `from engines import EngineError` callers keep working.
+from errors import EngineError
 
 
 def which(binary: str):
@@ -89,8 +87,6 @@ def run_ocr(data: bytes, filename: str, language: str = "eng",
                     img = native_ops.enhance_for_ocr(img)
                 pages_text.append(pytesseract.image_to_string(img, lang=language))
             return "\n\n--- page break ---\n\n".join(pages_text), "text/plain"
-
-        import pikepdf
 
         merged = pikepdf.Pdf.new()
         for img in page_images():
@@ -301,8 +297,11 @@ def run_pdfa(data: bytes):
             "-sDEVICE=pdfwrite", "-dPDFACompatibilityPolicy=1",
             f"-sOutputFile={dst}", src,
         ])
-        with open(dst, "rb") as f:
-            return f.read(), "application/pdf"
+        try:
+            with open(dst, "rb") as f:
+                return f.read(), "application/pdf"
+        except FileNotFoundError:
+            raise EngineError(422, "Ghostscript failed to produce a PDF/A output.")
 
 # ---------------------------------------------------------------------
 # Video processing – FFmpeg (C).
@@ -322,10 +321,16 @@ def run_video_process(data: bytes, filename: str, codec: str = "h264", quality: 
             raise ValueError()
     except ValueError:
         raise EngineError(422, f"Invalid quality value '{quality}'. Must be integer 0‑51.")
+    if not codec.replace("-", "").isalnum():
+        raise EngineError(422, f"Invalid codec '{codec}'.")
     # Create temporary files for input and output
     with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
-        src = os.path.join(tmp, filename)
-        dst = os.path.join(tmp, f"out.{codec if codec != 'h264' else 'mp4'}")
+        # basename() only — the uploaded filename is attacker-controlled and
+        # must never be able to escape the private temp dir.
+        src = os.path.join(tmp, os.path.basename(filename) or "input")
+        # Pick a real container: ffmpeg infers the muxer from the extension,
+        # and "out.vp9" is not one it knows.
+        dst = os.path.join(tmp, "out.webm" if codec in ("vp9", "vp8", "libvpx", "libvpx-vp9") else "out.mp4")
         # Write the input bytes to the source file
         with open(src, "wb") as f:
             f.write(data)
@@ -343,8 +348,7 @@ def run_video_process(data: bytes, filename: str, codec: str = "h264", quality: 
         # Read the processed video
         with open(dst, "rb") as f:
             out = f.read()
-    # Determine appropriate MIME type (default to mp4)
-    media_type = "video/mp4" if dst.lower().endswith('.mp4') else "application/octet-stream"
+    media_type = "video/mp4" if dst.endswith(".mp4") else "video/webm"
     return out, media_type
 
 
