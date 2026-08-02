@@ -1,5 +1,5 @@
 """
-Dockbench backend — optional, self-hosted, zero-per-call-cost API.
+PDFLove backend — optional, self-hosted, zero-per-call-cost API.
 
 Every dependency here is free and open-source. There is no paid vendor
 API anywhere in this file. You run this yourself (a VPS, a Docker
@@ -92,7 +92,7 @@ _handler.setFormatter(
     else _TextFormatter("%(asctime)s %(levelname)s [%(request_id)s] %(message)s")
 )
 logging.basicConfig(level=logging.INFO, handlers=[_handler])
-logger = logging.getLogger("dockbench")
+logger = logging.getLogger("pdflove")
 
 
 # ---------------------------------------------------------------------
@@ -115,7 +115,7 @@ def client_ip(request: Request) -> str:
 
 
 limiter = Limiter(key_func=client_ip, default_limits=["60/minute"])
-app = FastAPI(title="Dockbench API", version="0.3.0")
+app = FastAPI(title="PDFLove API", version="0.3.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -232,11 +232,11 @@ async def submit_job(request: Request, kind: str, file: UploadFile = File(...)):
         upload_path = os.path.join(UPLOAD_TMP_DIR, f"{job_id}.bin")
         with open(upload_path, "wb") as f:
             f.write(data)
-        await pool.set(f"dockbench:upload_path:{job_id}", upload_path, ex=upload_ttl)
+        await pool.set(f"pdflove:upload_path:{job_id}", upload_path, ex=upload_ttl)
     else:
         # Regular small file – keep the existing in‑memory flow and enforce the cap.
         _check_size(data)
-        await pool.set(f"dockbench:upload:{job_id}", data, ex=upload_ttl)
+        await pool.set(f"pdflove:upload:{job_id}", data, ex=upload_ttl)
     # Any extra multipart fields (language, target, level, ...) become
     # engine options — same names as the synchronous endpoints.
     form = await request.form()
@@ -252,7 +252,7 @@ async def job_status(request: Request, job_id: str):
     if not job_id.isalnum():
         raise HTTPException(422, "Invalid job id.")
     pool = await _pool()
-    if await pool.exists(f"dockbench:result:{job_id}"):
+    if await pool.exists(f"pdflove:result:{job_id}"):
         return JSONResponse({"job_id": job_id, "status": "complete"})
 
     from arq.jobs import Job, JobStatus
@@ -279,10 +279,10 @@ async def job_result(request: Request, job_id: str):
     if not job_id.isalnum():
         raise HTTPException(422, "Invalid job id.")
     pool = await _pool()
-    payload = await pool.get(f"dockbench:result:{job_id}")
+    payload = await pool.get(f"pdflove:result:{job_id}")
     if payload is None:
         raise HTTPException(404, "Result not ready or expired.")
-    media_type = await pool.get(f"dockbench:resultmeta:{job_id}")
+    media_type = await pool.get(f"pdflove:resultmeta:{job_id}")
     media_type = media_type.decode() if isinstance(media_type, bytes) else (media_type or "application/octet-stream")
     if media_type == "text/plain":
         return JSONResponse({"text": payload.decode("utf-8", "replace")})

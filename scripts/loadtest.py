@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Dockbench load test — stdlib only, no external tooling required.
+PDFLove load test — stdlib only, no external tooling required.
 
 Usage:
     python3 scripts/loadtest.py https://tools.example.com/api [concurrency] [seconds]

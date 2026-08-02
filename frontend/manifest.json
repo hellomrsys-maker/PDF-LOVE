@@ -1,17 +1,20 @@
 {
-  "name": "Dockbench — PDF & Image Tools",
-  "short_name": "Dockbench",
+  "id": "/",
+  "name": "PDFLove — PDF & Image Tools",
+  "short_name": "PDFLove",
   "description": "PDF and image tools that process entirely on your device. No uploads, no accounts, no limits.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
   "background_color": "#F6F3EC",
   "theme_color": "#C1683A",
+  "categories": ["productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "launch_handler": { "client_mode": "focus-existing" },
   "icons": [
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231F2420'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%234A7856'/%3E%3C/svg%3E",
-      "sizes": "192x192",
-      "type": "image/svg+xml"
-    },
     { "src": "icons/icon-48.png", "sizes": "48x48", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-72.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
@@ -23,5 +26,18 @@
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "icons/screenshot-wide-tools.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "Every PDF tool in one place" },
+    { "src": "icons/screenshot-wide-merge.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "Merge PDFs on your own device" },
+    { "src": "icons/screenshot-1-hero-assistant.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "Ask for what you need in plain language" },
+    { "src": "icons/screenshot-2-tool-grid.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "Browse the full toolbox" },
+    { "src": "icons/screenshot-3-assistant-plan.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "Step-by-step guidance" },
+    { "src": "icons/screenshot-4-merge-tool.png", "sizes": "824x1830", "type": "image/png", "form_factor": "narrow", "label": "Merge PDFs" }
+  ],
+  "shortcuts": [
+    { "name": "Merge PDF", "url": "./index.html?ask=merge%20pdf", "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Split PDF", "url": "./index.html?ask=split%20pdf", "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }] },
+    { "name": "Compress PDF", "url": "./index.html?ask=make%20pdf%20smaller", "icons": [{ "src": "icons/icon-96.png", "sizes": "96x96" }] }
   ]
 }

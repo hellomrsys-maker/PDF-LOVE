@@ -1,12 +1,12 @@
 name: Release
 
 # Builds and publishes ready-to-run images to GitHub Container Registry:
-#   ghcr.io/hellomrsys-maker/dockbench-frontend
-#   ghcr.io/hellomrsys-maker/dockbench-backend
+#   ghcr.io/hellomrsys-maker/pdflove-frontend
+#   ghcr.io/hellomrsys-maker/pdflove-backend
 #
 # - every push to the default branch  -> :latest
 # - every v* tag                      -> :vX.Y.Z (+ :latest) and a GitHub
-#   Release carrying dockbench-offline.zip (the double-click bundle)
+#   Release carrying pdflove-offline.zip (the double-click bundle)
 #
 # Deploying then becomes `docker compose pull && docker compose up -d`
 # on the server — no build resources needed there.
@@ -38,7 +38,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/dockbench-${{ matrix.component }}
+          images: ghcr.io/${{ github.repository_owner }}/pdflove-${{ matrix.component }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern=v{{version}}
@@ -63,11 +63,11 @@ jobs:
       - name: Build offline bundle
         run: |
           cd frontend
-          zip -r ../dockbench-offline.zip index.html manifest.json sw.js vendor/
+          zip -r ../pdflove-offline.zip index.html manifest.json sw.js vendor/
           cd ..
-          unzip -l dockbench-offline.zip | tail -3
+          unzip -l pdflove-offline.zip | tail -3
       - name: Attach to release
         uses: softprops/action-gh-release@v2
         with:
-          files: dockbench-offline.zip
+          files: pdflove-offline.zip
           generate_release_notes: true

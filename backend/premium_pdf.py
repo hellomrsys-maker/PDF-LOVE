@@ -18,7 +18,7 @@ except Exception:
     _USE_PIKEPDF = False
 from errors import EngineError
 
-# NOTE: these operations deliberately make no network calls. Dockbench is
+# NOTE: these operations deliberately make no network calls. PDFLove is
 # built to run air-gapped (see README "Offline licensing") — merging or
 # rotating a PDF must never depend on, or leak the fact of its use to, a
 # third-party host.

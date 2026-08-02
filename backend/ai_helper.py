@@ -28,7 +28,7 @@ def run_audio_extract(data: bytes, filename: str, format: str = "mp3"):
         raise EngineError(503, "FFmpeg is not installed on this server (see backend/Dockerfile).")
     if not format.isalnum():
         raise EngineError(422, "Invalid audio format.")
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pdflove-") as tmp:
         # basename() only — the uploaded filename is attacker-controlled and
         # must never be able to escape the private temp dir.
         src = os.path.join(tmp, os.path.basename(filename) or "input")

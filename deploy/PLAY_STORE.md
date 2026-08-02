@@ -1,6 +1,6 @@
-# Dockbench on the Play Store (TWA)
+# PDFLove on the Play Store (TWA)
 
-Dockbench is already an installable PWA (`frontend/manifest.json` +
+PDFLove is already an installable PWA (`frontend/manifest.json` +
 `frontend/sw.js`). A **Trusted Web Activity (TWA)** wraps that same PWA in a
 thin native Android shell — no app code to write or maintain, no
 Play-Store-specific fork of the app. Everything in this doc assumes the
@@ -29,7 +29,7 @@ scaffold already in the repo (`twa/twa-manifest.json`,
 1. A real production domain serving `frontend/` over HTTPS (TWA requires
    Digital Asset Links verification against a live domain — it cannot
    point at `localhost` or a file). Every placeholder below uses
-   `dockbench.app` — replace with your real domain everywhere.
+   `pdflove.co.in` — replace with your real domain everywhere.
 2. A Google Play Console developer account ($25 one-time fee,
    play.google.com/console).
 3. A signing key you generate and **back up somewhere safe, forever** —
@@ -68,7 +68,7 @@ bubblewrap build
 
 This creates `android.keystore` (your signing key — **back this up**) and
 prints the app bundle path plus your key's SHA-256 fingerprint. Take that
-fingerprint and your final package ID (e.g. `app.dockbench.twa`), and
+fingerprint and your final package ID (e.g. `in.co.pdflove.twa`), and
 update `frontend/.well-known/assetlinks.json` on your live domain:
 
 ```json
@@ -76,7 +76,7 @@ update `frontend/.well-known/assetlinks.json` on your live domain:
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "app.dockbench.twa",
+    "package_name": "in.co.pdflove.twa",
     "sha256_cert_fingerprints": ["YOUR:ACTUAL:FINGERPRINT:HERE"]
   }
 }]
@@ -98,10 +98,10 @@ second check before submitting.)
   size, real captures of the running app)
 - Listing copy: see below.
 - Privacy policy URL: host `deploy/PRIVACY_POLICY.md` (or its content)
-  at a public URL — Play Console requires this field, and Dockbench's
+  at a public URL — Play Console requires this field, and PDFLove's
   actual policy ("we don't collect anything") is a genuine selling point,
   not boilerplate.
-- Content rating questionnaire: Dockbench has no user-generated content
+- Content rating questionnaire: PDFLove has no user-generated content
   sharing, no ads by default (until you configure `AD_CONFIG` in
   `frontend/index.html`), no data collection — answer accordingly.
 - Data safety section: declare **no data collected** (true as shipped) —
@@ -119,19 +119,19 @@ submission at all**. Only bump the Android wrapper for TWA-level changes
 
 ## Store listing copy (draft — edit freely)
 
-**Title** (30 char max): `Dockbench — Free PDF Tools`
+**Title** (30 char max): `PDFLove — Free PDF Tools`
 
 **Short description** (80 char max):
 `103 free PDF/image tools. No login, no upload — runs on your device.`
 
 **Full description:**
 
-> Dockbench is a free PDF, image, and video toolbox that runs entirely on
+> PDFLove is a free PDF, image, and video toolbox that runs entirely on
 > your device — merging, splitting, compressing, converting, OCR, even
 > AES-256 encryption, all without uploading your file anywhere.
 >
 > No account. No login for individuals, ever. No daily limit. No
-> subscription. Just tell Dockbench what you need in your own words —
+> subscription. Just tell PDFLove what you need in your own words —
 > "make this small enough to email," "turn my photos into one PDF" — and
 > it picks the right tool and walks you through it.
 >
@@ -144,7 +144,7 @@ submission at all**. Only bump the Android wrapper for TWA-level changes
 > • Multi-language input support (English, Spanish, Hindi) for the
 >   built-in assistant
 >
-> Dockbench is open-source. Audit it, self-host the optional backend for
+> PDFLove is open-source. Audit it, self-host the optional backend for
 > advanced tools (full-fidelity Office conversion, deep compression), or
 > just use the free web app as-is.
 
