@@ -94,7 +94,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install minimal deps for import check
-        run: pip install fastapi slowapi uvicorn python-multipart Pillow
+        run: pip install fastapi slowapi uvicorn python-multipart Pillow pikepdf
       - name: Python syntax check
         run: python3 -m py_compile backend/main.py backend/native_ops.py
       - name: Compile the native C image kernel
