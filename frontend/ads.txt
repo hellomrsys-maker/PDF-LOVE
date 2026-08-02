@@ -1,0 +1,4 @@
+# Authorized Digital Sellers file (IAB spec). Google AdSense will not serve
+# ads on this domain until this file is reachable at the site root and
+# lists the publisher ID below — see AD_CONFIG.adsense.client in index.html.
+google.com, pub-6910175887237387, DIRECT, f08c47fec0942fa0
