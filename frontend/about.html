@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — PDFLove</title>
+<meta name="description" content="About PDFLove — a document toolkit built so your files never leave your device.">
+<link rel="canonical" href="https://pdflove.co.in/about.html">
+<meta name="theme-color" content="#C1683A">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="pages.css" rel="stylesheet">
+</head>
+<body>
+<header><div class="wrap">
+  <a class="brand" href="index.html"><span class="dot"></span>PDFLove</a>
+  <nav class="hdr-links"><a href="features.html">Features</a><a href="pricing.html">Pricing</a><a href="guides/index.html">Guides</a><a href="faq.html">FAQ</a><a href="security.html">Security</a></nav>
+</div></header>
+<main><div class="wrap-narrow">
+<h1>About PDFLove</h1>
+<p class="lede">PDFLove exists because "upload your confidential document to our server" is a
+strange thing to ask, and for most PDF jobs it is not even necessary.</p>
+
+<h2>The idea</h2>
+<p>Browsers have been able to do serious work for years. WebAssembly runs the same C and C++
+libraries that a server would use — qpdf for PDF surgery, Tesseract for OCR, real AES-256 for
+encryption — at close to native speed, on the machine already sitting in front of you. Once you
+accept that, sending a file to a server to have its pages reordered looks like an odd detour.</p>
+<p>So PDFLove keeps the file where it already is. Your device supplies the processing power and
+the memory; we supply the logic. That single decision is what removes the upload wait, the file
+size cap, the daily limit, the account, and the privacy question all at once.</p>
+
+<h2>What that means in practice</h2>
+<ul>
+  <li>There is no server holding your documents, because there is no upload.</li>
+  <li>There is no per-file cost to us, so there is no reason to meter you.</li>
+  <li>An installed copy keeps working on a machine with no internet connection at all.</li>
+  <li>We cannot hand over your files to anyone, because we never have them.</li>
+</ul>
+
+<h2>Being honest about the limits</h2>
+<div class="callout">
+<p>A few jobs really are better on a server — full-fidelity Office conversion needs LibreOffice,
+and deep compression needs Ghostscript. Rather than pretend otherwise, those tools are clearly
+marked "server-assisted", are switched off by default, and run on a backend you host yourself.
+The app never contacts one unless you tell it to.</p>
+</div>
+<p>PDFLove is also a web app, which means its code is delivered to your browser to run. That is
+what makes local processing possible, and it also means the code is inspectable — you can read
+exactly what it does.</p>
+
+<a class="cta" href="index.html">Try it →</a>
+</div></main>
+<footer><div class="wrap">
+  <div class="foot-cols">
+    <div class="foot-col foot-about">
+      <div class="foot-brand"><span class="dot"></span>PDFLove</div>
+      <p>A document toolkit that runs entirely on your own device. No upload,
+         no account, no daily limit. Install it and it keeps working with no
+         internet at all.</p>
+      <div class="foot-platforms"><span>Web</span><span>Windows</span><span>macOS</span><span>Linux</span><span>Android</span><span>iOS</span></div>
+    </div>
+    <div class="foot-col">
+      <h4>Product</h4>
+      <a href="index.html">All tools</a>
+      <a href="features.html">Features</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="guides/index.html">Guides</a>
+    </div>
+    <div class="foot-col">
+      <h4>Company</h4>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="faq.html">FAQ</a>
+    </div>
+    <div class="foot-col">
+      <h4>Legal</h4>
+      <a href="security.html">Security</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="terms.html">Terms &amp; conditions</a>
+      <a href="cookies.html">Cookies</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>&copy; 2026 PDFLove — pdflove.co.in</span>
+    <span>Your files never leave your device.</span>
+  </div>
+</div></footer>
+</body>
+</html>

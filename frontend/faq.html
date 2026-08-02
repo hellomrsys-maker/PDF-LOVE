@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAQ — PDFLove</title>
+<meta name="description" content="Frequently asked questions about PDFLove: privacy, offline use, installing, file limits and security.">
+<link rel="canonical" href="https://pdflove.co.in/faq.html">
+<meta name="theme-color" content="#C1683A">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="pages.css" rel="stylesheet">
+</head>
+<body>
+<header><div class="wrap">
+  <a class="brand" href="index.html"><span class="dot"></span>PDFLove</a>
+  <nav class="hdr-links"><a href="features.html">Features</a><a href="pricing.html">Pricing</a><a href="guides/index.html">Guides</a><a href="faq.html">FAQ</a><a href="security.html">Security</a></nav>
+</div></header>
+<main><div class="wrap-narrow">
+<h1>Frequently asked questions</h1>
+<p class="lede">If your question is not here, <a href="contact.html">get in touch</a>.</p>
+
+<details open><summary>Are my files uploaded anywhere?</summary>
+<p>No. Every tool listed as "runs on-device" does its work inside your browser using WebAssembly
+and Canvas. Your file is read into memory, processed, and handed back as a download. It never
+crosses the network. You can verify this yourself: open your browser's developer tools, switch
+to the Network tab, and run any tool — you will see no upload.</p></details>
+
+<details><summary>Does it really work without internet?</summary>
+<p>Yes, once installed. The app stores its whole toolkit — including the OCR engine and the
+encryption library — on your device. After that, the app makes no network requests of its own.
+It only reaches the network when you press "Check for updates".</p></details>
+
+<details><summary>How do I install it?</summary>
+<p>Open PDFLove in Chrome, Edge or another Chromium browser and use the <strong>Install</strong>
+button in the header, or the install icon in the address bar. On iPhone or iPad, use Safari's
+<strong>Share → Add to Home Screen</strong>. On Mac Safari, <strong>File → Add to Dock</strong>.
+It then behaves like any other installed application.</p></details>
+
+<details><summary>Is there a file-size limit?</summary>
+<p>There is no upload, so there is no upload limit. The real limit is your device's available
+memory. The app estimates the memory a job needs and warns you before starting something that
+is likely to fail.</p></details>
+
+<details><summary>Do I need an account?</summary>
+<p>No. There is no login, no email address and no profile. Nothing to sign up for.</p></details>
+
+<details><summary>Will my output have a watermark?</summary>
+<p>Never, unless you added one yourself with the watermark tool.</p></details>
+
+<details><summary>Can I unlock a PDF I have the password for?</summary>
+<p>Yes — the Unlock PDF tool removes a password you can already supply. It is for documents you
+own or are authorised to access. It is not a password cracker and will not open a document you
+do not have the password for.</p></details>
+
+<details><summary>What are the "server-assisted" tools?</summary>
+<p>A handful of jobs genuinely need heavyweight native software — full-fidelity Office
+conversion, deep Ghostscript compression, PDF/A, and chat-with-document. Those are an optional,
+open-source backend you run yourself. They are clearly labelled, and the app never looks for a
+backend automatically: you have to point it at one.</p></details>
+
+<details><summary>Is my data used to train anything?</summary>
+<p>No. We never receive your files, so there is nothing to train on. The on-device AI models are
+pre-trained and read-only — they do not send your text or images anywhere.</p></details>
+</div></main>
+<footer><div class="wrap">
+  <div class="foot-cols">
+    <div class="foot-col foot-about">
+      <div class="foot-brand"><span class="dot"></span>PDFLove</div>
+      <p>A document toolkit that runs entirely on your own device. No upload,
+         no account, no daily limit. Install it and it keeps working with no
+         internet at all.</p>
+      <div class="foot-platforms"><span>Web</span><span>Windows</span><span>macOS</span><span>Linux</span><span>Android</span><span>iOS</span></div>
+    </div>
+    <div class="foot-col">
+      <h4>Product</h4>
+      <a href="index.html">All tools</a>
+      <a href="features.html">Features</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="guides/index.html">Guides</a>
+    </div>
+    <div class="foot-col">
+      <h4>Company</h4>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="faq.html">FAQ</a>
+    </div>
+    <div class="foot-col">
+      <h4>Legal</h4>
+      <a href="security.html">Security</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="terms.html">Terms &amp; conditions</a>
+      <a href="cookies.html">Cookies</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>&copy; 2026 PDFLove — pdflove.co.in</span>
+    <span>Your files never leave your device.</span>
+  </div>
+</div></footer>
+</body>
+</html>
