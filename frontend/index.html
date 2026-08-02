@@ -55,9 +55,67 @@
     backdrop-filter:blur(6px);
     z-index:40;
   }
-  header .wrap{display:flex;align-items:center;justify-content:space-between;}
-  .brand{display:flex;align-items:baseline;gap:8px;font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;letter-spacing:-0.01em;}
+  header .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;}
+  .brand{display:flex;align-items:baseline;gap:8px;font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;letter-spacing:-0.01em;text-decoration:none;flex-shrink:0;}
   .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;box-shadow:0 0 0 3px rgba(74,120,86,0.15);}
+
+  /* ---------- primary nav + mega menu ---------- */
+  .mainnav{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+  .navlink{
+    font-family:inherit;font-size:0.83rem;font-weight:600;letter-spacing:0.01em;
+    background:none;border:0;color:var(--ink);cursor:pointer;
+    padding:9px 12px;border-radius:8px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:5px;transition:background .12s,color .12s;
+  }
+  .navlink:hover{background:rgba(193,104,58,0.09);color:var(--copper-deep);}
+  .navlink .chev{font-size:0.8em;opacity:.6;transition:transform .15s;}
+  .navdrop{position:relative;}
+  .navdrop.open > .navlink{background:rgba(193,104,58,0.11);color:var(--copper-deep);}
+  .navdrop.open > .navlink .chev{transform:rotate(180deg);}
+  .megamenu{
+    position:absolute;top:calc(100% + 10px);left:0;
+    background:var(--paper-raised);
+    border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 18px 44px rgba(31,36,32,0.16);
+    padding:22px 24px;display:none;z-index:60;
+    grid-template-columns:repeat(var(--mm-cols,2),minmax(190px,1fr));
+    gap:6px 30px;
+  }
+  /* The 4-column menu is wider than the space to the left of its button, so
+     anchoring it to the button pushes it off-screen. Pin it to the page
+     instead: fixed, centred, and never wider than the viewport. */
+  .megamenu-wide{
+    position:fixed;
+    top:var(--hdr-h,84px);
+    left:50%;right:auto;
+    transform:translateX(-50%);
+    width:min(1040px, calc(100vw - 32px));
+    max-height:calc(100vh - var(--hdr-h,84px) - 24px);
+    overflow-y:auto;
+  }
+  .navdrop.open .megamenu{display:grid;}
+  .mm-group{min-width:0;}
+  .mm-head{
+    font-family:'IBM Plex Mono',monospace;font-size:0.66rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.1em;color:var(--sage);
+    margin:6px 0 8px;
+  }
+  .mm-item{
+    display:flex;align-items:center;gap:9px;width:100%;
+    background:none;border:0;font-family:inherit;font-size:0.85rem;color:var(--ink);
+    padding:7px 9px;border-radius:8px;cursor:pointer;text-align:left;
+    transition:background .1s;
+  }
+  .mm-item:hover{background:rgba(193,104,58,0.09);color:var(--copper-deep);}
+  .mm-item .mm-ico{
+    flex-shrink:0;width:26px;height:26px;border-radius:7px;
+    display:grid;place-items:center;font-size:0.9rem;
+    background:rgba(193,104,58,0.12);
+  }
+  .mm-more{grid-column:1/-1;border-top:1px solid var(--line);margin-top:10px;padding-top:10px;}
+
+  .header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .nav-toggle{display:none;background:none;border:1px solid var(--line);border-radius:8px;font-size:1.05rem;padding:6px 11px;cursor:pointer;color:var(--ink);}
   .status-pill{
     font-family:'IBM Plex Mono',monospace;
     font-size:0.72rem;
@@ -92,13 +150,30 @@
     font-family:'Fraunces',serif;
     font-weight:600;
     font-size:clamp(2.1rem,5vw,3.4rem);
-    line-height:1.05;
-    margin:0 0 20px;
+    line-height:1.06;
+    margin:0 0 18px;
     letter-spacing:-0.01em;
-    max-width:16ch;
+    max-width:22ch;
   }
   h1 em{font-style:italic;color:var(--copper);}
-  .lede{font-size:1.08rem;color:var(--ink-soft);max-width:56ch;margin:0 0 32px;}
+  .lede{font-size:1.08rem;color:var(--ink-soft);max-width:62ch;margin:0 0 30px;}
+
+  /* centred hero (matches how the category-led tool sites read) */
+  .hero{text-align:center;}
+  .hero h1{max-width:22ch;margin-left:auto;margin-right:auto;}
+  .hero .lede{margin-left:auto;margin-right:auto;}
+  .hero .assist-hero{margin-left:auto;margin-right:auto;}
+  .promise-row{
+    list-style:none;display:flex;flex-wrap:wrap;justify-content:center;
+    gap:8px 10px;padding:0;margin:26px 0 0;
+  }
+  .promise-row li{
+    font-size:0.8rem;color:var(--ink-soft);
+    background:var(--paper-raised);border:1px solid var(--line);
+    border-radius:100px;padding:6px 14px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .promise-row li::before{content:"✓";color:var(--ok);font-weight:700;}
 
   /* signature: the trace/architecture panel */
   .trace{
@@ -127,15 +202,25 @@
 
   /* ---------- tool grid ---------- */
   .section-label{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:0.75rem;
-    color:var(--sage);
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-    margin:56px 0 16px;
-    padding-top:24px;
+    font-family:'Fraunces',serif;
+    font-size:1.35rem;
+    font-weight:600;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+    margin:52px 0 18px;
+    padding-top:26px;
     border-top:1px solid var(--line);
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
   }
+  .onbadge{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.66rem;font-weight:500;
+    text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ok);
+    background:rgba(74,120,86,0.10);
+    border-radius:100px;padding:3px 9px;
+  }
+  .onbadge.warn{color:var(--copper-deep);background:rgba(193,104,58,0.11);}
   .tools{
     display:grid;
     grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
@@ -153,11 +238,19 @@
     font-family:inherit;
     color:var(--ink);
   }
-  .tool-card:hover{border-color:var(--copper);transform:translateY(-2px);}
+  .tool-card:hover{border-color:var(--copper);transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(31,36,32,0.32);}
   .tool-card:focus-visible{outline:2px solid var(--copper);outline-offset:2px;}
-  .tool-card .icon{font-size:1.3rem;margin-bottom:10px;display:block;}
-  .tool-card .name{font-weight:600;font-size:0.95rem;margin-bottom:4px;}
-  .tool-card .desc{font-size:0.8rem;color:var(--ink-soft);}
+  /* icon sits in its own tinted tile, so the grid scans as a product
+     catalogue rather than a wall of loose emoji */
+  .tool-card .icon{
+    width:38px;height:38px;border-radius:10px;
+    display:grid;place-items:center;
+    font-size:1.15rem;line-height:1;
+    background:rgba(193,104,58,0.12);
+    margin-bottom:12px;
+  }
+  .tool-card .name{font-weight:600;font-size:0.95rem;margin-bottom:4px;line-height:1.3;}
+  .tool-card .desc{font-size:0.8rem;color:var(--ink-soft);line-height:1.45;}
   .tool-card .loc{
     font-family:'IBM Plex Mono',monospace;
     font-size:0.65rem;
@@ -228,7 +321,41 @@
   }
   .runlog .ok{color:var(--ok);}
 
-  footer{border-top:1px solid var(--line);margin-top:80px;padding:32px 0 60px;color:var(--ink-soft);font-size:0.85rem;}
+  footer{border-top:1px solid var(--line);margin-top:80px;padding:48px 0 60px;color:var(--ink-soft);font-size:0.85rem;}
+  .foot-cols{
+    display:grid;
+    grid-template-columns:1.6fr repeat(4,1fr);
+    gap:34px 28px;
+    padding-bottom:34px;
+  }
+  .foot-brand{
+    display:flex;align-items:baseline;gap:8px;
+    font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem;
+    color:var(--ink);margin-bottom:10px;
+  }
+  .foot-brand .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;}
+  .foot-about p{margin:0 0 14px;max-width:40ch;line-height:1.55;}
+  .foot-platforms{display:flex;flex-wrap:wrap;gap:6px;}
+  .foot-platforms span{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;
+    border:1px solid var(--line);border-radius:100px;padding:3px 10px;
+    background:var(--paper-raised);
+  }
+  .foot-col h4{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.1em;color:var(--sage);
+    margin:0 0 12px;
+  }
+  .foot-link{
+    display:block;width:100%;text-align:left;
+    background:none;border:0;padding:5px 0;
+    font-family:inherit;font-size:0.85rem;color:var(--ink-soft);
+    cursor:pointer;text-decoration:none;transition:color .12s;
+  }
+  .foot-link:hover{color:var(--copper-deep);text-decoration:underline;}
+  .foot-bottom{border-top:1px solid var(--line);padding-top:22px;display:grid;gap:14px;}
+  .foot-note{max-width:78ch;line-height:1.55;}
+  .foot-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
 
   .note{background:var(--paper);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;font-size:0.8rem;color:var(--ink-soft);margin:12px 0;}
   .canvas-wrap{position:relative;border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:60vh;margin:10px 0;background:#eee;}
@@ -302,6 +429,31 @@
   #home-rows .section-label{margin-top:34px;}
   #status-pill .backend-dot{width:7px;height:7px;border-radius:50%;background:var(--line);display:inline-block;}
   #status-pill .backend-dot.up{background:var(--ok);box-shadow:0 0 0 3px rgba(74,120,86,0.2);}
+  /* the mega menu needs real width; below this the nav collapses behind ☰ */
+  @media (max-width:1040px){
+    .mainnav{
+      display:none;order:4;flex-basis:100%;
+      flex-direction:column;align-items:stretch;gap:2px;
+      padding:10px 0 4px;border-top:1px solid var(--line);margin-top:10px;
+    }
+    .mainnav.open{display:flex;}
+    .nav-toggle{display:inline-block;}
+    .navlink{justify-content:space-between;width:100%;padding:11px 10px;}
+    .megamenu{
+      position:static;display:none;border:0;box-shadow:none;padding:4px 0 10px 10px;
+      background:transparent;grid-template-columns:1fr;
+    }
+    .navdrop.open .megamenu{display:grid;}
+    /* inside the collapsed ☰ drawer the menu is inline, not a popover */
+    .megamenu-wide{
+      position:static;transform:none;width:auto;
+      max-height:none;overflow:visible;top:auto;left:auto;right:auto;
+    }
+  }
+  @media (max-width:860px){
+    .foot-cols{grid-template-columns:repeat(2,1fr);}
+    .foot-about{grid-column:1/-1;}
+  }
   @media (max-width:700px){
     .header-row{flex-wrap:wrap;gap:10px;}
     .header-search{order:3;flex-basis:100%;max-width:none;}
@@ -309,6 +461,7 @@
     .overlay{padding:0;}
     .panel{border-radius:0;max-width:none;min-height:100dvh;}
     .hero{padding:28px 0 18px;}
+    .foot-cols{grid-template-columns:1fr;gap:24px;}
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -330,10 +483,28 @@
 
 <header>
   <div class="wrap header-row">
-    <div class="brand"><span class="dot"></span>Dockbench</div>
-    <div class="header-search"><input type="text" id="tool-search" placeholder="Search 104 tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
-    <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
-    <button class="install-btn" id="install-btn" title="Install Dockbench as an app on this device">⬇ Install</button>
+    <a class="brand" href="./" aria-label="Dockbench home"><span class="dot"></span>Dockbench</a>
+
+    <nav class="mainnav" id="mainnav" aria-label="Main">
+      <button class="navlink" data-jump="Merge PDF">Merge PDF</button>
+      <button class="navlink" data-jump="Split PDF">Split PDF</button>
+      <button class="navlink" data-jump="Make PDF Smaller">Compress PDF</button>
+      <div class="navdrop">
+        <button class="navlink has-menu" aria-expanded="false" aria-haspopup="true">Convert PDF <span class="chev">⌄</span></button>
+        <div class="megamenu" data-cols="2" role="menu"></div>
+      </div>
+      <div class="navdrop">
+        <button class="navlink has-menu" aria-expanded="false" aria-haspopup="true">All tools <span class="chev">⌄</span></button>
+        <div class="megamenu megamenu-wide" data-cols="4" role="menu"></div>
+      </div>
+    </nav>
+
+    <div class="header-actions">
+      <div class="header-search"><input type="text" id="tool-search" placeholder="Search tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
+      <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
+      <button class="install-btn" id="install-btn" title="Install Dockbench as an app on this device">Install</button>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
+    </div>
   </div>
   <nav class="wrap cat-tabs" id="cat-tabs" aria-label="Tool categories"></nav>
 </header>
@@ -342,84 +513,121 @@
 
 <div class="wrap">
   <section class="hero">
-    <div class="eyebrow">local-only document &amp; image tools</div>
-    <h1>Your files never leave <em>this tab.</em></h1>
-    <p class="lede">Merge, split, compress, and convert PDFs and images entirely in your browser. No account, no upload, no daily limit — the processing happens on your device, not ours.</p>
+    <h1>Every tool you need to work with PDFs, in one place</h1>
+    <p class="lede">Merge, split, compress, convert, sign and protect PDFs and images — free, with no sign-up and no daily limit. Everything runs inside this tab, so your files never leave your device.</p>
 
     <div class="assist-hero">
       <input type="text" id="assist-hero-input" placeholder="Tell me what you need — e.g. &ldquo;make this PDF small enough to email&rdquo;" aria-label="Describe what you want to do">
       <button class="primary-btn" id="assist-hero-btn">Ask</button>
     </div>
 
-    <div class="trace" aria-hidden="true">
-      <div class="line"><span class="tag">select</span><span>photo.jpg</span></div>
-      <div class="line"><span class="tag">route</span><span class="arrow">→</span> browser (wasm)<span> </span><span class="no">→ server</span></div>
-      <div class="line"><span class="tag">process</span><span>compress · resize · convert</span></div>
-      <div class="line"><span class="tag">result</span><span>download ready — 0 bytes sent over network</span></div>
-    </div>
-
-    <div class="promise-grid">
-      <div class="promise-item"><span class="promise-check">✓</span> No sign-up, ever</div>
-      <div class="promise-item"><span class="promise-check">✓</span> No "2 files a day" limit</div>
-      <div class="promise-item"><span class="promise-check">✓</span> No hidden or forced watermark — ever</div>
-      <div class="promise-item"><span class="promise-check">✓</span> No file-size ceiling</div>
-      <div class="promise-item"><span class="promise-check">✓</span> Works with your Wi-Fi off*</div>
-      <div class="promise-item"><span class="promise-check">✓</span> 104 tools, all in one place</div>
-    </div>
-    <div class="helper-line" style="max-width:56ch;">*Everything above the "AI / Server" and "Currency" sections works fully offline once this page has loaded once.</div>
+    <ul class="promise-row">
+      <li>No sign-up</li>
+      <li>No daily limit</li>
+      <li>No watermarks</li>
+      <li>No file-size ceiling</li>
+      <li>Works offline</li>
+    </ul>
   </section>
 
   <div id="search-no-results" style="display:none;padding:20px;text-align:center;color:var(--ink-soft);">No tools match that search. <button class="small-btn" id="no-results-ask" style="margin-left:8px;">Ask the assistant instead →</button></div>
 
   <div id="home-rows">
-    <div class="section-label" id="label-fav-tools">// your pinned tools ★</div>
+    <div class="section-label" id="label-fav-tools">Pinned</div>
     <div class="tools" id="fav-tools"></div>
-    <div class="section-label" id="label-recent-tools">// recently used</div>
+    <div class="section-label" id="label-recent-tools">Recently used</div>
     <div class="tools" id="recent-tools"></div>
-    <div class="section-label" id="label-popular-tools">// most popular</div>
+    <div class="section-label" id="label-popular-tools">Most popular</div>
     <div class="tools" id="popular-tools"></div>
   </div>
 
-  <div class="section-label" id="label-pdf-tools">// pdf tools — run entirely on your device</div>
+  <div class="section-label" id="label-pdf-tools">Organize PDF <span class="onbadge">on your device</span></div>
   <div class="tools" id="pdf-tools"></div>
 
-  <div class="section-label" id="label-convert-tools">// document conversion — run entirely on your device</div>
+  <div class="section-label" id="label-convert-tools">Convert PDF <span class="onbadge">on your device</span></div>
   <div class="tools" id="convert-tools"></div>
 
-  <div class="section-label" id="label-edit-tools">// edit, sign & redact — run entirely on your device</div>
+  <div class="section-label" id="label-edit-tools">Edit &amp; sign PDF <span class="onbadge">on your device</span></div>
   <div class="tools" id="edit-tools"></div>
 
-  <div class="section-label" id="label-security-tools">// pdf security — real AES-256, runs entirely on your device</div>
+  <div class="section-label" id="label-security-tools">PDF security <span class="onbadge">real AES-256, on your device</span></div>
   <div class="tools" id="security-tools"></div>
 
-  <div class="section-label" id="label-img-tools">// image &amp; id photo tools — run entirely on your device</div>
+  <div class="section-label" id="label-img-tools">Images &amp; ID photos <span class="onbadge">on your device</span></div>
   <div class="tools" id="img-tools"></div>
 
-  <div class="section-label" id="label-video-tools">// video tools — run entirely on your device</div>
+  <div class="section-label" id="label-video-tools">Video <span class="onbadge">on your device</span></div>
   <div class="tools" id="video-tools"></div>
 
-  <div class="section-label" id="label-api-tools">// server-assisted tools — optional, files sent only when you use these</div>
+  <div class="section-label" id="label-api-tools">Server-assisted <span class="onbadge warn">optional — files are sent only when you use these</span></div>
   <div class="tools" id="api-tools"></div>
 
-  <div class="section-label" id="label-text-tools">// text tools — run entirely on your device</div>
-  <div class="tools" id="text-tools"></div>
-
-  <div class="section-label" id="label-utility-tools">// everyday utilities — run entirely on your device</div>
+  <div class="section-label" id="label-utility-tools">Codes &amp; extras</div>
   <div class="tools" id="utility-tools"></div>
 
-  <div class="section-label" id="label-finance-tools">// finance tools — run entirely on your device, except currency (needs live rates)</div>
-  <div class="tools" id="finance-tools"></div>
-
-  <div class="section-label" id="label-ai-tools">// real AI, running on your device — no competitor does this without a paid cloud API</div>
+  <div class="section-label" id="label-ai-tools">PDF intelligence — real AI, running on your device</div>
   <div class="tools" id="ai-tools"></div>
 </div>
 
 <footer>
   <div class="wrap">
-    Dockbench is a static, client-side application. PDF and image tools above run on WebAssembly/Canvas in your browser. Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate opt-in backend — see <code>/backend</code> in the project for the self-hosted, open-source API that powers them.
-    Dockbench never checks for one automatically — <button class="small-btn" id="check-backend-btn" style="margin-left:4px;">Have a self-hosted backend? Check for it →</button>
-    <span id="check-backend-status" style="margin-left:8px;font-size:0.85rem;"></span>
-    <br><button class="small-btn" id="license-btn" style="margin-top:8px;">Have a license key? Manage it →</button>
+    <div class="foot-cols">
+      <div class="foot-col foot-about">
+        <div class="foot-brand"><span class="dot"></span>Dockbench</div>
+        <p>A static, client-side document toolkit. PDF and image tools run on WebAssembly and Canvas inside your browser — no upload, no account, no daily limit.</p>
+        <div class="foot-platforms" aria-label="Available on">
+          <span>Web</span><span>Windows</span><span>macOS</span><span>Linux</span><span>Android</span>
+        </div>
+      </div>
+
+      <div class="foot-col">
+        <h4>Organize</h4>
+        <button class="foot-link" data-jump="Merge PDF">Merge PDF</button>
+        <button class="foot-link" data-jump="Split PDF">Split PDF</button>
+        <button class="foot-link" data-jump="Make PDF Smaller">Compress PDF</button>
+        <button class="foot-link" data-jump="Rotate PDF">Rotate PDF</button>
+        <button class="foot-link" data-jump="Organize PDF">Organize PDF</button>
+      </div>
+
+      <div class="foot-col">
+        <h4>Convert</h4>
+        <button class="foot-link" data-jump="PDF to Word">PDF to Word</button>
+        <button class="foot-link" data-jump="PDF to JPG">PDF to JPG</button>
+        <button class="foot-link" data-jump="Images to PDF">Images to PDF</button>
+        <button class="foot-link" data-jump="Word to PDF">Word to PDF</button>
+        <button class="foot-link" data-jump="PDF to Excel">PDF to Excel</button>
+      </div>
+
+      <div class="foot-col">
+        <h4>Edit &amp; secure</h4>
+        <button class="foot-link" data-jump="PDF Editor">Edit PDF</button>
+        <button class="foot-link" data-jump="Sign PDF">Sign PDF</button>
+        <button class="foot-link" data-jump="Add Watermark">Add watermark</button>
+        <button class="foot-link" data-jump="Protect PDF">Protect PDF</button>
+        <button class="foot-link" data-jump="Unlock PDF">Unlock PDF</button>
+      </div>
+
+      <div class="foot-col">
+        <h4>Guides</h4>
+        <a class="foot-link" href="guides/">All guides</a>
+        <a class="foot-link" href="guides/how-to-make-a-pdf-smaller-to-email.html">Shrink a PDF for email</a>
+        <a class="foot-link" href="guides/why-cant-i-select-text-in-scanned-pdf.html">Scanned PDF won't select</a>
+        <a class="foot-link" href="guides/pdf-wont-open-says-its-damaged.html">Damaged PDF</a>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <div class="foot-note">
+        Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate,
+        opt-in backend — see <code>/backend</code> for the self-hosted, open-source API. Dockbench never checks for
+        one automatically.
+      </div>
+      <div class="foot-actions">
+        <button class="small-btn" id="check-backend-btn">Have a self-hosted backend? Check for it →</button>
+        <span id="check-backend-status" style="font-size:0.85rem;"></span>
+        <button class="small-btn" id="license-btn">Have a license key? Manage it →</button>
+      </div>
+    </div>
   </div>
 </footer>
 
@@ -2286,7 +2494,6 @@ const INTENT_SYNONYMS = [
   [['speech to text','dictate','voice to text'],'Voice to Text (On Your Device)'],
   [['read aloud','read to me','read it out','listen to'],'Read PDF Aloud'],
   [['describe photo','alt text','caption'],'Describe a Photo / Alt-Text (On Your Device)'],
-  [['count words','word count','how many words'],'Word & Character Counter'],
   [['qr','qr code','make a qr code','generate qr',
     'codigo qr','generar qr',
     'qr code banao'],'QR Code Generator'],
@@ -2294,10 +2501,6 @@ const INTENT_SYNONYMS = [
   [['password generator','make a password','strong password','random password','new password',
     'generar contraseña','contraseña segura',
     'password banao','strong password chahiye'],'Password Generator'],
-  [['currency','exchange rate','convert money','dollars to','euros to',
-    'convertir moneda','tipo de cambio',
-    'currency convert karo','paisa convert karo'],'Currency Converter'],
-  [['loan','emi','monthly payment'],'Loan / EMI Calculator'],
 ];
 
 // When the user is clearly talking about a photo/image, redirect PDF-default
@@ -2653,134 +2856,6 @@ function toolDigitalStamp(){
 
 /* ================= NEW CATEGORY: Text Tools ================= */
 
-function toolWordCounter(){
-  const body = panelShell({title:'Word & Character Counter', desc:'Paste text below and see the count update as you type.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<textarea id="wc-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);" placeholder="Paste or type your text here..."></textarea>`;
-  body.appendChild(field);
-  const stats=document.createElement('div'); stats.className='tools'; stats.style.gridTemplateColumns='repeat(4,1fr)'; body.appendChild(stats);
-  const boxes = ['Words','Characters','Sentences','Paragraphs'].map(label=>{
-    const b=document.createElement('div'); b.className='thumb'; b.style.padding='16px 8px';
-    b.innerHTML = `<div style="font-size:1.4rem;font-weight:700;color:var(--copper);" id="wc-${label.toLowerCase()}">0</div><div style="font-size:0.75rem;color:var(--ink-soft);">${label}</div>`;
-    stats.appendChild(b);
-    return b;
-  });
-  const input = field.querySelector('#wc-input');
-  input.addEventListener('input', ()=>{
-    const t = input.value;
-    document.getElementById('wc-words').textContent = (t.trim().match(/\S+/g)||[]).length;
-    document.getElementById('wc-characters').textContent = t.length;
-    document.getElementById('wc-sentences').textContent = (t.match(/[.!?]+(\s|$)/g)||[]).length;
-    document.getElementById('wc-paragraphs').textContent = t.split(/\n\s*\n/).filter(p=>p.trim()).length || (t.trim()?1:0);
-  });
-}
-
-function toolCaseConverter(){
-  const body = panelShell({title:'Change Text Case', desc:'Paste text, pick a style, copy the result.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Your text</label><textarea id="cc-input" rows="6" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);"></textarea>`;
-  body.appendChild(field);
-  const tabRow=document.createElement('div'); tabRow.className='tools'; tabRow.style.gridTemplateColumns='repeat(3,1fr)';
-  const styles = [
-    {label:'UPPERCASE', fn:t=>t.toUpperCase()},
-    {label:'lowercase', fn:t=>t.toLowerCase()},
-    {label:'Title Case', fn:t=>t.replace(/\w\S*/g, w=>w[0].toUpperCase()+w.slice(1).toLowerCase())},
-    {label:'Sentence case', fn:t=>t.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c=>c.toUpperCase())},
-    {label:'aLtErNaTiNg', fn:t=>t.split('').map((c,i)=>i%2?c.toLowerCase():c.toUpperCase()).join('')},
-    {label:'Remove extra spaces', fn:t=>t.replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim()},
-  ];
-  styles.forEach(s=>{
-    const b=document.createElement('button'); b.type='button'; b.className='tool-card'; b.style.padding='14px 8px';
-    b.innerHTML = `<span class="name" style="font-size:0.85rem;">${s.label}</span>`;
-    b.onclick = ()=>{
-      const input = document.getElementById('cc-input');
-      input.value = s.fn(input.value);
-    };
-    tabRow.appendChild(b);
-  });
-  body.appendChild(tabRow);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Copy to clipboard'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  btn.onclick = async ()=>{
-    const val = document.getElementById('cc-input').value;
-    try{ await navigator.clipboard.writeText(val); log.innerHTML='<span class="ok">✓ Copied!</span>'; }
-    catch(e){ log.textContent = 'Could not copy automatically — select the text and copy manually.'; }
-  };
-}
-
-function toolTextDiff(){
-  const body = panelShell({title:'Compare Two Texts', desc:'Paste the original and the changed version, see what\'s different, line by line.'});
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML = `
-    <div class="field"><label>Original</label><textarea id="td-a" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);"></textarea></div>
-    <div class="field"><label>Changed</label><textarea id="td-b" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);"></textarea></div>
-  `;
-  body.appendChild(row);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Compare'; body.appendChild(btn);
-  const result=document.createElement('div'); result.style.cssText='margin-top:14px;font-family:IBM Plex Mono,monospace;font-size:0.82rem;max-height:340px;overflow-y:auto;'; body.appendChild(result);
-  btn.onclick = ()=>{
-    const a = document.getElementById('td-a').value.split('\n');
-    const b = document.getElementById('td-b').value.split('\n');
-    const maxLen = Math.max(a.length, b.length);
-    let html='';
-    for(let i=0;i<maxLen;i++){
-      const lineA = a[i], lineB = b[i];
-      if(lineA===lineB){
-        html += `<div style="padding:3px 8px;">${escapeXml(lineA||'')}</div>`;
-      } else {
-        if(lineA!==undefined) html += `<div style="padding:3px 8px;background:#FBE6E3;color:#A6522A;">− ${escapeXml(lineA)}</div>`;
-        if(lineB!==undefined) html += `<div style="padding:3px 8px;background:#E5F0E7;color:#2E5A38;">+ ${escapeXml(lineB)}</div>`;
-      }
-    }
-    result.innerHTML = html || '<div class="note">Both texts are identical.</div>';
-  };
-}
-
-function toolRemoveDuplicateLines(){
-  const body = panelShell({title:'Remove Duplicate Lines', desc:'Paste a list, remove repeated lines, optionally sort it.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<textarea id="rdl-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--paper);" placeholder="One item per line..."></textarea>`;
-  body.appendChild(field);
-  const opts=document.createElement('label'); opts.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
-  opts.innerHTML = `<input type="checkbox" id="rdl-sort"> Also sort alphabetically`;
-  body.appendChild(opts);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Clean it up'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  btn.onclick = ()=>{
-    const input = document.getElementById('rdl-input');
-    let lines = [...new Set(input.value.split('\n').map(l=>l.trim()).filter(l=>l))];
-    if(document.getElementById('rdl-sort').checked) lines.sort((a,b)=>a.localeCompare(b));
-    input.value = lines.join('\n');
-    log.innerHTML = `<span class="ok">✓ Done — ${lines.length} unique line(s).</span>`;
-  };
-}
-
-function toolLoremIpsum(){
-  const body = panelShell({title:'Placeholder Text Generator', desc:'Generate filler text for mockups and designs.'});
-  const words = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat".split(' ');
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>How many paragraphs?</label><input type="number" id="li-count" value="3" min="1" max="20">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; body.appendChild(btn);
-  const out=document.createElement('textarea'); out.rows=10; out.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--paper);margin-top:12px;'; body.appendChild(out);
-  const copyBtn=document.createElement('button'); copyBtn.className='small-btn'; copyBtn.textContent='Copy'; copyBtn.style.marginTop='8px'; body.appendChild(copyBtn);
-  function randSentence(){
-    const len = 8+Math.floor(Math.random()*10);
-    let s = Array.from({length:len},()=>words[Math.floor(Math.random()*words.length)]).join(' ');
-    return s.charAt(0).toUpperCase()+s.slice(1)+'.';
-  }
-  btn.onclick = ()=>{
-    const n = parseInt(document.getElementById('li-count').value)||3;
-    const paras=[];
-    for(let i=0;i<n;i++){
-      const sentences = Array.from({length:4+Math.floor(Math.random()*3)}, randSentence);
-      paras.push(sentences.join(' '));
-    }
-    out.value = paras.join('\n\n');
-  };
-  copyBtn.onclick = async ()=>{ try{ await navigator.clipboard.writeText(out.value); }catch(e){} };
-}
-
 /* ================= NEW CATEGORY: Everyday Utilities ================= */
 
 function toolQRGenerate(){
@@ -2882,100 +2957,6 @@ function toolPasswordGenerator(){
   copyBtn.onclick = async ()=>{ try{ await navigator.clipboard.writeText(out.textContent); }catch(e){} };
 }
 
-function toolUnitConverter(){
-  const body = panelShell({title:'Unit Converter', desc:'Convert between everyday units — length, weight, or temperature.'});
-  const groups = {
-    length: { units: {mm:0.001,cm:0.01,m:1,km:1000,inch:0.0254,foot:0.3048,yard:0.9144,mile:1609.34}, base:'meters' },
-    weight: { units: {mg:0.001,g:1,kg:1000,oz:28.3495,lb:453.592}, base:'grams' },
-  };
-  const tabRow=document.createElement('div'); tabRow.className='tools'; tabRow.style.gridTemplateColumns='repeat(3,1fr)';
-  ['length','weight','temperature'].forEach((g,i)=>{
-    const b=document.createElement('button'); b.type='button'; b.className='tool-card'+(i===0?' active':''); b.style.padding='14px 8px'; b.style.borderColor = i===0?'var(--copper)':'var(--line)';
-    b.innerHTML = `<span class="name" style="text-transform:capitalize;">${g}</span>`;
-    b.onclick = ()=>{ [...tabRow.children].forEach(x=>x.style.borderColor='var(--line)'); b.style.borderColor='var(--copper)'; setGroup(g); };
-    tabRow.appendChild(b);
-  });
-  body.appendChild(tabRow);
-  const row=document.createElement('div'); row.className='row'; body.appendChild(row);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-
-  function setGroup(g){
-    if(g==='temperature'){
-      row.innerHTML = `
-        <div class="field"><label>From</label>
-          <select id="uc-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);"><option>Celsius</option><option>Fahrenheit</option><option>Kelvin</option></select>
-        </div>
-        <div class="field"><label>Value</label><input type="number" id="uc-val" value="0"></div>
-      `;
-      row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input', ()=>{
-        const from = document.getElementById('uc-from').value;
-        const v = parseFloat(document.getElementById('uc-val').value)||0;
-        let c = from==='Celsius'?v : from==='Fahrenheit'?(v-32)*5/9 : v-273.15;
-        log.innerHTML = `<strong>${c.toFixed(2)}°C</strong> = ${(c*9/5+32).toFixed(2)}°F = ${(c+273.15).toFixed(2)}K`;
-      }));
-      return;
-    }
-    const units = Object.keys(groups[g].units);
-    row.innerHTML = `
-      <div class="field"><label>From</label>
-        <select id="uc-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${units.map(u=>`<option>${u}</option>`).join('')}</select>
-      </div>
-      <div class="field"><label>Value</label><input type="number" id="uc-val" value="1"></div>
-      <div class="field"><label>To</label>
-        <select id="uc-to" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${units.map(u=>`<option>${u}</option>`).join('')}</select>
-      </div>
-    `;
-    row.querySelectorAll('input,select').forEach(el=>el.addEventListener('input', ()=>{
-      const from = document.getElementById('uc-from').value, to = document.getElementById('uc-to').value;
-      const v = parseFloat(document.getElementById('uc-val').value)||0;
-      const result = v * groups[g].units[from] / groups[g].units[to];
-      log.innerHTML = `<strong>${v} ${from}</strong> = <strong>${result.toFixed(4)} ${to}</strong>`;
-    }));
-  }
-  setGroup('length');
-}
-
-function toolBase64(){
-  const body = panelShell({title:'Base64 Encode / Decode', desc:'Turn text into Base64 code, or decode Base64 back into text — used when embedding data in URLs, emails, or code.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Input</label><textarea id="b64-input" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
-  body.appendChild(field);
-  const tabRow=document.createElement('div'); tabRow.className='pill-row';
-  tabRow.innerHTML = `<button class="small-btn" id="b64-encode">Encode →</button><button class="small-btn" id="b64-decode">← Decode</button>`;
-  body.appendChild(tabRow);
-  const outField=document.createElement('div'); outField.className='field';
-  outField.innerHTML = `<label>Result</label><textarea id="b64-output" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
-  body.appendChild(outField);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  tabRow.querySelector('#b64-encode').onclick = ()=>{
-    try{ document.getElementById('b64-output').value = btoa(unescape(encodeURIComponent(document.getElementById('b64-input').value))); log.textContent=''; }
-    catch(e){ log.textContent = 'Could not encode that text.'; }
-  };
-  tabRow.querySelector('#b64-decode').onclick = ()=>{
-    try{ document.getElementById('b64-output').value = decodeURIComponent(escape(atob(document.getElementById('b64-input').value))); log.textContent=''; }
-    catch(e){ log.textContent = 'That doesn\'t look like valid Base64 — check for typos.'; }
-  };
-}
-
-function toolJSONFormatter(){
-  const body = panelShell({title:'JSON Formatter & Checker', desc:'Paste messy or minified JSON and get it cleanly formatted — also tells you if there\'s an error.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<textarea id="json-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder='{"example": "paste your JSON here"}'></textarea>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Format & Check'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  btn.onclick = ()=>{
-    const input = document.getElementById('json-input');
-    try{
-      const parsed = JSON.parse(input.value);
-      input.value = JSON.stringify(parsed, null, 2);
-      log.innerHTML = '<span class="ok">✓ Valid JSON — formatted.</span>';
-    }catch(e){
-      log.textContent = 'This isn\'t valid JSON: ' + e.message;
-    }
-  };
-}
-
 /* ================= MORE UTILITIES: hashing, time, calculators, color, dev ================= */
 
 async function sha(algo, text){
@@ -3025,333 +3006,7 @@ function md5(str){
   return toHex(a)+toHex(b)+toHex(c)+toHex(d);
 }
 
-function toolHashGenerator(){
-  const body = panelShell({title:'Hash Generator', desc:'Turn text into a fixed-length fingerprint (checksum) — used to verify a file or password hasn\'t changed.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Text</label><textarea id="hg-input" rows="4" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate all hashes'; body.appendChild(btn);
-  const results=document.createElement('div'); results.style.marginTop='14px'; body.appendChild(results);
-  btn.onclick = async ()=>{
-    const text = document.getElementById('hg-input').value;
-    const [sha1v, sha256v, sha512v] = await Promise.all([sha('SHA-1',text), sha('SHA-256',text), sha('SHA-512',text)]);
-    const md5v = md5(text);
-    results.innerHTML = ['MD5','SHA-1','SHA-256','SHA-512'].map((label,i)=>{
-      const val = [md5v, sha1v, sha256v, sha512v][i];
-      return `<div class="filerow" style="margin-bottom:6px;"><span style="font-family:IBM Plex Mono,monospace;font-size:0.78rem;word-break:break-all;"><strong>${label}:</strong> ${val}</span></div>`;
-    }).join('');
-  };
-}
-
-function toolTimestampConverter(){
-  const body = panelShell({title:'Date & Timestamp Converter', desc:'Convert between a human-readable date and a computer timestamp.'});
-  const nowBtn=document.createElement('button'); nowBtn.className='small-btn'; nowBtn.textContent='Use current moment'; body.appendChild(nowBtn);
-  const field1=document.createElement('div'); field1.className='field'; field1.style.marginTop='12px';
-  field1.innerHTML = `<label>Unix timestamp (seconds since 1970)</label><input type="number" id="ts-epoch" placeholder="1776495426">`;
-  body.appendChild(field1);
-  const field2=document.createElement('div'); field2.className='field';
-  field2.innerHTML = `<label>Or a normal date & time</label><input type="datetime-local" id="ts-date">`;
-  body.appendChild(field2);
-  const result=document.createElement('div'); result.className='note'; body.appendChild(result);
-  function showFromDate(d){
-    result.innerHTML = `<strong>Unix timestamp:</strong> ${Math.floor(d.getTime()/1000)}<br><strong>Your local time:</strong> ${d.toLocaleString()}<br><strong>UTC:</strong> ${d.toUTCString()}`;
-  }
-  body.addEventListener('input', e=>{
-    if(e.target.id==='ts-epoch' && e.target.value){ showFromDate(new Date(parseInt(e.target.value)*1000)); }
-    if(e.target.id==='ts-date' && e.target.value){ showFromDate(new Date(e.target.value)); }
-  });
-  nowBtn.onclick = ()=>{ showFromDate(new Date()); };
-}
-
-function toolURLEncoder(){
-  const body = panelShell({title:'URL Encode / Decode', desc:'Make text safe to put inside a web address, or reverse it back.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Input</label><textarea id="ue-input" rows="5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
-  body.appendChild(field);
-  const tabRow=document.createElement('div'); tabRow.className='pill-row';
-  tabRow.innerHTML = `<button class="small-btn" id="ue-encode">Encode →</button><button class="small-btn" id="ue-decode">← Decode</button>`;
-  body.appendChild(tabRow);
-  const outField=document.createElement('div'); outField.className='field';
-  outField.innerHTML = `<label>Result</label><textarea id="ue-output" rows="5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
-  body.appendChild(outField);
-  tabRow.querySelector('#ue-encode').onclick = ()=>{ document.getElementById('ue-output').value = encodeURIComponent(document.getElementById('ue-input').value); };
-  tabRow.querySelector('#ue-decode').onclick = ()=>{ try{ document.getElementById('ue-output').value = decodeURIComponent(document.getElementById('ue-input').value); }catch(e){ document.getElementById('ue-output').value = 'Could not decode — check for typos.'; } };
-}
-
-function toolAgeCalculator(){
-  const body = panelShell({title:'Age Calculator', desc:'Find out exactly how old someone is (or how long until a date).'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Date of birth</label><input type="date" id="ac-dob">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Calculate'; body.appendChild(btn);
-  const result=document.createElement('div'); result.className='note'; body.appendChild(result);
-  btn.onclick = ()=>{
-    const dobVal = document.getElementById('ac-dob').value;
-    if(!dobVal){ result.textContent='Pick a date first.'; return; }
-    const dob = new Date(dobVal), now = new Date();
-    let years = now.getFullYear()-dob.getFullYear();
-    let months = now.getMonth()-dob.getMonth();
-    let days = now.getDate()-dob.getDate();
-    if(days<0){ months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
-    if(months<0){ years--; months += 12; }
-    const totalDays = Math.floor((now-dob)/(1000*60*60*24));
-    result.innerHTML = `<strong>${years} years, ${months} months, ${days} days old</strong><br>That's ${totalDays.toLocaleString()} days total.`;
-  };
-}
-
-function toolBMICalculator(){
-  const body = panelShell({title:'BMI Calculator', desc:'A quick body mass index estimate from height and weight — for general reference only, not medical advice.'});
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML = `
-    <div class="field"><label>Height (cm)</label><input type="number" id="bmi-h" value="170"></div>
-    <div class="field"><label>Weight (kg)</label><input type="number" id="bmi-w" value="65"></div>
-  `;
-  body.appendChild(row);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Calculate'; body.appendChild(btn);
-  const result=document.createElement('div'); result.className='note'; body.appendChild(result);
-  btn.onclick = ()=>{
-    const h = (parseFloat(document.getElementById('bmi-h').value)||0)/100;
-    const w = parseFloat(document.getElementById('bmi-w').value)||0;
-    if(!h || !w){ result.textContent='Fill in both fields.'; return; }
-    const bmi = w/(h*h);
-    let cat = bmi<18.5?'Underweight' : bmi<25?'Normal range' : bmi<30?'Overweight' : 'Obese';
-    result.innerHTML = `<strong>BMI: ${bmi.toFixed(1)}</strong> — ${cat}<div class="helper-line" style="margin-top:8px;">This is a rough general guide only. Talk to a doctor for anything health-related.</div>`;
-  };
-}
-
-function toolColorConverter(){
-  const body = panelShell({title:'Color Converter & Palette', desc:'Pick a color, get its HEX/RGB/HSL codes, and a matching palette.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Pick a color</label><input type="color" id="cc-picker" value="#C1683A" style="width:100%;height:48px;border:1px solid var(--line);border-radius:8px;">`;
-  body.appendChild(field);
-  const codes=document.createElement('div'); codes.style.margin='12px 0'; body.appendChild(codes);
-  const paletteWrap=document.createElement('div'); paletteWrap.style.cssText='display:flex;gap:6px;margin-top:12px;'; body.appendChild(paletteWrap);
-  function hexToRgb(hex){ const n=parseInt(hex.slice(1),16); return [(n>>16)&255,(n>>8)&255,n&255]; }
-  function rgbToHsl(r,g,b){
-    r/=255;g/=255;b/=255;
-    const max=Math.max(r,g,b),min=Math.min(r,g,b); let h,s,l=(max+min)/2;
-    if(max===min){h=s=0;} else {
-      const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min);
-      if(max===r) h=(g-b)/d+(g<b?6:0); else if(max===g) h=(b-r)/d+2; else h=(r-g)/d+4;
-      h/=6;
-    }
-    return [Math.round(h*360), Math.round(s*100), Math.round(l*100)];
-  }
-  function update(){
-    const hex = document.getElementById('cc-picker').value;
-    const [r,g,b] = hexToRgb(hex);
-    const [h,s,l] = rgbToHsl(r,g,b);
-    codes.innerHTML = `
-      <div class="filerow" style="margin-bottom:6px;"><span style="font-family:IBM Plex Mono,monospace;">HEX: ${hex}</span></div>
-      <div class="filerow" style="margin-bottom:6px;"><span style="font-family:IBM Plex Mono,monospace;">RGB: rgb(${r}, ${g}, ${b})</span></div>
-      <div class="filerow"><span style="font-family:IBM Plex Mono,monospace;">HSL: hsl(${h}, ${s}%, ${l}%)</span></div>
-    `;
-    paletteWrap.innerHTML='';
-    [-30,-15,0,15,30].forEach(delta=>{
-      const nl = Math.max(5, Math.min(95, l+delta));
-      const swatch = document.createElement('div');
-      swatch.style.cssText = `flex:1;height:56px;border-radius:6px;background:hsl(${h},${s}%,${nl}%);`;
-      paletteWrap.appendChild(swatch);
-    });
-  }
-  body.addEventListener('input', e=>{ if(e.target.id==='cc-picker') update(); });
-  update();
-}
-
-function toolCSVJSONConverter(){
-  const body = panelShell({title:'CSV ↔ JSON Converter', desc:'Paste a spreadsheet-style list (CSV) and turn it into JSON, or the other way around.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Input</label><textarea id="cj-input" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" placeholder="name,age&#10;Alice,30&#10;Bob,25"></textarea>`;
-  body.appendChild(field);
-  const tabRow=document.createElement('div'); tabRow.className='pill-row';
-  tabRow.innerHTML = `<button class="small-btn" id="cj-tocsv">CSV → JSON</button><button class="small-btn" id="cj-tojson">JSON → CSV</button>`;
-  body.appendChild(tabRow);
-  const outField=document.createElement('div'); outField.className='field';
-  outField.innerHTML = `<label>Result</label><textarea id="cj-output" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" readonly></textarea>`;
-  body.appendChild(outField);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  tabRow.querySelector('#cj-tocsv').onclick = ()=>{
-    try{
-      const lines = document.getElementById('cj-input').value.trim().split('\n');
-      const headers = lines[0].split(',').map(h=>h.trim());
-      const rows = lines.slice(1).map(line=>{
-        const cells = line.split(',');
-        const obj={}; headers.forEach((h,i)=>obj[h]=(cells[i]||'').trim());
-        return obj;
-      });
-      document.getElementById('cj-output').value = JSON.stringify(rows, null, 2);
-      log.textContent='';
-    }catch(e){ log.textContent = 'Could not parse that as CSV.'; }
-  };
-  tabRow.querySelector('#cj-tojson').onclick = ()=>{
-    try{
-      const arr = JSON.parse(document.getElementById('cj-input').value);
-      if(!Array.isArray(arr) || arr.length===0) throw new Error('expected a JSON array of objects');
-      const headers = Object.keys(arr[0]);
-      const csv = [headers.join(','), ...arr.map(o=>headers.map(h=>o[h]).join(','))].join('\n');
-      document.getElementById('cj-output').value = csv;
-      log.textContent='';
-    }catch(e){ log.textContent = 'Could not parse that as JSON: '+e.message; }
-  };
-}
-
-function toolStopwatchTimer(){
-  const body = panelShell({title:'Stopwatch & Countdown Timer', desc:'Time something, or count down to zero.'});
-  const tabRow=document.createElement('div'); tabRow.className='tab-row';
-  tabRow.innerHTML = `
-    <button type="button" class="tab-btn active" data-mode="stopwatch"><span class="tab-title">Stopwatch</span><span class="tab-sub">Count up from zero</span></button>
-    <button type="button" class="tab-btn" data-mode="countdown"><span class="tab-title">Countdown</span><span class="tab-sub">Count down to zero</span></button>
-  `;
-  body.appendChild(tabRow);
-  const display=document.createElement('div'); display.style.cssText='font-family:IBM Plex Mono,monospace;font-size:2.4rem;text-align:center;padding:24px 0;font-weight:600;'; display.textContent='00:00:00'; body.appendChild(display);
-  const countdownField=document.createElement('div'); countdownField.className='field'; countdownField.style.display='none';
-  countdownField.innerHTML = `<label>Minutes to count down from</label><input type="number" id="sw-mins" value="5">`;
-  body.appendChild(countdownField);
-  const controls=document.createElement('div'); controls.className='pill-row'; controls.style.justifyContent='center';
-  controls.innerHTML = `<button class="primary-btn" id="sw-start" style="width:auto;padding:12px 24px;">Start</button><button class="small-btn" id="sw-reset">Reset</button>`;
-  body.appendChild(controls);
-  let mode='stopwatch', running=false, startTime=0, elapsed=0, countdownTotal=0, raf=null;
-  tabRow.querySelectorAll('.tab-btn').forEach(b=>{
-    b.onclick=()=>{ tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); mode=b.dataset.mode; countdownField.style.display = mode==='countdown'?'block':'none'; reset(); };
-  });
-  function fmt(ms){
-    const s = Math.max(0,Math.floor(ms/1000));
-    const h=String(Math.floor(s/3600)).padStart(2,'0'), m=String(Math.floor((s%3600)/60)).padStart(2,'0'), sec=String(s%60).padStart(2,'0');
-    return `${h}:${m}:${sec}`;
-  }
-  function tick(){
-    if(!running) return;
-    if(mode==='stopwatch'){ display.textContent = fmt(Date.now()-startTime+elapsed); }
-    else { const remain = countdownTotal-(Date.now()-startTime+elapsed); display.textContent = fmt(remain); if(remain<=0){ running=false; display.textContent='00:00:00'; return; } }
-    raf = requestAnimationFrame(tick);
-  }
-  function reset(){ running=false; elapsed=0; if(raf) cancelAnimationFrame(raf); display.textContent = mode==='countdown' ? fmt((parseFloat(document.getElementById('sw-mins')?.value||5))*60000) : '00:00:00'; document.getElementById('sw-start').textContent='Start'; }
-  document.getElementById('sw-start').onclick = ()=>{
-    if(running){ running=false; elapsed += Date.now()-startTime; document.getElementById('sw-start').textContent='Resume'; return; }
-    if(mode==='countdown' && elapsed===0){ countdownTotal = (parseFloat(document.getElementById('sw-mins').value)||5)*60000; }
-    startTime = Date.now(); running=true; document.getElementById('sw-start').textContent='Pause'; tick();
-  };
-  document.getElementById('sw-reset').onclick = reset;
-}
-
-function toolRandomGenerator(){
-  const body = panelShell({title:'Random Number, Dice & Coin', desc:'Get a random number in a range, roll dice, or flip a coin.'});
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML = `
-    <div class="field"><label>Lowest number</label><input type="number" id="rg-min" value="1"></div>
-    <div class="field"><label>Highest number</label><input type="number" id="rg-max" value="100"></div>
-  `;
-  body.appendChild(row);
-  const tabRow=document.createElement('div'); tabRow.className='tools'; tabRow.style.gridTemplateColumns='repeat(3,1fr)';
-  const actions = [
-    {label:'Pick a Number', fn:()=>{ const lo=parseInt(document.getElementById('rg-min').value)||1, hi=parseInt(document.getElementById('rg-max').value)||100; return String(lo+Math.floor(Math.random()*(hi-lo+1))); }},
-    {label:'Roll a Die (1-6)', fn:()=>String(1+Math.floor(Math.random()*6))},
-    {label:'Flip a Coin', fn:()=>Math.random()<0.5?'Heads':'Tails'},
-  ];
-  actions.forEach(a=>{
-    const b=document.createElement('button'); b.type='button'; b.className='tool-card'; b.style.padding='16px 8px';
-    b.innerHTML = `<span class="name" style="font-size:0.85rem;">${a.label}</span>`;
-    b.onclick = ()=>{ result.textContent = a.fn(); };
-    tabRow.appendChild(b);
-  });
-  body.appendChild(tabRow);
-  const result=document.createElement('div'); result.style.cssText='font-size:2.2rem;font-weight:700;text-align:center;padding:20px 0;color:var(--copper);'; result.textContent='—'; body.appendChild(result);
-}
-
 /* ================= NEW CATEGORY: Finance Tools ================= */
-
-function toolEMICalculator(){
-  const body = panelShell({title:'Loan / EMI Calculator', desc:'See your monthly payment, and exactly how much of it is interest vs. paying down the loan.'});
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML = `
-    <div class="field"><label>Loan amount</label><input type="number" id="emi-p" value="1000000"></div>
-    <div class="field"><label>Interest rate per year (%)</label><input type="number" id="emi-r" value="8.5" step="0.1"></div>
-  `;
-  body.appendChild(row);
-  const row2=document.createElement('div'); row2.className='row';
-  row2.innerHTML = `<div class="field"><label>Loan length (years)</label><input type="number" id="emi-y" value="20"></div>`;
-  body.appendChild(row2);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Calculate'; body.appendChild(btn);
-  const result=document.createElement('div'); body.appendChild(result);
-  btn.onclick = ()=>{
-    const P = parseFloat(document.getElementById('emi-p').value)||0;
-    const annualR = parseFloat(document.getElementById('emi-r').value)||0;
-    const years = parseFloat(document.getElementById('emi-y').value)||0;
-    const months = Math.round(years*12);
-    const r = annualR/12/100;
-    const emi = r===0 ? P/months : P * r * Math.pow(1+r, months) / (Math.pow(1+r, months)-1);
-    const totalPaid = emi*months;
-    const totalInterest = totalPaid-P;
-    result.innerHTML = `
-      <div class="tools" style="grid-template-columns:repeat(3,1fr);margin-top:14px;">
-        <div class="thumb" style="padding:16px 8px;"><div style="font-size:1.3rem;font-weight:700;color:var(--copper);">${emi.toFixed(2)}</div><div style="font-size:0.75rem;color:var(--ink-soft);">Monthly payment</div></div>
-        <div class="thumb" style="padding:16px 8px;"><div style="font-size:1.3rem;font-weight:700;">${totalInterest.toFixed(2)}</div><div style="font-size:0.75rem;color:var(--ink-soft);">Total interest paid</div></div>
-        <div class="thumb" style="padding:16px 8px;"><div style="font-size:1.3rem;font-weight:700;">${totalPaid.toFixed(2)}</div><div style="font-size:0.75rem;color:var(--ink-soft);">Total you'll pay back</div></div>
-      </div>
-      <div class="helper-line" style="margin-top:12px;">You're borrowing ${P.toLocaleString()}, but paying back ${totalPaid.toFixed(0)} in total — the extra ${totalInterest.toFixed(0)} is the cost of borrowing (the interest).</div>
-    `;
-  };
-}
-
-function toolInterestComparison(){
-  const body = panelShell({title:'Simple vs. Compound Interest', desc:'The single biggest source of confusion in finance, explained side by side with your own numbers.'});
-  const note=document.createElement('div'); note.className='note';
-  note.innerHTML = `<strong>Simple interest:</strong> you only ever earn (or pay) interest on the original amount.<br><strong>Compound interest:</strong> you earn interest on the original amount <em>and</em> on all the interest that's already been added — so it grows faster the longer it runs.`;
-  body.appendChild(note);
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML = `
-    <div class="field"><label>Starting amount</label><input type="number" id="ic-p" value="100000"></div>
-    <div class="field"><label>Interest rate per year (%)</label><input type="number" id="ic-r" value="10"></div>
-  `;
-  body.appendChild(row);
-  const row2=document.createElement('div'); row2.className='row';
-  row2.innerHTML = `
-    <div class="field"><label>Number of years</label><input type="number" id="ic-t" value="10"></div>
-    <div class="field"><label>Compounding frequency</label>
-      <select id="ic-n" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
-        <option value="1">Once a year</option>
-        <option value="2">Every 6 months</option>
-        <option value="4" selected>Every 3 months</option>
-        <option value="12">Every month</option>
-      </select>
-    </div>
-  `;
-  body.appendChild(row2);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Compare'; body.appendChild(btn);
-  const result=document.createElement('div'); body.appendChild(result);
-  const chartWrap=document.createElement('div'); chartWrap.style.marginTop='14px'; body.appendChild(chartWrap);
-  btn.onclick = ()=>{
-    const P = parseFloat(document.getElementById('ic-p').value)||0;
-    const R = parseFloat(document.getElementById('ic-r').value)||0;
-    const T = parseFloat(document.getElementById('ic-t').value)||0;
-    const n = parseInt(document.getElementById('ic-n').value)||1;
-    const simpleTotal = P + (P*R*T/100);
-    const compoundTotal = P*Math.pow(1+(R/100)/n, n*T);
-    const diff = compoundTotal-simpleTotal;
-    result.innerHTML = `
-      <div class="row">
-        <div class="thumb" style="padding:16px 12px;flex:1;">
-          <div style="font-size:0.8rem;color:var(--ink-soft);margin-bottom:4px;">Simple interest total</div>
-          <div style="font-size:1.4rem;font-weight:700;">${simpleTotal.toFixed(2)}</div>
-        </div>
-        <div class="thumb" style="padding:16px 12px;flex:1;border-color:var(--copper);">
-          <div style="font-size:0.8rem;color:var(--ink-soft);margin-bottom:4px;">Compound interest total</div>
-          <div style="font-size:1.4rem;font-weight:700;color:var(--copper);">${compoundTotal.toFixed(2)}</div>
-        </div>
-      </div>
-      <div class="helper-line" style="margin-top:12px;">Over ${T} years, compounding earns you <strong>${diff.toFixed(2)} more</strong> than simple interest would — same rate, same time, just because interest starts earning its own interest.</div>
-    `;
-    // simple year-by-year bar comparison
-    const years = Math.min(20, Math.max(1,Math.round(T)));
-    const simSeries=[], compSeries=[], labels=[];
-    for(let y=1;y<=years;y++){
-      simSeries.push((P + P*R*y/100).toFixed(0));
-      compSeries.push((P*Math.pow(1+(R/100)/n, n*y)).toFixed(0));
-      labels.push('Y'+y);
-    }
-    chartWrap.innerHTML = '<div class="helper-line">Growth year by year:</div>';
-  };
-}
 
 function toolBatchImageProcessor(){
   const body = panelShell({title:'Batch Resize / Shrink Many Photos at Once', desc:'Add as many photos as you want, set it up once, and get them all done together — no "2 files per day" limit like the paid tools have.'});
@@ -3425,58 +3080,6 @@ function toolBatchImageProcessor(){
     const zipBlob = await zip.generateAsync({type:'blob'});
     download(zipBlob, 'processed-photos.zip');
     log.innerHTML = `<span class="ok">✓ Done! ${files.length} photo(s) processed together — nothing was uploaded, no daily limit, completely free.</span>`;
-  };
-}
-
-function toolCurrencyConverter(){
-  const body = panelShell({title:'Currency Converter', desc:'Convert between world currencies using real daily rates.'});
-  const note=document.createElement('div'); note.className='note';
-  note.textContent='Rates come from the European Central Bank via the free, open Frankfurter service — updated once a day, not live trading rates. This is the one tool on this page that needs an internet connection (to fetch today\'s rates); nothing about your input is uploaded.';
-  body.appendChild(note);
-  const currencies = ['USD','EUR','GBP','JPY','INR','AUD','CAD','CHF','CNY','SEK','NZD','SGD','HKD','ZAR','MXN','BRL','AED','SAR','KRW','THB'];
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML = `
-    <div class="field"><label>Amount</label><input type="number" id="cur-amt" value="100"></div>
-    <div class="field"><label>From</label>
-      <select id="cur-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${currencies.map(c=>`<option ${c==='USD'?'selected':''}>${c}</option>`).join('')}</select>
-    </div>
-    <div class="field"><label>To</label>
-      <select id="cur-to" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${currencies.map(c=>`<option ${c==='INR'?'selected':''}>${c}</option>`).join('')}</select>
-    </div>
-  `;
-  body.appendChild(row);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert'; body.appendChild(btn);
-  const result=document.createElement('div'); result.className='note'; body.appendChild(result);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  btn.onclick = async ()=>{
-    const amt = parseFloat(document.getElementById('cur-amt').value)||0;
-    const from = document.getElementById('cur-from').value;
-    const to = document.getElementById('cur-to').value;
-    log.textContent = 'Fetching today\'s rate...';
-    // The one tool that inherently needs the network (live FX rates, from
-    // the free/open frankfurter.dev service — no key, no quota). Every
-    // fetched rate is cached so the tool keeps working offline with the
-    // last known rate, clearly labeled with its date.
-    const cacheKey = `dockbench.fx.${from}.${to}`;
-    try{
-      const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`);
-      if(!res.ok) throw new Error('rate service unavailable');
-      const data = await res.json();
-      const rate = data.rates[to];
-      try{ localStorage.setItem(cacheKey, JSON.stringify({rate, date:data.date})); }catch(e){}
-      result.innerHTML = `<strong>${amt} ${from} = ${(amt*rate).toFixed(2)} ${to}</strong><div class="helper-line" style="margin-top:6px;">1 ${from} = ${rate} ${to} — as of ${data.date}</div>`;
-      log.textContent = '';
-    }catch(e){
-      const cached = localStorage.getItem(cacheKey);
-      if(cached){
-        const {rate, date} = JSON.parse(cached);
-        result.innerHTML = `<strong>${amt} ${from} = ${(amt*rate).toFixed(2)} ${to}</strong><div class="helper-line" style="margin-top:6px;">⚠ Offline — using the last fetched rate (1 ${from} = ${rate} ${to}, from ${date}).</div>`;
-        log.textContent = '';
-      } else {
-        log.textContent = 'Could not fetch today\'s rate — check your internet connection and try again.';
-        result.innerHTML = '';
-      }
-    }
   };
 }
 
@@ -3828,38 +3431,6 @@ function toolBarcodeGenerator(){
     }
   };
   dlBtn.onclick = ()=>{ if(lastCanvas) lastCanvas.toBlob(blob=>download(blob,'barcode.png')); };
-}
-
-function toolRegexTester(){
-  const body = panelShell({title:'Pattern (Regex) Tester', desc:'Test a search pattern against some text and see every match highlighted.'});
-  const field=document.createElement('div'); field.className='field';
-  field.innerHTML = `<label>Pattern</label><input type="text" id="rt-pattern" placeholder="e.g. \\d+" style="font-family:'IBM Plex Mono',monospace;">`;
-  body.appendChild(field);
-  const field2=document.createElement('div'); field2.className='field';
-  field2.innerHTML = `<label>Text to search</label><textarea id="rt-text" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
-  body.appendChild(field2);
-  const result=document.createElement('div'); result.style.cssText='margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);font-family:IBM Plex Mono,monospace;font-size:0.85rem;white-space:pre-wrap;word-break:break-word;'; body.appendChild(result);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  function run(){
-    const pat = document.getElementById('rt-pattern').value;
-    const text = document.getElementById('rt-text').value;
-    if(!pat){ result.innerHTML=''; return; }
-    try{
-      const re = new RegExp(pat, 'g');
-      let html='', last=0, count=0, m;
-      while((m = re.exec(text)) !== null){
-        html += escapeXml(text.slice(last, m.index)) + `<mark style="background:#FBEFE6;color:var(--copper-deep);">${escapeXml(m[0])}</mark>`;
-        last = m.index + m[0].length;
-        count++;
-        if(m.index===re.lastIndex) re.lastIndex++;
-        if(count>500) break;
-      }
-      html += escapeXml(text.slice(last));
-      result.innerHTML = html || '<span style="color:var(--ink-soft)">No matches.</span>';
-      log.textContent = count+' match(es)';
-    }catch(e){ log.textContent = 'Not a valid pattern: '+e.message; result.innerHTML=''; }
-  }
-  body.addEventListener('input', e=>{ if(e.target.id==='rt-pattern'||e.target.id==='rt-text') run(); });
 }
 
 /* ================= Highlight, Business Card, ID Card ================= */
@@ -6941,43 +6512,20 @@ renderGrid('img-tools', imgTools);
 renderGrid('video-tools', videoTools);
 renderGrid('api-tools', apiTools);
 
-const textTools = [
-  {icon:'🔢', name:'Word & Character Counter', desc:'Count words, characters, sentences as you type.', fn:toolWordCounter},
-  {icon:'Aa', name:'Change Text Case', desc:'UPPERCASE, lowercase, Title Case, and more.', fn:toolCaseConverter},
-  {icon:'⇄', name:'Compare Two Texts', desc:'See what changed, line by line.', fn:toolTextDiff},
-  {icon:'♻️', name:'Remove Duplicate Lines', desc:'Clean up a list, optionally sort it.', fn:toolRemoveDuplicateLines},
-  {icon:'▤', name:'Placeholder Text Generator', desc:'Lorem ipsum filler text for mockups.', fn:toolLoremIpsum},
-];
-renderGrid('text-tools', textTools);
-
+// Dockbench is a document and image toolkit. Generic web gadgets (unit /
+// timestamp / colour converters, JSON + regex + hash utilities, BMI and
+// loan calculators, lorem ipsum) were removed: they diluted the product,
+// buried the PDF tools people actually come for, and the currency
+// converter needed live exchange rates, which broke the offline promise.
+// What stays below is what a document workflow genuinely reaches for.
 const utilityTools = [
   {icon:'✨', name:'Ask Dockbench', desc:'Say what you need in your own words — get walked through it, step by step.', fn:toolAskDockbench},
   {icon:'▦', name:'QR Code Generator', desc:'Turn a link or text into a QR code.', fn:toolQRGenerate},
   {icon:'🔍', name:'QR Code Reader', desc:'Read a QR code from a photo.', fn:toolQRRead},
-  {icon:'🔑', name:'Password Generator', desc:'Make a strong, random password.', fn:toolPasswordGenerator},
-  {icon:'⇌', name:'Unit Converter', desc:'Length, weight, or temperature.', fn:toolUnitConverter},
-  {icon:'{ }', name:'JSON Formatter & Checker', desc:'Clean up and validate JSON.', fn:toolJSONFormatter},
-  {icon:'⎆', name:'Base64 Encode / Decode', desc:'For embedding data in URLs, code, or email.', fn:toolBase64},
-  {icon:'#', name:'Hash Generator', desc:'MD5, SHA-1, SHA-256, SHA-512 fingerprints.', fn:toolHashGenerator},
-  {icon:'🕐', name:'Date & Timestamp Converter', desc:'Human date ↔ Unix timestamp.', fn:toolTimestampConverter},
-  {icon:'🔗', name:'URL Encode / Decode', desc:'Make text safe for a web address.', fn:toolURLEncoder},
-  {icon:'🎂', name:'Age Calculator', desc:'Exact age from a birth date.', fn:toolAgeCalculator},
-  {icon:'⚖️', name:'BMI Calculator', desc:'Quick body mass index estimate.', fn:toolBMICalculator},
-  {icon:'🎨', name:'Color Converter & Palette', desc:'HEX/RGB/HSL plus a matching palette.', fn:toolColorConverter},
-  {icon:'📊', name:'CSV ↔ JSON Converter', desc:'Convert a spreadsheet list to/from JSON.', fn:toolCSVJSONConverter},
-  {icon:'⏱️', name:'Stopwatch & Countdown Timer', desc:'Time something, or count down.', fn:toolStopwatchTimer},
-  {icon:'🎲', name:'Random Number, Dice & Coin', desc:'Pick a number, roll a die, flip a coin.', fn:toolRandomGenerator},
   {icon:'▮▯', name:'Barcode Generator', desc:'Turn a code into a scannable barcode.', fn:toolBarcodeGenerator},
-  {icon:'.*', name:'Pattern (Regex) Tester', desc:'Test a search pattern against text.', fn:toolRegexTester},
+  {icon:'🔑', name:'Password Generator', desc:'Make a strong password for Protect PDF.', fn:toolPasswordGenerator},
 ];
 renderGrid('utility-tools', utilityTools);
-
-const financeTools = [
-  {icon:'🏦', name:'Loan / EMI Calculator', desc:'Monthly payment, total interest, total repaid.', fn:toolEMICalculator},
-  {icon:'⚖️', name:'Simple vs. Compound Interest', desc:'The confusing part, explained side by side.', fn:toolInterestComparison},
-  {icon:'💱', name:'Currency Converter', desc:'Real daily exchange rates, 20 major currencies.', fn:toolCurrencyConverter},
-];
-renderGrid('finance-tools', financeTools);
 
 const aiTools = [
   {icon:'🧠', name:'AI Summarize (On Your Device)', desc:'A real AI model, downloaded once, then works offline forever.', fn:toolAISummarizeLocal},
@@ -6989,10 +6537,9 @@ renderGrid('ai-tools', aiTools);
 
 /* ---------- navigation: category tabs, home rows, search ---------- */
 const CATEGORIES = [
-  ['all','All'], ['pdf-tools','PDF'], ['convert-tools','Convert'], ['edit-tools','Edit & Sign'],
-  ['security-tools','Security'], ['img-tools','Images'], ['video-tools','Video'],
-  ['text-tools','Text'], ['utility-tools','Utilities'], ['finance-tools','Finance'],
-  ['ai-tools','AI on-device'], ['api-tools','Server'],
+  ['all','All'], ['pdf-tools','Organize PDF'], ['convert-tools','Convert PDF'], ['edit-tools','Edit PDF'],
+  ['security-tools','PDF Security'], ['img-tools','Images'], ['video-tools','Video'],
+  ['ai-tools','PDF Intelligence'], ['utility-tools','Codes'], ['api-tools','Server'],
 ];
 const SECTION_IDS = CATEGORIES.slice(1).map(c=>c[0]);
 const POPULAR = ['Ask Dockbench','Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
@@ -7013,6 +6560,124 @@ CATEGORIES.forEach(([id,label])=>{
   if(id==='api-tools') b.style.display='none'; // zero-server by default
   b.onclick=()=>{ searchInput.value=''; setCategory(id); };
   catTabs.appendChild(b);
+});
+
+/* ---------- header mega-menus ----------
+   Built from the same registries the grids use, so a menu can never drift
+   out of sync with the tools that actually exist. Each entry opens the tool
+   directly; "See all N" drops into the matching category. */
+const mainnav = document.getElementById('mainnav');
+const navToggle = document.getElementById('nav-toggle');
+
+function openToolByName(name){
+  const hit = toolIndex[name];
+  if(!hit) return false;
+  closeAllMenus();
+  openTool(hit.tool);
+  return true;
+}
+function jumpToCategory(catId){
+  closeAllMenus();
+  searchInput.value='';
+  setCategory(catId);
+  const label=document.getElementById('label-'+catId);
+  if(label) label.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function mmGroup(heading, names, moreCat){
+  const g=document.createElement('div'); g.className='mm-group';
+  const h=document.createElement('div'); h.className='mm-head'; h.textContent=heading; g.appendChild(h);
+  names.forEach(n=>{
+    const hit=toolIndex[n];
+    if(!hit) return;                        // tool was curated away — skip silently
+    const b=document.createElement('button');
+    b.className='mm-item'; b.setAttribute('role','menuitem');
+    b.innerHTML=`<span class="mm-ico">${hit.tool.icon}</span><span>${n}</span>`;
+    b.onclick=()=>openToolByName(n);
+    g.appendChild(b);
+  });
+  if(moreCat){
+    const count=(document.getElementById(moreCat)||{children:[]}).children.length;
+    const b=document.createElement('button');
+    b.className='mm-item'; b.innerHTML=`<span class="mm-ico">→</span><span>See all ${count}</span>`;
+    b.onclick=()=>jumpToCategory(moreCat);
+    g.appendChild(b);
+  }
+  return g;
+}
+
+const MENUS = [
+  // Convert PDF
+  [[['Convert to PDF', ['Images to PDF','Word to PDF','HTML / Text to PDF','Markdown to PDF','Excel to PDF','PowerPoint to PDF'], null],
+    ['Convert from PDF', ['PDF to Word','PDF to JPG','PDF to Excel','PDF to PowerPoint','PDF to Text','PDF to PDF/A'], 'convert-tools']]],
+  // All tools
+  [[['Organize PDF', ['Merge PDF','Split PDF','Rotate PDF','Organize PDF','Crop PDF','Extract Images'], 'pdf-tools'],
+    ['Optimize PDF', ['Make PDF Smaller','Repair PDF','OCR — Make Scans Searchable','Scan Document','Grayscale PDF'], null],
+    ['Edit &amp; sign', ['PDF Editor','Sign PDF','Add Watermark','Highlight Important Text','PDF Forms','Search &amp; Redact'], 'edit-tools'],
+    ['Security', ['Protect PDF','Unlock PDF','Sanitize PDF','Flatten PDF'], 'security-tools'],
+    ['Images', ['Make Image Smaller','Resize Image','Remove Background','Convert Image Format','Passport &amp; ID Photo Maker','Invoice Generator'], 'img-tools'],
+    ['Video', ['Video to GIF','Trim Video','Screen Recorder','Extract Audio from Video'], 'video-tools'],
+    ['PDF intelligence', ['Ask Dockbench','AI Summarize (On Your Device)','Translate Text (On Your Device)','Chat with PDF'], 'ai-tools'],
+    ['Codes', ['QR Code Generator','QR Code Reader','Barcode Generator','Password Generator'], 'utility-tools']]],
+];
+document.querySelectorAll('.megamenu').forEach((menu, i)=>{
+  const spec = MENUS[i]; if(!spec) return;
+  menu.style.setProperty('--mm-cols', menu.dataset.cols||2);
+  // decode the &amp; used above so names match the registry exactly
+  const dec = s => s.replace(/&amp;/g,'&');
+  spec[0].forEach(([head, names, more])=> menu.appendChild(mmGroup(dec(head), names.map(dec), more)));
+});
+
+// The fixed-position mega menu hangs off the bottom of the sticky header,
+// whose height changes with viewport width — publish it as a CSS variable.
+function syncHeaderHeight(){
+  const h = document.querySelector('header');
+  if(h) document.documentElement.style.setProperty('--hdr-h', h.offsetHeight + 'px');
+}
+syncHeaderHeight();
+window.addEventListener('resize', syncHeaderHeight);
+
+function closeAllMenus(){
+  document.querySelectorAll('.navdrop.open').forEach(d=>{
+    d.classList.remove('open');
+    const t=d.querySelector('.navlink'); if(t) t.setAttribute('aria-expanded','false');
+  });
+  mainnav.classList.remove('open');
+  navToggle.setAttribute('aria-expanded','false');
+}
+document.querySelectorAll('.navdrop > .navlink').forEach(btn=>{
+  btn.onclick=(e)=>{
+    e.stopPropagation();
+    const drop=btn.parentElement, wasOpen=drop.classList.contains('open');
+    document.querySelectorAll('.navdrop.open').forEach(d=>{
+      d.classList.remove('open');
+      d.querySelector('.navlink').setAttribute('aria-expanded','false');
+    });
+    if(!wasOpen){ drop.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+  };
+});
+navToggle.onclick=(e)=>{
+  e.stopPropagation();
+  const open=mainnav.classList.toggle('open');
+  navToggle.setAttribute('aria-expanded', open?'true':'false');
+};
+// Click-outside closes the menus — but the toggle and the drawer's own
+// contents are "inside", or opening the drawer would immediately close it.
+document.addEventListener('click',(e)=>{
+  if(e.target.closest('.navdrop') || e.target.closest('#nav-toggle') || e.target.closest('.mainnav')) return;
+  closeAllMenus();
+});
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeAllMenus(); });
+
+// Direct nav links and footer links both jump straight to a named tool.
+document.querySelectorAll('[data-jump]').forEach(el=>{
+  el.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(!openToolByName(el.dataset.jump)){
+      searchInput.value = el.dataset.jump;
+      applyView();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+  });
 });
 
 function fillRow(gridId, labelId, names){
