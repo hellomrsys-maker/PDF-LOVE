@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdflove-v7';
+const CACHE_NAME = 'pdflove-v8';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Browser/OS favicons — declared in index.html, so precache them or an
@@ -84,11 +84,22 @@ self.addEventListener('fetch', (event) => {
   // would read "queued" forever and never see the job finish.
   if (url.origin !== location.origin) return;     // backend is always live
   if (url.pathname.startsWith('/api/')) return;   // same-origin backend too
+
+  // Tool pages are routed by query string (index.html?tool=Merge+PDF), and
+  // a Cache API lookup is exact by default, so ?tool=… would miss the
+  // precached index.html and leave the app broken offline. Match
+  // navigations ignoring the query — the document is identical either way.
+  const isNavigation = req.mode === 'navigate';
+  const matchOpts = isNavigation ? { ignoreSearch: true } : undefined;
+
   event.respondWith(
-    caches.match(req).then((cached) => {
+    caches.match(req, matchOpts).then((cached) => {
       const fetchPromise = fetch(req)
         .then((res) => {
-          if (res && res.status === 200) {
+          // Don't store one copy of the document per ?tool=… URL — that is
+          // the same index.html 80-odd times over. The shell is precached.
+          const skipStore = isNavigation && url.search;
+          if (res && res.status === 200 && !skipStore) {
             const resClone = res.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(req, resClone)).catch(() => {});
           }
