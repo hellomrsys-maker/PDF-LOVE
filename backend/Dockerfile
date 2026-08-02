@@ -4,6 +4,7 @@ FROM python:3.11-slim
 #   tesseract-ocr           OCR engine (+ extra language packs as needed)
 #   ghostscript             PDF/A conversion + deep PDF compression
 #   libreoffice (nogui)     Office <-> PDF conversion, headless
+#   qpdf                    merge/split PDF CLI used by premium_pdf.py
 #   gcc                     compiles our native scan-cleanup kernel below
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
@@ -12,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-impress-nogui \
     libreoffice-calc-nogui \
     fonts-liberation \
+    qpdf \
     gcc \
     libgl1 \
     libglib2.0-0 \

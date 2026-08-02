@@ -15,7 +15,7 @@ from premium_pdf import (
     run_watermark_pdf,
 )
 
-def _run_job(job: str, files: List[bytes], **kwargs):
+def run_batch_pdf(job: str, files: List[bytes], **kwargs):
     """Dispatch a batch job to the appropriate premium PDF function.
 
     Args:

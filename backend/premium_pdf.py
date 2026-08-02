@@ -51,6 +51,39 @@ def run_merge_pdf_files(input_paths: List[str]) -> Tuple[str, str]:
     return tmp_path, "application/pdf"
 
 
+def run_merge_pdf(files: List[bytes]) -> Tuple[bytes, str]:
+    """Merge PDFs given as raw bytes. Returns (merged_pdf_bytes, "application/pdf").
+    Thin bytes-in/bytes-out wrapper around run_merge_pdf_files for callers
+    (batch jobs, the job queue) that work with in-memory payloads.
+    """
+    if not files:
+        raise EngineError(422, "No PDFs provided for merge.")
+    input_paths = []
+    try:
+        for data in files:
+            fd, path = tempfile.mkstemp(suffix=".pdf", prefix="merge_input_")
+            os.close(fd)
+            with open(path, "wb") as f:
+                f.write(data)
+            input_paths.append(path)
+        output_path, media_type = run_merge_pdf_files(input_paths)
+        try:
+            with open(output_path, "rb") as f:
+                merged_bytes = f.read()
+        finally:
+            try:
+                os.remove(output_path)
+            except OSError:
+                pass
+        return merged_bytes, media_type
+    finally:
+        for p in input_paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+
+
 def run_split_pdf(data: bytes) -> Tuple[bytes, str]:
     """Split a PDF into individual pages and zip them.
     Returns (zip_bytes, "application/zip").
