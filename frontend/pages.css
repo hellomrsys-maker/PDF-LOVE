@@ -1,0 +1,132 @@
+/* Shared styling for PDFLove's static pages (about, terms, privacy,
+   security, faq, contact, features, pricing). Kept in one file so the
+   pages stay visually identical to each other and to the app shell. */
+:root{
+  --paper:#F6F3EC; --paper-raised:#FFFFFF; --ink:#1F2420; --ink-soft:#4A5049;
+  --copper:#C1683A; --copper-deep:#A6522A; --sage:#6B7C6E; --line:#D9D3C4; --ok:#4A7856;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#181A17; --paper-raised:#22251F; --ink:#ECE8DC; --ink-soft:#A8AD9F;
+    --copper:#D07E4C; --copper-deep:#E0925F; --sage:#8B977F; --line:#3A3E35; --ok:#7FB78F;
+  }
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'IBM Plex Sans',system-ui,sans-serif;
+  line-height:1.65; -webkit-font-smoothing:antialiased;
+}
+a{color:var(--copper-deep);}
+.wrap{max-width:1600px;margin:0 auto;padding:0 40px;}
+.wrap-narrow{max-width:780px;margin:0 auto;padding:0 40px;}
+/* pages built around card grids (pricing tiers, feature cards) need more
+   room than a reading column */
+.wrap-wide{max-width:1180px;margin:0 auto;padding:0 40px;}
+.wrap-wide .lede{margin-bottom:34px;}
+@media (max-width:900px){ .wrap,.wrap-narrow,.wrap-wide{padding:0 20px;} }
+
+/* header */
+header{border-bottom:1px solid var(--line);padding:16px 0;background:var(--paper);}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.brand{
+  font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;
+  text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:8px;
+}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;}
+.hdr-links{display:flex;gap:4px;flex-wrap:wrap;}
+.hdr-links a{
+  font-size:0.83rem;font-weight:600;color:var(--ink);text-decoration:none;
+  padding:8px 12px;border-radius:8px;
+}
+.hdr-links a:hover{background:rgba(193,104,58,0.1);color:var(--copper-deep);}
+
+/* page body */
+main{padding:52px 0 70px;}
+h1{
+  font-family:'Fraunces',serif;font-weight:600;
+  font-size:clamp(1.9rem,4.5vw,3rem);line-height:1.08;
+  margin:0 0 16px;letter-spacing:-0.01em;
+}
+.lede{font-size:1.1rem;color:var(--ink-soft);margin:0 0 12px;max-width:65ch;}
+.updated{font-family:'IBM Plex Mono',monospace;font-size:0.76rem;color:var(--sage);margin:0 0 34px;}
+h2{
+  font-family:'Fraunces',serif;font-weight:600;font-size:1.45rem;
+  margin:40px 0 12px;letter-spacing:-0.01em;padding-top:20px;border-top:1px solid var(--line);
+}
+h2:first-of-type{border-top:0;padding-top:0;}
+h3{font-size:1.05rem;margin:24px 0 6px;}
+p,li{color:var(--ink-soft);}
+p{margin:0 0 14px;}
+ul,ol{margin:0 0 16px;padding-left:22px;}
+li{margin-bottom:8px;}
+strong{color:var(--ink);}
+code{
+  font-family:'IBM Plex Mono',monospace;font-size:0.88em;
+  background:var(--paper-raised);border:1px solid var(--line);
+  border-radius:5px;padding:1px 5px;
+}
+.callout{
+  background:var(--paper-raised);border:1px solid var(--line);
+  border-left:3px solid var(--copper);border-radius:10px;
+  padding:18px 22px;margin:0 0 26px;
+}
+.callout p:last-child{margin-bottom:0;}
+
+/* cards used by features / pricing / faq */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin:0 0 28px;}
+.card{
+  background:var(--paper-raised);border:1px solid var(--line);
+  border-radius:12px;padding:22px;
+}
+.card h3{margin:0 0 6px;color:var(--ink);font-size:1.02rem;}
+.card p{margin:0;font-size:0.9rem;}
+.card .ico{
+  width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  font-size:1.15rem;background:rgba(193,104,58,0.12);margin-bottom:12px;
+}
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin:0 0 30px;}
+.price{
+  background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;padding:28px;
+}
+.price.highlight{border-color:var(--copper);box-shadow:0 10px 30px -20px rgba(193,104,58,0.6);}
+.price .tier{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;text-transform:uppercase;
+  letter-spacing:0.1em;color:var(--sage);margin-bottom:10px;}
+.price .amount{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:600;color:var(--ink);line-height:1;}
+.price .per{font-size:0.85rem;color:var(--ink-soft);margin-bottom:16px;}
+.price ul{list-style:none;padding:0;margin:16px 0 0;}
+.price li{padding-left:22px;position:relative;font-size:0.92rem;}
+.price li::before{content:"✓";position:absolute;left:0;color:var(--ok);font-weight:700;}
+.price li.no::before{content:"—";color:var(--sage);}
+
+details{background:var(--paper-raised);border:1px solid var(--line);border-radius:10px;
+  padding:16px 20px;margin-bottom:10px;}
+details summary{cursor:pointer;font-weight:600;color:var(--ink);}
+details p{margin:12px 0 0;}
+
+.cta{
+  display:inline-block;background:var(--copper);color:#fff;text-decoration:none;
+  font-weight:600;padding:14px 26px;border-radius:10px;margin:6px 0 0;
+}
+.cta:hover{background:var(--copper-deep);}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:40px 0 60px;font-size:0.86rem;color:var(--ink-soft);}
+.foot-cols{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:30px 26px;padding-bottom:28px;}
+.foot-col h4{
+  font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.1em;color:var(--sage);margin:0 0 12px;
+}
+.foot-col a{display:block;padding:5px 0;color:var(--ink-soft);text-decoration:none;}
+.foot-col a:hover{color:var(--copper-deep);text-decoration:underline;}
+.foot-brand{font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;color:var(--ink);
+  margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.foot-brand .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+.foot-platforms{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+.foot-platforms span{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;
+  border:1px solid var(--line);border-radius:100px;padding:3px 10px;background:var(--paper-raised);}
+.foot-bottom{border-top:1px solid var(--line);padding-top:20px;display:flex;
+  flex-wrap:wrap;gap:12px;justify-content:space-between;}
+@media (max-width:860px){ .foot-cols{grid-template-columns:repeat(2,1fr);} .foot-about{grid-column:1/-1;} }
+@media (max-width:600px){ .foot-cols{grid-template-columns:1fr;} }

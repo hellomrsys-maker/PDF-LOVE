@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security — PDFLove</title>
+<meta name="description" content="How PDFLove protects your documents: on-device processing, AES-256 encryption, and responsible disclosure.">
+<link rel="canonical" href="https://pdflove.co.in/security.html">
+<meta name="theme-color" content="#C1683A">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="pages.css" rel="stylesheet">
+</head>
+<body>
+<header><div class="wrap">
+  <a class="brand" href="index.html"><span class="dot"></span>PDFLove</a>
+  <nav class="hdr-links"><a href="features.html">Features</a><a href="pricing.html">Pricing</a><a href="guides/index.html">Guides</a><a href="faq.html">FAQ</a><a href="security.html">Security</a></nav>
+</div></header>
+<main><div class="wrap-narrow">
+<h1>Security</h1>
+<p class="lede">The strongest security property PDFLove has is structural: your documents are
+not on our servers, because we never receive them.</p>
+
+<h2>Processing model</h2>
+<p>On-device tools read your file with the browser's File API, process it in page memory, and
+return a download. The bytes never enter a network request. Closing the tab discards everything.
+There is no server-side copy, no temporary upload directory and no retention window, because
+there is no upload.</p>
+
+<h2>Encryption</h2>
+<p>Protect PDF applies genuine <strong>AES-256</strong> encryption through a WebAssembly build of
+qpdf, running locally. The password you type is used on your device and is never transmitted or
+stored. We cannot recover it — if you lose it, the document cannot be opened.</p>
+
+<h2>Transport and page security</h2>
+<ul>
+  <li>Served strictly over HTTPS.</li>
+  <li>A strict <strong>Content-Security-Policy</strong>, plus <code>X-Content-Type-Options:
+      nosniff</code>, <code>X-Frame-Options: DENY</code> and a restrictive
+      <code>Permissions-Policy</code>.</li>
+  <li>Every library is self-hosted. The app loads no third-party scripts, so there is no CDN
+      that could be compromised to alter what runs on your document.</li>
+</ul>
+
+<h2>The optional backend</h2>
+<p>If you enable server-assisted tools, only the file you explicitly submit to that tool is sent,
+to a backend you have pointed the app at. That backend logs no file contents or filenames, works
+in a per-request temporary directory that is deleted as the response is built, and runs as a
+non-root user in a container. You can host it yourself and read every line of it.</p>
+
+<h2>Reporting a vulnerability</h2>
+<div class="callout">
+<p>Please report privately to <a href="mailto:security@pdflove.co.in">security@pdflove.co.in</a>
+before disclosing publicly. Include the steps to reproduce and the affected version. We will
+acknowledge, keep you updated while we investigate, and credit you when a fix ships if you would
+like us to.</p>
+</div>
+<p>Please do not run automated scanners against the production site, and do not test with anyone
+else's data.</p>
+</div></main>
+<footer><div class="wrap">
+  <div class="foot-cols">
+    <div class="foot-col foot-about">
+      <div class="foot-brand"><span class="dot"></span>PDFLove</div>
+      <p>A document toolkit that runs entirely on your own device. No upload,
+         no account, no daily limit. Install it and it keeps working with no
+         internet at all.</p>
+      <div class="foot-platforms"><span>Web</span><span>Windows</span><span>macOS</span><span>Linux</span><span>Android</span><span>iOS</span></div>
+    </div>
+    <div class="foot-col">
+      <h4>Product</h4>
+      <a href="index.html">All tools</a>
+      <a href="features.html">Features</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="guides/index.html">Guides</a>
+    </div>
+    <div class="foot-col">
+      <h4>Company</h4>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="faq.html">FAQ</a>
+    </div>
+    <div class="foot-col">
+      <h4>Legal</h4>
+      <a href="security.html">Security</a>
+      <a href="privacy.html">Privacy policy</a>
+      <a href="terms.html">Terms &amp; conditions</a>
+      <a href="cookies.html">Cookies</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>&copy; 2026 PDFLove — pdflove.co.in</span>
+    <span>Your files never leave your device.</span>
+  </div>
+</div></footer>
+</body>
+</html>

@@ -1,9 +1,22 @@
-const CACHE_NAME = 'pdflove-v10';
+const CACHE_NAME = 'pdflove-v11';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
+  // Static pages, precached so an installed offline copy can still show its
+  // own terms, privacy policy and help.
+  './pages.css',
+  './about.html',
+  './features.html',
+  './pricing.html',
+  './faq.html',
+  './contact.html',
+  './security.html',
+  './privacy.html',
+  './terms.html',
+  './cookies.html',
   // Browser/OS favicons — declared in index.html, so precache them or an
   // installed, offline app requests them and gets nothing.
   './favicon.ico',
+  './apple-touch-icon.png',
   './favicon-16x16.png',
   './favicon-32x32.png',
   './favicon-192x192.png',
