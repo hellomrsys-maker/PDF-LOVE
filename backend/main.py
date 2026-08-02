@@ -57,7 +57,7 @@ import engines
 import native_ops
 from engines import EngineError
 from typing import List
-from .premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
+from premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
 
 # ---------------------------------------------------------------------
 # Logging: human-readable by default, JSON lines with LOG_JSON=1.
@@ -349,19 +349,21 @@ async def pdfa(request: Request, file: UploadFile = File(...)):
     payload, media_type = _engine(engines.run_pdfa, data)
     return Response(content=payload, media_type=media_type)
 
-    # ---------------------------------------------------------------------
-    # Video processing endpoint – uses FFmpeg
-    @app.post("/video-process")
-    @limiter.limit("10/minute")
-    async def video_process(request: Request, file: UploadFile = File(...), codec: str = Form("h264"), quality: str = Form("23")):
-        """Process a video file with FFmpeg.
 
-        * ``codec`` – video codec (e.g., ``h264`` or ``vp9``).
-        * ``quality`` – CRF value (0‑51, lower = higher quality)."""
-        data = await file.read()
-        _check_size(data)
-        payload, media_type = _engine(engines.run_video_process, data, file.filename or "input", codec, quality)
-        return Response(content=payload, media_type=media_type)
+# ---------------------------------------------------------------------
+# Video processing endpoint – uses FFmpeg
+# ---------------------------------------------------------------------
+@app.post("/video-process")
+@limiter.limit("10/minute")
+async def video_process(request: Request, file: UploadFile = File(...), codec: str = Form("h264"), quality: str = Form("23")):
+    """Process a video file with FFmpeg.
+
+    * ``codec`` – video codec (e.g., ``h264`` or ``vp9``).
+    * ``quality`` – CRF value (0‑51, lower = higher quality)."""
+    data = await file.read()
+    _check_size(data)
+    payload, media_type = _engine(engines.run_video_process, data, file.filename or "input", codec, quality)
+    return Response(content=payload, media_type=media_type)
 
 
 # ---------------------------------------------------------------------
@@ -373,27 +375,29 @@ async def merge_pdf(request: Request, files: List[UploadFile] = File(...)):
     Supports very large inputs by streaming them from disk."""
     import tempfile, os
     from fastapi.responses import StreamingResponse
-    from .premium_pdf import run_merge_pdf_files
+    from premium_pdf import run_merge_pdf_files
 
     input_paths = []
-    for f in files:
-        data = await f.read()
-        # Write each upload to a temporary file (required for the C engine)
-        tmp_fd, tmp_path = tempfile.mkstemp(suffix=".pdf", prefix="upload_")
-        os.close(tmp_fd)
-        with open(tmp_path, "wb") as out:
-            out.write(data)
-        input_paths.append(tmp_path)
+    try:
+        for f in files:
+            data = await f.read()
+            _check_size(data)
+            # Write each upload to a temporary file (required for the C engine)
+            tmp_fd, tmp_path = tempfile.mkstemp(suffix=".pdf", prefix="upload_")
+            os.close(tmp_fd)
+            with open(tmp_path, "wb") as out:
+                out.write(data)
+            input_paths.append(tmp_path)
 
-    # Perform the merge using the streaming implementation
-    output_path, media_type = run_merge_pdf_files(input_paths)
-
-    # Clean up the temporary input files
-    for p in input_paths:
-        try:
-            os.remove(p)
-        except OSError:
-            pass
+        # Perform the merge using the streaming implementation
+        output_path, media_type = _engine(run_merge_pdf_files, input_paths)
+    finally:
+        # Clean up the temporary input files even if a upload/merge failed.
+        for p in input_paths:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
 
     def iterfile():
         with open(output_path, "rb") as f:
@@ -438,7 +442,7 @@ async def watermark_pdf(request: Request, file: UploadFile = File(...), watermar
 # ---------------------------------------------------------------------
 
 # Batch PDF processing endpoint (no size caps as requested)
-from backend.batch_pdf import run_batch_pdf
+from batch_pdf import run_batch_pdf
 
 @app.post("/batch-pdf")
 @limiter.limit("10/minute")
@@ -454,7 +458,7 @@ async def batch_pdf(request: Request, job: str = Form(...), files: List[UploadFi
         _check_size(data)
         data_list.append(data)
     # Dispatch to the appropriate helper
-    payload, media_type = run_batch_pdf(job, data_list, angle=angle)
+    payload, media_type = _engine(run_batch_pdf, job, data_list, angle=angle)
     return Response(content=payload, media_type=media_type)
 
 # ---------------------------------------------------------------------
