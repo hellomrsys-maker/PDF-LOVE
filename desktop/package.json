@@ -1,0 +1,86 @@
+{
+  "name": "pdflove-desktop",
+  "productName": "PDFLove",
+  "version": "1.0.0",
+  "description": "PDF and image tools that run entirely on your own device — a real installed application, fully offline.",
+  "main": "main.js",
+  "author": "PDFLove",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "prepare-app": "node scripts/bundle.js",
+    "start": "npm run prepare-app && electron .",
+    "dist": "npm run prepare-app && electron-builder",
+    "dist:win": "npm run prepare-app && electron-builder --win",
+    "dist:mac": "npm run prepare-app && electron-builder --mac",
+    "dist:linux": "npm run prepare-app && electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "in.co.pdflove.desktop",
+    "productName": "PDFLove",
+    "copyright": "Copyright © 2026 PDFLove",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "app/**/*",
+      "build/icon.*"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PDFLove"
+    },
+    "portable": {
+      "artifactName": "PDFLove-${version}-portable.exe"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Office",
+      "icon": "build/icon.png",
+      "maintainer": "PDFLove <hello@pdflove.co.in>"
+    }
+  }
+}
