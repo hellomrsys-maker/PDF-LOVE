@@ -154,7 +154,7 @@ def run_convert(data: bytes, filename: str, target: str):
 def _office_to_pdf(data: bytes, ext: str) -> bytes:
     if not which("soffice"):
         raise EngineError(501, "LibreOffice is not installed on this server (see backend/Dockerfile).")
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pdflove-") as tmp:
         src = os.path.join(tmp, "input" + ext)
         with open(src, "wb") as f:
             f.write(data)
@@ -176,7 +176,7 @@ def _office_to_pdf(data: bytes, ext: str) -> bytes:
 def _pdf_to_docx(data: bytes) -> bytes:
     from pdf2docx import Converter
 
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pdflove-") as tmp:
         src = os.path.join(tmp, "input.pdf")
         dst = os.path.join(tmp, "output.docx")
         with open(src, "wb") as f:
@@ -262,7 +262,7 @@ def run_compress_pdf(data: bytes, level: str = "strong"):
     if level not in GS_PRESETS:
         raise EngineError(422, f"level must be one of {sorted(GS_PRESETS)}")
     logging.info("Compress‑PDF: input=%d bytes, preset=%s", len(data), level)
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pdflove-") as tmp:
         src = os.path.join(tmp, "in.pdf")
         dst = os.path.join(tmp, "out.pdf")
         with open(src, "wb") as f:
@@ -286,7 +286,7 @@ def run_compress_pdf(data: bytes, level: str = "strong"):
 def run_pdfa(data: bytes):
     if not which("gs"):
         raise EngineError(501, "Ghostscript is not installed on this server (see backend/Dockerfile).")
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pdflove-") as tmp:
         src = os.path.join(tmp, "in.pdf")
         dst = os.path.join(tmp, "out.pdf")
         with open(src, "wb") as f:
@@ -324,7 +324,7 @@ def run_video_process(data: bytes, filename: str, codec: str = "h264", quality: 
     if not codec.replace("-", "").isalnum():
         raise EngineError(422, f"Invalid codec '{codec}'.")
     # Create temporary files for input and output
-    with tempfile.TemporaryDirectory(prefix="dockbench-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="pdflove-") as tmp:
         # basename() only — the uploaded filename is attacker-controlled and
         # must never be able to escape the private temp dir.
         src = os.path.join(tmp, os.path.basename(filename) or "input")

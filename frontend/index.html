@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dockbench — PDF &amp; Image tools that never leave your device</title>
+<title>PDFLove — PDF &amp; Image tools that never leave your device</title>
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231F2420'/%3E%3Ccircle cx='50' cy='50' r='14' fill='%234A7856'/%3E%3C/svg%3E">
 <meta name="theme-color" content="#C1683A">
 <!-- Fonts are self-hosted in ./vendor/fonts (zero external requests,
      correct rendering offline). If that directory is missing, the app
@@ -396,7 +395,7 @@
      configured and actually injects content — see AD_CONFIG. */
   .ad-slot{min-height:0;overflow:hidden;}
   .ad-slot:empty{display:none;}
-  /* "Ask Dockbench" hero input — the plain-language front door. */
+  /* "Ask PDFLove" hero input — the plain-language front door. */
   .assist-hero{display:flex;gap:8px;margin:0 0 28px;max-width:56ch;}
   .assist-hero input{flex:1;padding:13px 16px;font-size:0.98rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-raised);font-family:inherit;}
   .assist-hero input:focus{outline:none;border-color:var(--copper);}
@@ -483,7 +482,7 @@
 
 <header>
   <div class="wrap header-row">
-    <a class="brand" href="./" aria-label="Dockbench home"><span class="dot"></span>Dockbench</a>
+    <a class="brand" href="./" aria-label="PDFLove home"><span class="dot"></span>PDFLove</a>
 
     <nav class="mainnav" id="mainnav" aria-label="Main">
       <button class="navlink" data-jump="Merge PDF">Merge PDF</button>
@@ -502,7 +501,7 @@
     <div class="header-actions">
       <div class="header-search"><input type="text" id="tool-search" placeholder="Search tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
       <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
-      <button class="install-btn" id="install-btn" title="Install Dockbench as an app on this device">Install</button>
+      <button class="install-btn" id="install-btn" title="Install PDFLove as an app on this device">Install</button>
       <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
     </div>
   </div>
@@ -573,7 +572,7 @@
   <div class="wrap">
     <div class="foot-cols">
       <div class="foot-col foot-about">
-        <div class="foot-brand"><span class="dot"></span>Dockbench</div>
+        <div class="foot-brand"><span class="dot"></span>PDFLove</div>
         <p>A static, client-side document toolkit. PDF and image tools run on WebAssembly and Canvas inside your browser — no upload, no account, no daily limit.</p>
         <div class="foot-platforms" aria-label="Available on">
           <span>Web</span><span>Windows</span><span>macOS</span><span>Linux</span><span>Android</span>
@@ -619,7 +618,7 @@
     <div class="foot-bottom">
       <div class="foot-note">
         Server-assisted tools (OCR, Office conversion, deep compression, background removal, chat) are a separate,
-        opt-in backend — see <code>/backend</code> for the self-hosted, open-source API. Dockbench never checks for
+        opt-in backend — see <code>/backend</code> for the self-hosted, open-source API. PDFLove never checks for
         one automatically.
       </div>
       <div class="foot-actions">
@@ -739,13 +738,35 @@ if(IS_FILE){
   vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
 }
 
+/* ---------- storage migration: dockbench.* -> pdflove.* ----------
+   The rename would otherwise silently drop everyone's pinned tools,
+   recents, licence key and backend URL. Copy the old keys across once,
+   then leave the originals alone so an older cached build still works. */
+(function migrateStorageKeys(){
+  try{
+    const map = {
+      'dockbench.favs':'pdflove.favs',
+      'dockbench.recents':'pdflove.recents',
+      'dockbench.apiBase':'pdflove.apiBase',
+      'dockbench.licenseKey':'pdflove.licenseKey',
+      'dockbench.adsEnabled':'pdflove.adsEnabled',
+    };
+    for(const [oldKey,newKey] of Object.entries(map)){
+      const val = localStorage.getItem(oldKey);
+      if(val !== null && localStorage.getItem(newKey) === null){
+        localStorage.setItem(newKey, val);
+      }
+    }
+  }catch(e){ /* private mode / storage disabled — nothing to migrate */ }
+})();
+
 /* ---------- optional self-hosted backend ---------- */
 // The server-assisted tools (OCR, background removal, Office conversion,
 // PDF/A, deep compression, chat/summarize) talk to the FastAPI backend in
 // /backend. Deployed with the bundled docker-compose + nginx, it lives at
 // same-origin /api. Override at any time from the browser console:
-//   localStorage.setItem('dockbench.apiBase', 'https://my-server:8000')
-const API_BASE = localStorage.getItem('dockbench.apiBase')
+//   localStorage.setItem('pdflove.apiBase', 'https://my-server:8000')
+const API_BASE = localStorage.getItem('pdflove.apiBase')
   || (location.protocol.startsWith('http') ? '/api' : 'http://localhost:8000');
 let _apiCaps = null;
 async function apiCapabilities(){
@@ -814,7 +835,7 @@ function apiErrorHelp(e){
   return `Could not reach the backend (${escapeXml(e.message)}). `+
     `Server-assisted tools need the optional self-hosted API from this project's `+
     `<code>/backend</code> — start it with <code>docker compose up -d</code>, `+
-    `or point this app at it via <code>localStorage.setItem('dockbench.apiBase', 'https://your-server')</code>.`;
+    `or point this app at it via <code>localStorage.setItem('pdflove.apiBase', 'https://your-server')</code>.`;
 }
 
 /* Single, hardened entry point for pdf.js parsing. isEvalSupported:false
@@ -917,7 +938,7 @@ async function addCornerMark(blob){
     const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
     doc.getPages().forEach(p=>{
       const { width } = p.getSize();
-      p.drawText('Dockbench', {
+      p.drawText('PDFLove', {
         x: Math.max(width-70, 8), y: 8, size: 8, font,
         color: PDFLib.rgb(0.55,0.55,0.55), opacity: 0.55
       });
@@ -991,11 +1012,11 @@ async function verifyLicenseKey(keyStr){
 
 let activeLicense = null; // {tier, licensee, seats, issued, expires} once verified this session
 async function loadStoredLicense(){
-  const stored = localStorage.getItem('dockbench.licenseKey');
+  const stored = localStorage.getItem('pdflove.licenseKey');
   if(!stored) return;
   const result = await verifyLicenseKey(stored);
   if(result.valid) activeLicense = result.payload;
-  else localStorage.removeItem('dockbench.licenseKey'); // stale, tampered, or expired — stop asking
+  else localStorage.removeItem('pdflove.licenseKey'); // stale, tampered, or expired — stop asking
 }
 loadStoredLicense();
 
@@ -1013,7 +1034,7 @@ function showLicensePanel(opts={}){
     const clearBtn = document.createElement('button');
     clearBtn.className = 'small-btn';
     clearBtn.textContent = 'Remove this license from this device';
-    clearBtn.onclick = ()=>{ localStorage.removeItem('dockbench.licenseKey'); activeLicense = null; closePanel(); };
+    clearBtn.onclick = ()=>{ localStorage.removeItem('pdflove.licenseKey'); activeLicense = null; closePanel(); };
     body.appendChild(clearBtn);
     return;
   }
@@ -1036,7 +1057,7 @@ function showLicensePanel(opts={}){
     btn.disabled = false;
     if(result.valid){
       activeLicense = result.payload;
-      try{ localStorage.setItem('dockbench.licenseKey', input.value.trim()); }catch(e){}
+      try{ localStorage.setItem('pdflove.licenseKey', input.value.trim()); }catch(e){}
       log.innerHTML = '<span class="ok">✓ Activated — no more watermark prompts on this device.</span>';
       if(opts.onActivated) opts.onActivated();
     } else {
@@ -1051,7 +1072,7 @@ function showLicensePanel(opts={}){
 // panelShell/overlay modal every tool already uses.
 function showWatermarkChoice(blob, filename){
   const body = panelShell({
-    title: 'Remove the Dockbench mark?',
+    title: 'Remove the PDFLove mark?',
     desc: 'This free export carries a small corner mark. Watch a short ad for a clean copy, or download it as-is — your choice.'
   });
   const watchBtn = document.createElement('button');
@@ -2372,7 +2393,7 @@ function openToolPicker(){
   });
 }
 
-/* ---------- Ask Dockbench: the plain-language help desk ----------
+/* ---------- Ask PDFLove: the plain-language help desk ----------
    The user says what they want in their own words ("make this small enough
    to email and give me a markdown copy"); we split the request into steps,
    match each one to a real tool, and walk them through — carrying the file
@@ -2571,7 +2592,7 @@ function assistOpenNext(){
 }
 
 function toolAskDockbench(prefill){
-  const body = panelShell({title:'✨ Ask Dockbench', desc:'Say what you want in your own words — no technical terms needed. I\'ll pick the right tools and walk you through, step by step.'});
+  const body = panelShell({title:'✨ Ask PDFLove', desc:'Say what you want in your own words — no technical terms needed. I\'ll pick the right tools and walk you through, step by step.'});
   buildDropzone(body, {multiple:false, accept:'', onFiles:(f)=>{ assistSourceFile=f[0]; fileInfo.textContent = `Working with: ${assistSourceFile.name} (${fmtBytes(assistSourceFile.size)})`; }});
   const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:10px 0;font-size:0.85rem;'; body.appendChild(fileInfo);
   assistSourceFile = null; assistQueue = []; assistStepNum = 0; assistTotal = 0;
@@ -4091,7 +4112,7 @@ function toolInvoiceGenerator(){
 
 function serverNote(body, engineLabel){
   const note = document.createElement('div'); note.className='note';
-  note.innerHTML = `<strong>Server-assisted tool.</strong> This one sends the file to <em>your own</em> self-hosted Dockbench backend (${engineLabel}) — open-source, no third-party service, nothing retained after the response.`;
+  note.innerHTML = `<strong>Server-assisted tool.</strong> This one sends the file to <em>your own</em> self-hosted PDFLove backend (${engineLabel}) — open-source, no third-party service, nothing retained after the response.`;
   body.appendChild(note);
   return note;
 }
@@ -6462,13 +6483,13 @@ const apiTools = [
 
 /* ---------- card factory, favorites & recents ---------- */
 const toolIndex = {}; // name -> {tool, sectionId}
-let favs = new Set(JSON.parse(localStorage.getItem('dockbench.favs')||'[]'));
-let recents = JSON.parse(localStorage.getItem('dockbench.recents')||'[]');
+let favs = new Set(JSON.parse(localStorage.getItem('pdflove.favs')||'[]'));
+let recents = JSON.parse(localStorage.getItem('pdflove.recents')||'[]');
 
 let lastOpenedToolName = null; // single tracking point, reused by offerChain's "also want to" suggestion
 function openTool(t){
   recents = [t.name, ...recents.filter(n=>n!==t.name)].slice(0,8);
-  try{ localStorage.setItem('dockbench.recents', JSON.stringify(recents)); }catch(e){}
+  try{ localStorage.setItem('pdflove.recents', JSON.stringify(recents)); }catch(e){}
   renderHomeRows();
   lastOpenedToolName = t.name;
   t.fn();
@@ -6486,7 +6507,7 @@ function makeCard(t, sectionId){
   star.onclick = (e)=>{
     e.stopPropagation();
     if(favs.has(t.name)) favs.delete(t.name); else favs.add(t.name);
-    try{ localStorage.setItem('dockbench.favs', JSON.stringify([...favs])); }catch(e2){}
+    try{ localStorage.setItem('pdflove.favs', JSON.stringify([...favs])); }catch(e2){}
     document.querySelectorAll(`.tool-card[data-tool="${CSS.escape(t.name)}"] .fav-star`).forEach(st=>{
       st.classList.toggle('faved', favs.has(t.name));
       st.textContent = favs.has(t.name) ? '★' : '☆';
@@ -6512,14 +6533,14 @@ renderGrid('img-tools', imgTools);
 renderGrid('video-tools', videoTools);
 renderGrid('api-tools', apiTools);
 
-// Dockbench is a document and image toolkit. Generic web gadgets (unit /
+// PDFLove is a document and image toolkit. Generic web gadgets (unit /
 // timestamp / colour converters, JSON + regex + hash utilities, BMI and
 // loan calculators, lorem ipsum) were removed: they diluted the product,
 // buried the PDF tools people actually come for, and the currency
 // converter needed live exchange rates, which broke the offline promise.
 // What stays below is what a document workflow genuinely reaches for.
 const utilityTools = [
-  {icon:'✨', name:'Ask Dockbench', desc:'Say what you need in your own words — get walked through it, step by step.', fn:toolAskDockbench},
+  {icon:'✨', name:'Ask PDFLove', desc:'Say what you need in your own words — get walked through it, step by step.', fn:toolAskDockbench},
   {icon:'▦', name:'QR Code Generator', desc:'Turn a link or text into a QR code.', fn:toolQRGenerate},
   {icon:'🔍', name:'QR Code Reader', desc:'Read a QR code from a photo.', fn:toolQRRead},
   {icon:'▮▯', name:'Barcode Generator', desc:'Turn a code into a scannable barcode.', fn:toolBarcodeGenerator},
@@ -6542,7 +6563,7 @@ const CATEGORIES = [
   ['ai-tools','PDF Intelligence'], ['utility-tools','Codes'], ['api-tools','Server'],
 ];
 const SECTION_IDS = CATEGORIES.slice(1).map(c=>c[0]);
-const POPULAR = ['Ask Dockbench','Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
+const POPULAR = ['Ask PDFLove','Merge PDF','Split PDF','Make PDF Smaller','Images to PDF','PDF to JPG','Sign PDF',
                  'Protect PDF','Make Image Smaller','Resize Image','PDF to Word','Video to GIF','Invoice Generator'];
 let activeCategory = 'all';
 let serverAvailable = false; // Server tab/tools appear only when a backend answers
@@ -6616,7 +6637,7 @@ const MENUS = [
     ['Security', ['Protect PDF','Unlock PDF','Sanitize PDF','Flatten PDF'], 'security-tools'],
     ['Images', ['Make Image Smaller','Resize Image','Remove Background','Convert Image Format','Passport &amp; ID Photo Maker','Invoice Generator'], 'img-tools'],
     ['Video', ['Video to GIF','Trim Video','Screen Recorder','Extract Audio from Video'], 'video-tools'],
-    ['PDF intelligence', ['Ask Dockbench','AI Summarize (On Your Device)','Translate Text (On Your Device)','Chat with PDF'], 'ai-tools'],
+    ['PDF intelligence', ['Ask PDFLove','AI Summarize (On Your Device)','Translate Text (On Your Device)','Chat with PDF'], 'ai-tools'],
     ['Codes', ['QR Code Generator','QR Code Reader','Barcode Generator','Password Generator'], 'utility-tools']]],
 ];
 document.querySelectorAll('.megamenu').forEach((menu, i)=>{
@@ -6742,7 +6763,7 @@ function applyView(){
 searchInput.addEventListener('input', applyView);
 applyView();
 
-// "Ask Dockbench" entry points: the hero input, the search dead-end, and a
+// "Ask PDFLove" entry points: the hero input, the search dead-end, and a
 // ?ask=... URL param — the link target for external guide/SEO pages so a
 // page titled "how do I make a PDF smaller?" can deep-link straight into
 // the assistant with the question already asked.
@@ -6770,7 +6791,7 @@ document.addEventListener('keydown', e=>{
   if(e.key==='Escape' && overlay.classList.contains('open')) closePanel();
 });
 
-// Backend check is manual, not automatic — Dockbench makes zero network
+// Backend check is manual, not automatic — PDFLove makes zero network
 // requests of its own accord, on load or otherwise (installed app or plain
 // browser tab, same rule). Clicking the footer button is the only thing
 // that ever triggers this probe.
@@ -6860,8 +6881,8 @@ document.addEventListener('db-result-delivered', ()=>{
 
   function showManualInstallInstructions(){
     const body = panelShell({
-      title: 'Install Dockbench',
-      desc: 'Add Dockbench to your desktop, taskbar, or home screen — it opens like a real app and works offline after that.'
+      title: 'Install PDFLove',
+      desc: 'Add PDFLove to your desktop, taskbar, or home screen — it opens like a real app and works offline after that.'
     });
     const ua = navigator.userAgent;
     const isIOS = /iPad|iPhone|iPod/.test(ua);
@@ -6872,7 +6893,7 @@ document.addEventListener('db-result-delivered', ()=>{
     } else if(isSafari){
       steps = 'On Mac Safari: open the <strong>File</strong> menu, then <strong>Add to Dock</strong> (Safari 17+).';
     } else {
-      steps = 'Look for an install icon at the right edge of the address bar, or open the browser menu (⋮ or ≡) and choose <strong>Install Dockbench</strong> / <strong>Add to Home screen</strong>.';
+      steps = 'Look for an install icon at the right edge of the address bar, or open the browser menu (⋮ or ≡) and choose <strong>Install PDFLove</strong> / <strong>Add to Home screen</strong>.';
     }
     const p = document.createElement('div');
     p.innerHTML = `<p style="margin-top:0;">${steps}</p>`;

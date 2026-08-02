@@ -1,4 +1,4 @@
-# Dockbench in production
+# PDFLove in production
 
 One VPS, docker compose, automatic HTTPS. Total operating cost: the
 server. There are no external services and nothing to subscribe to.
@@ -31,8 +31,8 @@ curl -fsSL https://get.docker.com | sh
 
 # 2. DNS: point an A (and AAAA) record for your domain at this server.
 
-# 3. Dockbench
-git clone https://github.com/hellomrsys-maker/Dockbench && cd Dockbench
+# 3. PDFLove
+git clone https://github.com/hellomrsys-maker/PDFLove && cd PDFLove
 cp .env.example .env
 nano .env        # set DOMAIN, ACME_EMAIL, ALLOWED_ORIGINS
 
@@ -62,7 +62,7 @@ means no migrations, ever. Pin versions in `.env` via `FRONTEND_IMAGE` /
   `backend:8000/metrics` (blocked from the public internet by nginx).
   Scrape config:
   ```yaml
-  - job_name: dockbench
+  - job_name: pdflove
     static_configs: [{targets: ["backend:8000"]}]
   ```
 - Logs: `docker compose logs -f backend worker` — JSON lines with
@@ -109,7 +109,7 @@ Yours:
 1. **Vertical first** — this stack happily uses 8-16 vCPUs
    (`WEB_WORKERS`, `--scale worker=N`).
 2. **Split the frontend** — it's static; serve it from any CDN or static host
-   and point `localStorage dockbench.apiBase` (or a build-time edit) at
+   and point `localStorage pdflove.apiBase` (or a build-time edit) at
    the API box. ~90% of tool usage never reaches your server at all.
 3. **Multi-host** — run Redis on one node, point several worker nodes'
    `REDIS_URL` at it, and put any load balancer in front of 2+ API

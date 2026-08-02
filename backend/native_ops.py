@@ -20,7 +20,7 @@ import ctypes
 import logging
 import os
 
-logger = logging.getLogger("dockbench.native")
+logger = logging.getLogger("pdflove.native")
 
 _LIB_PATHS = (
     os.path.join(os.path.dirname(__file__), "native", "imgproc.so"),

@@ -168,7 +168,7 @@ jobs:
           python3 - <<'PY'
           import io, socket, zipfile
 
-          # Dockbench must work air-gapped (README: "no server involved
+          # PDFLove must work air-gapped (README: "no server involved
           # before or after, ever"). Any outbound socket here is a bug.
           class Phoned(Exception): pass
           def deny(*a, **k): raise Phoned("engine attempted a network call")

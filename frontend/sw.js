@@ -1,6 +1,12 @@
-const CACHE_NAME = 'dockbench-v6';
+const CACHE_NAME = 'pdflove-v7';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
+  // Browser/OS favicons — declared in index.html, so precache them or an
+  // installed, offline app requests them and gets nothing.
+  './favicon.ico',
+  './favicon-16x16.png',
+  './favicon-32x32.png',
+  './favicon-192x192.png',
   // Installable-app icons referenced by manifest.json.
   './icons/icon-48.png',
   './icons/icon-72.png',
@@ -72,7 +78,7 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;               // let the network handle it
   const url = new URL(req.url);
   // Only ever cache our own static assets. A cross-origin request is the
-  // backend (dockbench.apiBase pointed at a separate host — the normal
+  // backend (pdflove.apiBase pointed at a separate host — the normal
   // setup when the frontend is on Cloudflare and the API is elsewhere).
   // Caching those would serve a stale GET /jobs/{id}, so the poll loop
   // would read "queued" forever and never see the job finish.

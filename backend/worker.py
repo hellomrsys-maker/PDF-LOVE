@@ -52,13 +52,13 @@ async def process_job(ctx, kind: str, filename: str, options: dict):
     job_id = ctx["job_id"]
 
     # Try to fetch in‑memory upload first.
-    data = await redis.get(f"dockbench:upload:{job_id}")
+    data = await redis.get(f"pdflove:upload:{job_id}")
     if data is not None:
         # In‑memory payload – delete the key and continue.
-        await redis.delete(f"dockbench:upload:{job_id}")
+        await redis.delete(f"pdflove:upload:{job_id}")
     else:
         # Fallback to a temporary file path (large upload).
-        path_key = f"dockbench:upload_path:{job_id}"
+        path_key = f"pdflove:upload_path:{job_id}"
         upload_path = await redis.get(path_key)
         if not upload_path:
             raise RuntimeError("Upload expired before the job started — resubmit.")
@@ -89,8 +89,8 @@ async def process_job(ctx, kind: str, filename: str, options: dict):
     if len(payload) > MAX_RESULT_MB * 1024 * 1024:
         raise RuntimeError(f"Result exceeds {MAX_RESULT_MB}MB limit.")
 
-    await redis.set(f"dockbench:result:{job_id}", payload, ex=RESULT_TTL)
-    await redis.set(f"dockbench:resultmeta:{job_id}", media_type, ex=RESULT_TTL)
+    await redis.set(f"pdflove:result:{job_id}", payload, ex=RESULT_TTL)
+    await redis.set(f"pdflove:resultmeta:{job_id}", media_type, ex=RESULT_TTL)
     return {"media_type": media_type, "bytes": len(payload)}
 
 
