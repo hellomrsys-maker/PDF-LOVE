@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdflove-v11';
+const CACHE_NAME = 'pdflove-v12';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Static pages, precached so an installed offline copy can still show its
@@ -67,10 +67,30 @@ const APP_SHELL = [
   './vendor/fonts/ibm-plex-mono-latin-500-normal.woff2',
 ];
 
+// The shell that MUST be cached for the app to open offline at all. If one
+// of these genuinely cannot be fetched, installing is pointless.
+const CRITICAL = ['./', './index.html', './manifest.json'];
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+
+    // cache.addAll() is atomic: one 404 anywhere in a 60-entry list rejects
+    // the whole thing, the worker never activates, and the installed app
+    // then fails to open offline with ERR_FAILED — with no clue why. Cache
+    // the critical shell atomically, then everything else individually so a
+    // single missing asset degrades one tool instead of the entire app.
+    await cache.addAll(CRITICAL);
+
+    const rest = APP_SHELL.filter((u) => !CRITICAL.includes(u));
+    const failed = [];
+    await Promise.all(rest.map((u) =>
+      cache.add(u).catch(() => { failed.push(u); })
+    ));
+    if (failed.length) {
+      console.warn('[PDFLove] not precached (app still works offline):', failed);
+    }
+  })());
   self.skipWaiting();
 });
 
