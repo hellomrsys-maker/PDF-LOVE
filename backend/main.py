@@ -57,7 +57,7 @@ import engines
 import native_ops
 from engines import EngineError
 from typing import List
-from .premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
+from premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
 
 # ---------------------------------------------------------------------
 # Logging: human-readable by default, JSON lines with LOG_JSON=1.
@@ -373,7 +373,7 @@ async def merge_pdf(request: Request, files: List[UploadFile] = File(...)):
     Supports very large inputs by streaming them from disk."""
     import tempfile, os
     from fastapi.responses import StreamingResponse
-    from .premium_pdf import run_merge_pdf_files
+    from premium_pdf import run_merge_pdf_files
 
     input_paths = []
     for f in files:
@@ -438,7 +438,7 @@ async def watermark_pdf(request: Request, file: UploadFile = File(...), watermar
 # ---------------------------------------------------------------------
 
 # Batch PDF processing endpoint (no size caps as requested)
-from backend.batch_pdf import run_batch_pdf
+from batch_pdf import run_batch_pdf
 
 @app.post("/batch-pdf")
 @limiter.limit("10/minute")

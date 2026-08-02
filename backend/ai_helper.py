@@ -2,7 +2,7 @@ import os
 import tempfile
 import logging
 from shutil import which
-from .engines import EngineError
+from engines import EngineError
 
 # ---------------------------------------------------------------------
 # AI-powered engines – placeholder implementations using local tools
@@ -67,7 +67,7 @@ def run_audio_extract(data: bytes, filename: str, format: str = "mp3"):
             "-acodec", "copy",
             out_file,
         ]
-        from .engines import _run
+        from engines import _run
         _run(cmd)
         with open(out_file, "rb") as f:
             out = f.read()
@@ -93,7 +93,7 @@ def run_audio_extract(data: bytes, filename: str, format: str = "mp3"):
             out_file,
         ]
         # Import the internal _run helper from engines
-        from .engines import _run
+        from engines import _run
         _run(cmd)
         with open(out_file, "rb") as f:
             out = f.read()

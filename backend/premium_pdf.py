@@ -16,8 +16,8 @@ try:
 except Exception:
     from PyPDF2 import PdfReader, PdfWriter
     _USE_PIKEPDF = False
-from .connectivity import is_online
-from .engines import EngineError
+from connectivity import is_online
+from engines import EngineError
 
 def _ensure_online():
     """Raise EngineError if offline for premium PDF features."""

@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY native/ native/
 RUN gcc -O3 -shared -fPIC -o native/imgproc.so native/imgproc.c
 
-COPY native_ops.py engines.py worker.py main.py ./
+COPY native_ops.py engines.py worker.py main.py connectivity.py premium_pdf.py batch_pdf.py ai_helper.py ./
 
 # Run as a non-root user; HOME is writable for engine caches (LibreOffice
 # profiles go to per-request temp dirs, rembg models to ~/.u2net).

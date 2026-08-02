@@ -23,7 +23,7 @@ import native_ops
 import logging
 from typing import List, Tuple
 import pikepdf
-from .connectivity import is_online
+from connectivity import is_online
 
 
 class EngineError(Exception):
@@ -348,8 +348,8 @@ def run_video_process(data: bytes, filename: str, codec: str = "h264", quality: 
     return out, media_type
 
 
-from .ai_helper import run_image_enhance, run_super_resolve, run_audio_extract
-from .premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
+from ai_helper import run_image_enhance, run_super_resolve, run_audio_extract
+from premium_pdf import run_merge_pdf, run_split_pdf, run_rotate_pdf, run_watermark_pdf
 # Each takes (data, filename, **options) and returns (payload, media_type).
 JOB_KINDS = {
     "ocr": lambda data, filename, **o: run_ocr(

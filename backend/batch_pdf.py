@@ -8,7 +8,7 @@ import pikepdf
 import io
 import zipfile
 
-from .premium_pdf import (
+from premium_pdf import (
     run_merge_pdf,
     run_split_pdf,
     run_rotate_pdf,
