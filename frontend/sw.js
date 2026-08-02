@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dockbench-v5';
+const CACHE_NAME = 'dockbench-v6';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Installable-app icons referenced by manifest.json.
@@ -71,7 +71,13 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;               // let the network handle it
   const url = new URL(req.url);
-  if (url.pathname.startsWith('/api/')) return;   // backend is always live
+  // Only ever cache our own static assets. A cross-origin request is the
+  // backend (dockbench.apiBase pointed at a separate host — the normal
+  // setup when the frontend is on Cloudflare and the API is elsewhere).
+  // Caching those would serve a stale GET /jobs/{id}, so the poll loop
+  // would read "queued" forever and never see the job finish.
+  if (url.origin !== location.origin) return;     // backend is always live
+  if (url.pathname.startsWith('/api/')) return;   // same-origin backend too
   event.respondWith(
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req)
