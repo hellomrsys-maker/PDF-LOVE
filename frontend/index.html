@@ -3,9 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDFLove — PDF &amp; Image tools that never leave your device</title>
+<title>PDFLove — Free PDF tools that work on your device, even offline</title>
+<meta name="description" content="Merge, split, compress, convert, sign and protect PDFs free. Everything runs in your browser — no upload, no sign-up, no daily limit, no watermarks. Works offline.">
+<link rel="canonical" href="https://pdflove.co.in/">
+<meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#C1683A">
+<meta name="application-name" content="PDFLove">
+<meta name="apple-mobile-web-app-title" content="PDFLove">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<!-- Open Graph / Twitter: controls how a shared link renders. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PDFLove">
+<meta property="og:url" content="https://pdflove.co.in/">
+<meta property="og:title" content="PDFLove — Free PDF tools that work on your device">
+<meta property="og:description" content="Merge, split, compress, convert, sign and protect PDFs free. Nothing is uploaded — every tool runs in your browser, and it works offline.">
+<meta property="og:image" content="https://pdflove.co.in/icons/feature-graphic-1024x500.png">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="500">
+<meta property="og:locale" content="en_IN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="PDFLove — Free PDF tools that work on your device">
+<meta name="twitter:description" content="Merge, split, compress, convert, sign and protect PDFs free. Nothing is uploaded, and it works offline.">
+<meta name="twitter:image" content="https://pdflove.co.in/icons/feature-graphic-1024x500.png">
+
+<!-- Structured data: WebApplication + the FAQ answers Google can surface. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://pdflove.co.in/#app",
+      "name": "PDFLove",
+      "url": "https://pdflove.co.in/",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web, Windows, macOS, Linux, Android, iOS",
+      "browserRequirements": "Requires a modern browser with WebAssembly",
+      "description": "PDF and image tools that process entirely on your own device. No upload, no account, no daily limit. Works offline once installed.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+      "featureList": [
+        "Merge PDF", "Split PDF", "Compress PDF", "PDF to Word", "PDF to JPG",
+        "Images to PDF", "Sign PDF", "Protect PDF with AES-256", "OCR scanned PDFs",
+        "Rotate and organise pages", "Add watermark", "Redact text"
+      ]
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://pdflove.co.in/#org",
+      "name": "PDFLove",
+      "url": "https://pdflove.co.in/",
+      "logo": "https://pdflove.co.in/icons/icon-512.png"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://pdflove.co.in/#website",
+      "url": "https://pdflove.co.in/",
+      "name": "PDFLove",
+      "publisher": { "@id": "https://pdflove.co.in/#org" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Are my files uploaded anywhere?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Every tool marked \"runs on-device\" works inside your browser using WebAssembly. Your file is read into memory, processed, and handed back as a download — it never crosses the network." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does PDFLove work without an internet connection?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Once installed, the whole toolkit is stored on your device and every tool keeps working with no connection at all." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is there a file size limit?",
+          "acceptedAnswer": { "@type": "Answer", "text": "There is no upload, so there is no upload limit. The practical limit is your own device's memory, and the app warns you before starting a job that is likely to exceed it." }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need an account?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. There is no login, no email address and no profile. Nothing to sign up for." }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <!-- Fonts are self-hosted in ./vendor/fonts (zero external requests,
      correct rendering offline). If that directory is missing, the app
      falls back to system fonts via the CSS font stacks. -->

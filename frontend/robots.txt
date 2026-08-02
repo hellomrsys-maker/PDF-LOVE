@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# The tool "pages" are query-string views of the same document. Indexing
+# them would put 83 near-identical URLs in the index; the canonical on
+# index.html already points crawlers at the real page.
+Disallow: /*?tool=
+Disallow: /*?ask=
+
+# No value to a search engine, and no reason to spend crawl budget on them.
+Disallow: /vendor/
+Disallow: /.well-known/
+
+Sitemap: https://pdflove.co.in/sitemap.xml
