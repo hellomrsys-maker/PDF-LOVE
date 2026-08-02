@@ -774,18 +774,32 @@ const VENDOR_FALLBACKS = {
   'vendor/qpdf.js':           'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js',
   'vendor/qpdf.wasm':         'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm',
 };
-/* ---------- optional ad monetization (disabled by default) ----------
+/* ---------- ad monetization ----------
    Individuals never pay and never log in — that stays true no matter what.
-   These are the only two monetization surfaces on the free tier:
-     1. A passive banner (never blocks anything, just sits on the page).
+   Ads are strictly web-only: the desktop app (see /desktop) blocks all
+   outbound network access at the OS process level, so this code path is
+   never reached there even if it tried to run.
+     1. A passive AdSense banner (never blocks anything, just sits on the page).
      2. An optional rewarded ad that removes a small corner mark from a
         free-tier PDF export — the user can also just keep the mark.
-   Both are fully inert (zero network requests, zero UI) until a real ad
-   network is configured below and its `enabled` flag is flipped true. */
+     3. A passive AdSense unit at the bottom of a tool panel, shown only
+        AFTER a result is delivered — never before or during processing.
+   All three are inert (zero network requests, zero UI) until enabled below,
+   and slot 1/3 additionally need a real Ad unit ID from the AdSense
+   dashboard before they render anything (see the two TODOs below). */
 const AD_CONFIG = {
+  adsense: {
+    // Real publisher ID — this alone is enough for Google to crawl/verify
+    // the site for AdSense approval and for ads.txt to check out, even
+    // before any ad unit below is filled in.
+    client: 'ca-pub-6910175887237387',
+  },
   banner: {
-    enabled: false,     // flip true once bannerSlotId/scriptUrl below are real
-    scriptUrl: null,    // your ad network's loader <script src>
+    enabled: true,
+    // TODO: AdSense dashboard -> Ads -> By ad unit -> Display ads -> Create.
+    // Paste the numeric "Ad unit ID" here. Until this is set, the loader is
+    // live but the slot renders nothing (AdSense requires a real slot id).
+    slotId: null,
   },
   rewarded: {
     enabled: false,     // flip true once scriptUrl below is real
@@ -798,8 +812,8 @@ const AD_CONFIG = {
     // the higher-value slot of the two — worth prioritizing over banner.
   },
   result: {
-    enabled: false,     // passive slot at the bottom of a tool panel, shown
-    scriptUrl: null,    // only AFTER a result is delivered — never before/during
+    enabled: true,      // passive slot at the bottom of a tool panel, shown
+    slotId: null,       // TODO: same as banner.slotId — a separate ad unit is recommended
   },
 };
 
@@ -7049,40 +7063,85 @@ if(IS_FILE){
 
 document.getElementById('license-btn').onclick = ()=>showLicensePanel();
 
-// Passive banner ad (see AD_CONFIG) — a no-op until a real network is
-// configured, so out of the box this makes zero network requests and
-// leaves #ad-banner-slot empty (collapsed to nothing by .ad-slot:empty).
+/* ---------- AdSense loader + slot rendering ----------
+   Strictly web-only: never runs on file:// (the desktop app), and never
+   runs inside the packaged desktop build even when served over http, since
+   that build's whole point is zero outbound network access (see /desktop
+   and the data-build="desktop" check below, set by desktop/scripts/bundle.js). */
+const IS_DESKTOP_BUILD = document.body.dataset.build === 'desktop';
+const ADS_ALLOWED = !IS_FILE && !IS_DESKTOP_BUILD;
+
+let _adsenseLoading = null;
+function loadAdsense(){
+  if(!ADS_ALLOWED || !AD_CONFIG.adsense.client) return Promise.resolve(false);
+  if(_adsenseLoading) return _adsenseLoading;
+  _adsenseLoading = new Promise((resolve)=>{
+    if(window.adsbygoogle){ resolve(true); return; }
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=' + encodeURIComponent(AD_CONFIG.adsense.client);
+    s.crossOrigin = 'anonymous';
+    s.onload = ()=>resolve(true);
+    s.onerror = ()=>resolve(false);  // blocked by an extension, offline, etc. — slot just stays empty
+    document.head.appendChild(s);
+  });
+  return _adsenseLoading;
+}
+
+// Google's AdSense "Connect your site" step expects the loader present
+// site-wide so its crawler can find and verify it — that step is separate
+// from any individual ad unit existing yet, so it fires as soon as ads are
+// turned on at all, not gated on a slot ID.
+if(ADS_ALLOWED && (AD_CONFIG.banner.enabled || AD_CONFIG.result.enabled)){
+  loadAdsense();
+}
+
+// Renders one AdSense <ins> into `container` and asks AdSense to fill it.
+// No-op (leaves the slot empty, zero layout shift via .ad-slot:empty) until
+// a real Ad unit ID has been pasted into AD_CONFIG — see the TODOs there.
+function renderAdUnit(container, slotId){
+  if(!ADS_ALLOWED || !slotId || container.querySelector('.adsbygoogle')) return;
+  const ins = document.createElement('ins');
+  ins.className = 'adsbygoogle';
+  ins.style.display = 'block';
+  ins.dataset.adClient = AD_CONFIG.adsense.client;
+  ins.dataset.adSlot = slotId;
+  ins.dataset.adFormat = 'auto';
+  ins.dataset.fullWidthResponsive = 'true';
+  container.appendChild(ins);
+  loadAdsense().then((ok)=>{
+    if(!ok) return;
+    try{ (window.adsbygoogle = window.adsbygoogle || []).push({}); }
+    catch(e){ /* AdSense not yet approved for this site, or blocked — slot stays empty */ }
+  });
+}
+
+// Passive banner ad. Structurally live once AD_CONFIG.banner.enabled is
+// true and AD_CONFIG.adsense.client is set (both true now); visually empty
+// until AD_CONFIG.banner.slotId names a real ad unit.
 function initBannerAd(){
   const cfg = AD_CONFIG.banner;
-  if(!cfg.enabled || !cfg.scriptUrl || IS_FILE) return;
+  if(!cfg.enabled) return;
   const slot = document.getElementById('ad-banner-slot');
   if(!slot) return;
-  const s = document.createElement('script');
-  s.async = true;
-  s.src = cfg.scriptUrl;
-  s.onerror = ()=>{ /* network unreachable or blocked — slot just stays empty */ };
-  document.head.appendChild(s);
+  renderAdUnit(slot, cfg.slotId);
 }
 initBannerAd();
 
 // Result-area passive ad (see AD_CONFIG.result) — only ever appears at the
 // bottom of a tool panel AFTER a result has been delivered, never before or
-// during processing. Dormant (zero DOM, zero requests) until configured.
+// during processing.
 document.addEventListener('db-result-delivered', ()=>{
   const cfg = AD_CONFIG.result;
-  if(!cfg.enabled || !cfg.scriptUrl || IS_FILE) return;
+  if(!cfg.enabled) return;
   if(toolView.hidden) return;
-  if(!document.getElementById('result-ad-script')){
-    const s = document.createElement('script');
-    s.id='result-ad-script'; s.async = true; s.src = cfg.scriptUrl;
-    s.onerror = ()=>{ /* unreachable/blocked — slot stays empty */ };
-    document.head.appendChild(s);
-  }
-  if(!panel.querySelector('.ad-slot')){
-    const slot = document.createElement('div');
+  let slot = panel.querySelector('.ad-slot');
+  if(!slot){
+    slot = document.createElement('div');
     slot.className='ad-slot';
     panel.appendChild(slot);
   }
+  renderAdUnit(slot, cfg.slotId);
 });
 
 // Visible "Install" button — the PWA is already installable via the
