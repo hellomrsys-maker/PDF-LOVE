@@ -60,10 +60,14 @@ more than that.
 
 `frontend/index.html` plus `frontend/vendor/` is the complete client-side
 app. Every library it uses (pdf-lib, pdf.js, JSZip, mammoth, jsPDF,
-html2canvas, qrcode, jsQR, JsBarcode, and qpdf compiled to WebAssembly)
-is **self-hosted in `vendor/`** — zero external requests, and each script
-tag still carries a pinned-version CDN fallback in case a stray copy of
-the HTML is served without the vendor directory.
+qrcode, jsQR, JsBarcode, and qpdf compiled to WebAssembly) is
+**self-hosted in `vendor/`** — zero external requests, and each still
+carries a pinned-version CDN fallback in case a stray copy of the HTML is
+served without the vendor directory. None of them load eagerly: each is
+fetched via `loadScript()`/`ensure*()` the first time a tool that actually
+needs it runs, not on page load — pdf-lib, pdf.js, JSZip, mammoth and
+jsPDF together used to be six blocking `<script>` tags totalling ~2.1MB,
+measured at ~11s added to `DOMContentLoaded` on a throttled connection.
 
 - **Serve it statically**:
   ```bash

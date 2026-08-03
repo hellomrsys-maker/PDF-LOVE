@@ -34,32 +34,73 @@ const path = require('path');
     hasManifestLink: !!document.querySelector('link[rel="manifest"]'),
     hasInstallBtn: !!document.querySelector('.install-btn'),
     swControlled: !!(navigator.serviceWorker && navigator.serviceWorker.controller),
-    pdfLib: typeof PDFLib !== 'undefined',
+    // pdf-lib etc. now load on demand (see index.html's ensure*() helpers),
+    // not eagerly, so this must be false until a tool that needs it runs.
+    pdfLibLoadedEagerly: typeof PDFLib !== 'undefined',
   }));
 
-  // real work, entirely inside the packaged app
-  out.merge = await win.evaluate(async () => {
-    const { PDFDocument } = PDFLib;
-    const mk = async (n) => {
-      const d = await PDFDocument.create();
-      for (let i = 0; i < n; i++) d.addPage([200, 200]);
-      return d.save();
-    };
-    const outDoc = await PDFDocument.create();
-    for (const b of [await mk(2), await mk(3)]) {
-      const s = await PDFDocument.load(b);
-      (await outDoc.copyPages(s, s.getPageIndices())).forEach((p) => outDoc.addPage(p));
-    }
-    return (await PDFDocument.load(await outDoc.save())).getPageCount();
-  });
+  // Fixture PDFs for the merge test below, built via pdf-lib injected
+  // directly into the page. This is a test-only helper independent of the
+  // app's own lazy loader — it does not touch the network (Playwright's
+  // addScriptTag with a local `path` reads the file and injects it via
+  // CDP, not a browser request), so it works under the app's network block.
+  await win.addScriptTag({ path: path.resolve(__dirname, '..', 'app', 'vendor', 'pdf-lib.min.js') });
+  const mkPdf = async (n) => win.evaluate(async (pages) => {
+    const d = await PDFLib.PDFDocument.create();
+    for (let i = 0; i < pages; i++) d.addPage([200, 200]);
+    return Array.from(await d.save());
+  }, n);
+  const pdf2 = await mkPdf(2);
+  const pdf3 = await mkPdf(3);
 
-  // open a tool page inside the app
+  // open the tool page inside the app
   await win.click('.tool-card[data-tool="Merge PDF"]');
   await win.waitForTimeout(900);
   out.toolPage = await win.evaluate(() => ({
     h1: document.querySelector('#tool-page h1') && document.querySelector('#tool-page h1').textContent,
     url: location.href.split('/').pop(),
   }));
+
+  // real merge, driven through the actual tool UI (not the pdf-lib API
+  // directly) so this exercises the app's own ensurePdfLib() lazy loader.
+  //
+  // The result is captured by intercepting URL.createObjectURL rather than
+  // Playwright's page.waitForEvent('download'): in this Electron + xvfb
+  // combination, native downloads never fire a 'will-download' session
+  // event at all (confirmed independently of the app's own code — even a
+  // trivial blob-anchor click outside any tool never reaches it), so
+  // waiting on that event just times out. Reading the blob the app itself
+  // built is a more direct check anyway — it confirms the merge tool
+  // produced the right bytes, without depending on Electron's native
+  // download plumbing working under Xvfb.
+  await win.evaluate(() => {
+    window.__lastBlob = null;
+    const orig = URL.createObjectURL.bind(URL);
+    URL.createObjectURL = (blob) => { window.__lastBlob = blob; return orig(blob); };
+  });
+  const dt = await win.evaluateHandle((files) => {
+    const dt = new DataTransfer();
+    for (const [bytes, name] of files) dt.items.add(new File([new Uint8Array(bytes)], name, { type: 'application/pdf' }));
+    return dt;
+  }, [[pdf2, 'a.pdf'], [pdf3, 'b.pdf']]);
+  await win.evaluate((dt) => {
+    const input = document.querySelector('#panel-body input[type=file]');
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, dt);
+  await win.waitForTimeout(400);
+  await win.click('#panel-body button.primary-btn');
+  await win.waitForTimeout(1500);
+  out.merge = await win.evaluate(async () => {
+    if (!window.__lastBlob) return null;
+    const bytes = new Uint8Array(await window.__lastBlob.arrayBuffer());
+    const pageCount = (await PDFLib.PDFDocument.load(bytes)).getPageCount();
+    return { type: window.__lastBlob.type, bytes: bytes.length, pageCount };
+  });
+  out.runlog = await win.evaluate(() => {
+    const el = document.querySelector('.runlog');
+    return el ? el.textContent : null;
+  });
 
   // the network really is blocked for the renderer
   out.networkBlocked = await win.evaluate(async () => {
@@ -73,4 +114,18 @@ const path = require('path');
 
   console.log(JSON.stringify(out, null, 2));
   await app.close();
+
+  const failures = [];
+  if (!out.isFileProtocol) failures.push('not loaded from file://');
+  if (!out.page.toolCards) failures.push('no tool cards rendered');
+  if (out.page.hasManifestLink) failures.push('manifest link present (should be stripped)');
+  if (out.page.swControlled) failures.push('service worker controlling the page (should be stripped)');
+  if (out.page.pdfLibLoadedEagerly) failures.push('pdf-lib loaded eagerly on page load (should be lazy)');
+  if (!out.merge || out.merge.pageCount !== 5) failures.push('merge did not produce a 5-page PDF: ' + JSON.stringify(out.merge));
+  if (!out.networkBlocked) failures.push('outbound network was not blocked');
+  if (failures.length) {
+    console.error('SMOKE FAILED:', failures.join('; '));
+    process.exit(1);
+  }
+  console.log('SMOKE OK');
 })().catch((e) => { console.error('SMOKE FAILED:', e.message); process.exit(1); });

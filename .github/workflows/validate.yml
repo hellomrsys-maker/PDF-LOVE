@@ -48,6 +48,23 @@ jobs:
           if(dups.length > 0){ console.error('Duplicates found:', dups); process.exit(1); }
           console.log(names.length, 'tool names, no duplicates.');
           "
+      - name: Heavy PDF/Office libraries must load lazily, not eagerly
+        run: |
+          node -e "
+          // Regression guard: pdf-lib, pdf.js, JSZip, mammoth and jsPDF used
+          // to be six blocking <script> tags totalling ~2.1MB, executed on
+          // every single page load regardless of what the visitor came to
+          // do — measured at ~11s added to DOMContentLoaded on a throttled
+          // connection. They now load on demand via loadScript()/ensure*().
+          // If one of these five ever reappears as an eager <script src=...>
+          // tag, that performance regression is back — fail loudly.
+          const fs = require('fs');
+          const html = fs.readFileSync('frontend/index.html','utf8');
+          const heavy = ['pdf-lib.min.js','pdf.min.js','jszip.min.js','mammoth.browser.min.js','jspdf.umd.min.js'];
+          const eager = heavy.filter(f => new RegExp('<script[^>]+src=\"vendor/'+f.replace('.','\\\\.')+'\"').test(html));
+          if(eager.length){ console.error('Loaded eagerly again (should be lazy via loadScript()):', eager); process.exit(1); }
+          console.log('pdf-lib/pdf.js/JSZip/mammoth/jsPDF all still load lazily.');
+          "
 
   frontend-vendor:
     runs-on: ubuntu-latest
@@ -56,7 +73,7 @@ jobs:
       - name: Verify all self-hosted libraries are present and non-empty
         run: |
           for f in pdf-lib.min.js pdf.min.js pdf.worker.min.js jszip.min.js \
-                   mammoth.browser.min.js jspdf.umd.min.js html2canvas.min.js \
+                   mammoth.browser.min.js jspdf.umd.min.js \
                    qrcode.min.js jsqr.js jsbarcode.all.min.js qpdf.js qpdf.wasm \
                    qpdf.wasm.b64.js gifenc.min.js xlsx.full.min.js \
                    tesseract/tesseract.min.js tesseract/worker.min.js \
@@ -66,7 +83,7 @@ jobs:
                    tesseract/lang/eng.traineddata.gz; do
             test -s "frontend/vendor/$f" || { echo "MISSING: vendor/$f"; exit 1; }
           done
-          echo "All 21 vendor assets present."
+          echo "All 20 vendor assets present."
       - name: Base64 WASM copy matches the real qpdf.wasm
         run: |
           node -e "
