@@ -96,14 +96,14 @@
      falls back to system fonts via the CSS font stacks. -->
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
 <!-- Core libraries are self-hosted in ./vendor (no CDN dependency, works
-     fully offline). If a copy of this file is served without the vendor
-     directory, each tag falls back to the same pinned version on a CDN. -->
-<script defer src="vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
-<script defer src="vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
+     fully offline). PDF/Office libraries (pdf-lib, pdf.js, JSZip, mammoth,
+     jsPDF) are no longer eagerly script-tagged here: that used to be six
+     blocking tags totalling ~2.1MB, downloaded and executed on every single page
+     load even for someone who only wanted a QR code. They now load lazily,
+     on first use, via loadScript()/ensure*() below — see that section for
+     the CDN fallback each keeps. html2canvas was never actually called
+     anywhere in this file and has been dropped entirely. -->
+
 <style>
   :root{
     --paper:#F6F3EC;
@@ -760,13 +760,23 @@
 
 <script>
 window.addEventListener('DOMContentLoaded', function(){
-const { PDFDocument, degrees } = PDFLib;
+// PDFDocument/degrees (pdf-lib) and jsPDF (jspdf) are populated by
+// ensurePdfLib()/ensureJsPDF() the first time a tool that needs them runs
+// — see below. Referencing either before that resolves is a bug in the
+// calling tool, not something to silently paper over, so they start
+// undefined rather than eagerly loaded.
+let PDFDocument, degrees;
 
 /* ---------- self-hosted assets, with pinned-version CDN fallback ---------- */
 // Everything the app needs ships in ./vendor so it runs with zero external
 // requests (and fully offline as a PWA). The CDN URLs below are only used
 // when a stray copy of this file is served without the vendor directory.
 const VENDOR_FALLBACKS = {
+  'vendor/pdf-lib.min.js':    'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js',
+  'vendor/pdf.min.js':        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  'vendor/jszip.min.js':      'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  'vendor/mammoth.browser.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js',
+  'vendor/jspdf.umd.min.js':  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'vendor/pdf.worker.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
   'vendor/qrcode.min.js':     'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
   'vendor/jsqr.js':           'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
@@ -864,16 +874,60 @@ function loadScript(path, {fallbackOnError=true}={}){
   }
   return _loadedScripts[path];
 }
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
-if(IS_FILE){
-  // On file:// a real Worker can't be created from a local URL, and pdf.js's
-  // fake-worker fallback would try (and fail) to fetch the script. Loading
-  // the worker bundle as a classic script defines globalThis.pdfjsWorker,
-  // which pdf.js picks up directly — everything then runs on the main
-  // thread, slower but fully functional offline.
-  loadScript('vendor/pdf.worker.min.js').catch(()=>{});
-} else {
-  vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+/* ---------- lazy-loaded heavy libraries ----------
+   pdf-lib, pdf.js, JSZip, mammoth and jsPDF together used to be six
+   blocking <script> tags (~2.1MB) executed on every page load, before a
+   visitor could so much as see a tool card — measured at ~11s added to
+   DOMContentLoaded on a throttled connection. Each is now fetched once,
+   the first time a tool that actually needs it runs, and cached for the
+   rest of the session. Every call site below awaits the matching
+   ensure*() first; that await is cheap (an already-resolved promise)
+   on every call after the first. */
+let _pdfLibReady = null;
+function ensurePdfLib(){
+  if(!_pdfLibReady){
+    _pdfLibReady = loadScript('vendor/pdf-lib.min.js').then(()=>{
+      ({ PDFDocument, degrees } = PDFLib);
+    });
+  }
+  return _pdfLibReady;
+}
+
+let _pdfjsReady = null;
+function ensurePdfjsLib(){
+  if(!_pdfjsReady){
+    _pdfjsReady = loadScript('vendor/pdf.min.js').then(()=>{
+      if(IS_FILE){
+        // On file:// a real Worker can't be created from a local URL, and
+        // pdf.js's fake-worker fallback would try (and fail) to fetch the
+        // script. Loading the worker bundle as a classic script defines
+        // globalThis.pdfjsWorker, which pdf.js picks up directly —
+        // everything then runs on the main thread, slower but fully
+        // functional offline.
+        return loadScript('vendor/pdf.worker.min.js').catch(()=>{});
+      }
+      return vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+    });
+  }
+  return _pdfjsReady;
+}
+
+let _jszipReady = null;
+function ensureJSZip(){
+  if(!_jszipReady) _jszipReady = loadScript('vendor/jszip.min.js');
+  return _jszipReady;
+}
+
+let _mammothReady = null;
+function ensureMammoth(){
+  if(!_mammothReady) _mammothReady = loadScript('vendor/mammoth.browser.min.js');
+  return _mammothReady;
+}
+
+let _jspdfReady = null;
+function ensureJsPDF(){
+  if(!_jspdfReady) _jspdfReady = loadScript('vendor/jspdf.umd.min.js');
+  return _jspdfReady;
 }
 
 /* ---------- storage migration: dockbench.* -> pdflove.* ----------
@@ -980,7 +1034,8 @@ function apiErrorHelp(e){
  * closes CVE-2024-4367 (malicious font matrices in a crafted PDF could
  * otherwise execute JavaScript in this page's context) — essential for an
  * app whose whole job is opening untrusted files. */
-function getPdfDoc(data){
+async function getPdfDoc(data){
+  await ensurePdfjsLib();
   return pdfjsLib.getDocument({data, isEvalSupported:false}).promise;
 }
 
@@ -990,6 +1045,7 @@ function getPdfDoc(data){
 // an owner-locked file), and if the file is truly password-protected tell
 // the user which tool fixes it.
 async function loadPdf(bytes){
+  await ensurePdfLib();
   try{
     return await PDFDocument.load(bytes);
   }catch(e){
@@ -1097,6 +1153,7 @@ function _anchorDownload(blob, filename){
 // function — a stamping failure just returns the original bytes so a
 // download is never blocked by this optional feature.
 async function addCornerMark(blob){
+  await ensurePdfLib();
   try{
     const bytes = await blob.arrayBuffer();
     const doc = await PDFDocument.load(bytes, {ignoreEncryption:true});
@@ -1376,6 +1433,7 @@ function toolMergePDF(){
   function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<2; }
   renderList();
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!(await memoryGuard(files, 4, log))) return;
     log.textContent='Merging on-device...';
     const merged = await PDFDocument.create();
@@ -1428,6 +1486,8 @@ function toolSplitPDF(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJSZip();
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     const mode = tabRow.querySelector('.tab-btn.active').dataset.mode;
     const bytes = await file.arrayBuffer();
@@ -1501,6 +1561,7 @@ function toolImageToPDF(){
   function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
   renderList();
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     log.textContent='Building PDF on-device...';
     const pageSizes = { a4:[595.28,841.89], letter:[612,792] };
     const sizeMode = document.getElementById('i2p-size').value;
@@ -1539,6 +1600,7 @@ function toolPDFToJPG(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJSZip();
     if(!file){log.textContent='Choose a PDF first.';return;}
     if(!(await memoryGuard(file, 6, log))) return;
     log.textContent='Rendering pages on-device...';
@@ -1749,6 +1811,7 @@ function toolRotatePDF(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Rotate & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     const deg = parseInt(document.getElementById('rot').value);
     log.textContent='Rotating on-device...';
@@ -1919,6 +1982,7 @@ function toolRemoveDuplicateBlank(){
   }
 
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     const remove = new Set([...grid.querySelectorAll('input[type=checkbox]')].filter(c=>c.checked).map(c=>parseInt(c.dataset.page)));
     log.textContent='Rebuilding on-device...';
@@ -1943,6 +2007,8 @@ function toolExtractImages(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJSZip();
+    await ensurePdfjsLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Scanning pages on-device...';
     const bytes = await file.arrayBuffer();
@@ -2241,6 +2307,7 @@ function toolNUp(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Build & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     const n = parseInt(document.getElementById('nup-count').value);
     log.textContent='Building on-device...';
@@ -2350,6 +2417,8 @@ function toolSplitByBookmark(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJSZip();
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Reading outline on-device...';
     const bytes = await file.arrayBuffer();
@@ -2396,6 +2465,8 @@ function toolSplitBySize(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJSZip();
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     const targetBytes = (parseFloat(document.getElementById('sbs-mb').value)||10) * 1024*1024;
     log.textContent='Analyzing on-device...';
@@ -2884,6 +2955,7 @@ function toolSearchRedact(){
 
   let matches = []; // {page, str}
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file || !pdfjsDoc){log.textContent='Choose a PDF first.';return;}
     const presetVal = document.getElementById('sr-preset').value;
     const customVal = document.getElementById('sr-custom').value.trim();
@@ -3245,6 +3317,7 @@ function toolBatchImageProcessor(){
   renderList();
 
   btn.onclick = async ()=>{
+    await ensureJSZip();
     if(files.length===0){ log.textContent='Add at least one photo first.'; return; }
     const mode = tabRow.querySelector('.tab-btn.active').dataset.mode;
     const zip = new JSZip();
@@ -3939,6 +4012,7 @@ function toolCardDesigner(kind){
     log.innerHTML = `<span class="ok">✓ Done! ${canvas.width}×${canvas.height}px (300 DPI, standard card size) — made on your device, nothing uploaded.</span>`;
   };
   btnPdf.onclick = async ()=>{
+    await ensureJsPDF();
     log.textContent = 'Creating print-ready PDF...';
     const canvas = await finalCanvas();
     const { jsPDF } = window.jspdf;
@@ -3977,6 +4051,7 @@ function toolBatchIDCards(){
   }
 
   btn.onclick = async ()=>{
+    await ensureJSZip();
     const raw = document.getElementById('bic-input').value.trim();
     if(!raw){ log.textContent='Paste your list first.'; return; }
     const color = document.getElementById('bic-color').value;
@@ -4144,6 +4219,7 @@ function toolCertificateGenerator(){
   renderPreview();
 
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     log.textContent = 'Creating your certificate...';
     const canvas = buildCanvas(1);
     const blob = await new Promise(res=>canvas.toBlob(res,'image/jpeg',0.95));
@@ -4220,6 +4296,7 @@ function toolInvoiceGenerator(){
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     log.textContent = 'Building your invoice...';
     const from = document.getElementById('inv-from').value || 'Your Business';
     const num = document.getElementById('inv-num').value || 'INV-0001';
@@ -4485,6 +4562,7 @@ function escapeXml(s){
 }
 
 async function buildDocxBlob(pagesText){
+  await ensureJSZip();
   const zip = new JSZip();
   zip.file('[Content_Types].xml',
 `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -4577,6 +4655,8 @@ function toolWordToPDF(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureMammoth();
+    await ensureJsPDF();
     if(!file){log.textContent='Choose a .docx first.';return;}
     log.textContent='Rendering document on-device...';
     const bytes = await file.arrayBuffer();
@@ -4745,6 +4825,7 @@ function toolAddWatermark(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add watermark & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Stamping on-device...';
     const bytes = await file.arrayBuffer();
@@ -4816,6 +4897,7 @@ function toolRedact(){
   }
 
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file || !box){log.textContent='Choose a PDF and drag a box on the preview first.';return;}
     log.textContent='Redacting on-device...';
     const outDoc = await PDFDocument.create();
@@ -4886,6 +4968,7 @@ function toolOrganizePDF(){
   }
 
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     const kept = new Set([...grid.querySelectorAll('input[type=checkbox]')].filter(c=>c.checked).map(c=>parseInt(c.dataset.page)));
     const finalOrder = order.filter(p=>kept.has(p));
@@ -5088,6 +5171,7 @@ function toolCompressPDF(){
   });
 
   async function buildAtQuality(pdf, q, scale, onProgress){
+    await ensurePdfLib();
     const out = await PDFDocument.create();
     for(let i=1;i<=pdf.numPages;i++){
       const { canvas } = await renderPdfPageToCanvas(pdf, i, scale);
@@ -5164,6 +5248,7 @@ function toolHtmlToPDF(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJsPDF();
     const raw = document.getElementById('html-input').value;
     if(!raw.trim()){log.textContent='Paste some HTML or text first.';return;}
     log.textContent='Rendering on-device...';
@@ -5195,6 +5280,7 @@ function toolRepairPDF(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Repair & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Repairing on-device...';
     try{
@@ -5418,6 +5504,7 @@ function toolScanToPDF(){
   }
 
   buildBtn.onclick = async ()=>{
+    await ensurePdfLib();
     if(pages.length===0){ log.textContent='Add at least one page first.'; return; }
     log.textContent = 'Building PDF on-device...';
     const doc = await PDFDocument.create();
@@ -5543,6 +5630,7 @@ function toolExcelToPDFLocal(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJsPDF();
     if(!file){log.textContent='Choose a spreadsheet first.';return;}
     btn.disabled=true;
     try{
@@ -5585,6 +5673,8 @@ function toolPptxToPDFLocal(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensureJSZip();
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a .pptx first.';return;}
     btn.disabled=true;
     try{
@@ -5742,6 +5832,7 @@ function toolLocalOCR(){
   }
 
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a scanned PDF or an image first.';return;}
     if(!(await memoryGuard(file, 8, log))) return;
     btn.disabled=true; resultBox.style.display='none';
@@ -6257,6 +6348,7 @@ function toolGrayscalePDF(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
+    await ensurePdfLib();
     if(!file){log.textContent='Choose a PDF first.';return;}
     if(!(await memoryGuard(file, 6, log))) return;
     log.textContent='Rendering pages on-device...';
@@ -6475,6 +6567,7 @@ function toolFaviconGenerator(){
   }
 
   btn.onclick = async ()=>{
+    await ensureJSZip();
     if(!file){log.textContent='Choose a logo image first.';return;}
     log.textContent='Rendering sizes on-device...';
     const bitmap = await createImageBitmap(file);
@@ -6545,6 +6638,7 @@ function toolMarkdownToPDF(){
   }
 
   btn.onclick = async ()=>{
+    await ensureJsPDF();
     const raw = document.getElementById('md-input').value;
     if(!raw.trim()){log.textContent='Write some Markdown first.';return;}
     log.textContent='Rendering on-device...';

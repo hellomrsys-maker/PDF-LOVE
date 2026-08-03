@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdflove-v13';
+const CACHE_NAME = 'pdflove-v14';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Static pages, precached so an installed offline copy can still show its
@@ -42,7 +42,6 @@ const APP_SHELL = [
   './vendor/jszip.min.js',
   './vendor/mammoth.browser.min.js',
   './vendor/jspdf.umd.min.js',
-  './vendor/html2canvas.min.js',
   './vendor/qrcode.min.js',
   './vendor/jsqr.js',
   './vendor/jsbarcode.all.min.js',
