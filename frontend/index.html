@@ -640,77 +640,72 @@
   </div>
 
   <div class="container">
-    <div class="category-filters" id="category-filters">
-      <button class="category-btn active" data-category="all">All</button>
-      <button class="category-btn" data-category="pdf-tools">Organize PDF</button>
-      <button class="category-btn" data-category="convert-tools">Convert PDF</button>
-      <button class="category-btn" data-category="edit-tools">Edit PDF</button>
-      <button class="category-btn" data-category="security-tools">PDF Security</button>
-      <button class="category-btn" data-category="img-tools">Images</button>
-      <button class="category-btn" data-category="video-tools">Video</button>
-      <button class="category-btn" data-category="ai-tools">PDF Intelligence</button>
-      <button class="category-btn" data-category="utility-tools">Codes</button>
+    <div class="category-filters" id="cat-tabs"></div>
+
+    <div id="search-no-results" style="display:none; text-align:center; padding:40px 20px;">
+      <p style="color:var(--text-gray); font-size:16px;">No tools found. <button id="no-results-ask" style="background:none; border:none; color:var(--primary-red); cursor:pointer; text-decoration:underline; font-size:16px;">Ask PDFLove instead</button></p>
     </div>
 
-    <div class="main-content">
-    <div id="fav-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">★ Pinned Tools</h2>
-      <div class="tools" id="fav-tools"></div>
-    </div>
+    <div id="home-rows">
+      <div id="fav-section" class="tools-section" style="display:none;">
+        <h2 class="section-title" id="label-fav-tools">★ Pinned Tools</h2>
+        <div class="tools" id="fav-tools"></div>
+      </div>
 
-    <div id="recent-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">Recently Used</h2>
-      <div class="tools-grid" id="recent-tools"></div>
-    </div>
+      <div id="recent-section" class="tools-section" style="display:none;">
+        <h2 class="section-title" id="label-recent-tools">Recently Used</h2>
+        <div class="tools" id="recent-tools"></div>
+      </div>
 
-    <div id="popular-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">Popular</h2>
-      <div class="tools-grid" id="popular-tools"></div>
+      <div id="popular-section" class="tools-section" style="display:none;">
+        <h2 class="section-title" id="label-popular-tools">Popular</h2>
+        <div class="tools" id="popular-tools"></div>
+      </div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">Organize PDF</h2>
-      <div class="tools-grid" id="pdf-tools"></div>
+      <h2 class="section-title" id="label-pdf-tools">Organize PDF</h2>
+      <div class="tools" id="pdf-tools"></div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">Convert PDF</h2>
-      <div class="tools-grid" id="convert-tools"></div>
+      <h2 class="section-title" id="label-convert-tools">Convert PDF</h2>
+      <div class="tools" id="convert-tools"></div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">Edit PDF</h2>
-      <div class="tools-grid" id="edit-tools"></div>
+      <h2 class="section-title" id="label-edit-tools">Edit PDF</h2>
+      <div class="tools" id="edit-tools"></div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">PDF Security</h2>
-      <div class="tools-grid" id="security-tools"></div>
+      <h2 class="section-title" id="label-security-tools">PDF Security</h2>
+      <div class="tools" id="security-tools"></div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">Images</h2>
-      <div class="tools-grid" id="img-tools"></div>
+      <h2 class="section-title" id="label-img-tools">Images</h2>
+      <div class="tools" id="img-tools"></div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">Video</h2>
-      <div class="tools-grid" id="video-tools"></div>
+      <h2 class="section-title" id="label-video-tools">Video</h2>
+      <div class="tools" id="video-tools"></div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">PDF Intelligence</h2>
-      <div class="tools-grid" id="ai-tools"></div>
+      <h2 class="section-title" id="label-ai-tools">PDF Intelligence</h2>
+      <div class="tools" id="ai-tools"></div>
     </div>
 
     <div class="tools-section">
-      <h2 class="section-title">Codes & Utilities</h2>
-      <div class="tools-grid" id="utility-tools"></div>
+      <h2 class="section-title" id="label-utility-tools">Codes & Utilities</h2>
+      <div class="tools" id="utility-tools"></div>
     </div>
 
     <div id="api-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">Server-Assisted</h2>
-      <div class="tools-grid" id="api-tools"></div>
+      <h2 class="section-title" id="label-api-tools">Server-Assisted</h2>
+      <div class="tools" id="api-tools"></div>
     </div>
   </div>
 </div>
@@ -804,104 +799,6 @@ if(IS_FILE){
     }
   }catch(e){}
 })();
-window.addEventListener('DOMContentLoaded', function(){
-const { PDFDocument, degrees } = PDFLib;
-
-/* ---------- self-hosted assets, with pinned-version CDN fallback ---------- */
-// Everything the app needs ships in ./vendor so it runs with zero external
-// requests (and fully offline as a PWA). The CDN URLs below are only used
-// when a stray copy of this file is served without the vendor directory.
-const VENDOR_FALLBACKS = {
-  'vendor/pdf.worker.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-  'vendor/qrcode.min.js':     'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-  'vendor/jsqr.js':           'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
-  'vendor/jsbarcode.all.min.js': 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
-  'vendor/qpdf.js':           'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js',
-  'vendor/qpdf.wasm':         'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm',
-};
-/* ---------- ad monetization ----------
-   Individuals never pay and never log in — that stays true no matter what.
-   Ads are strictly web-only: the desktop app (see /desktop) blocks all
-   outbound network access at the OS process level, so this code path is
-   never reached there even if it tried to run.
-     1. A passive AdSense banner (never blocks anything, just sits on the page).
-     2. An optional rewarded ad that removes a small corner mark from a
-        free-tier PDF export — the user can also just keep the mark.
-     3. A passive AdSense unit at the bottom of a tool panel, shown only
-        AFTER a result is delivered — never before or during processing.
-   All three are inert (zero network requests, zero UI) until enabled below,
-   and slot 1/3 additionally need a real Ad unit ID from the AdSense
-   dashboard before they render anything (see the two TODOs below). */
-const AD_CONFIG = {
-  adsense: {
-    // Real publisher ID — this alone is enough for Google to crawl/verify
-    // the site for AdSense approval and for ads.txt to check out, even
-    // before any ad unit below is filled in.
-    client: 'ca-pub-6910175887237387',
-  },
-  banner: {
-    enabled: true,
-    // TODO: AdSense dashboard -> Ads -> By ad unit -> Display ads -> Create.
-    // Paste the numeric "Ad unit ID" here. Until this is set, the loader is
-    // live but the slot renders nothing (AdSense requires a real slot id).
-    slotId: null,
-  },
-  rewarded: {
-    enabled: false,     // flip true once scriptUrl below is real
-    scriptUrl: null,    // your ad network's rewarded-video loader <script src>
-    // Recommended: a web-native rewarded-video network (e.g. AppLixir),
-    // not a mobile-app SDK (AdMob) or Google's "AdSense for Video" — that
-    // one requires 2M+ monthly video impressions and 40%+ video content,
-    // which a tool site like this will never hit. Rewarded video runs
-    // $4-15 CPM on the web vs $0.50-2 for standard display, so this is
-    // the higher-value slot of the two — worth prioritizing over banner.
-  },
-  result: {
-    enabled: true,      // passive slot at the bottom of a tool panel, shown
-    slotId: null,       // TODO: same as banner.slotId — a separate ad unit is recommended
-  },
-};
-
-/* ---------- offline licensing (for deployments with no internet at all) ----
-   Ad revenue requires a live connection — there's no way around that, an ad
-   network has to serve the creative and verify the impression in real time.
-   For a genuinely offline deployment (a library, a school, an air-gapped
-   office), that revenue path simply doesn't exist. This is the alternative:
-   a cryptographically signed license key, verified entirely on-device via
-   the browser's Web Crypto API — no server involved, before or after,
-   ever. See licensing/README.md for how to generate keys and mint licenses.
-   Paste your public-key.json contents below once you've run
-   `node licensing/keygen.js` — until then this stays null and the license
-   panel honestly says "not configured yet" rather than rejecting real keys. */
-const LICENSE_PUBLIC_KEY_JWK = null;
-const IS_FILE = location.protocol === 'file:';
-async function vendorAsset(path){
-  // Returns the local path if it's actually there, else the CDN fallback.
-  // On file:// (double-clicked index.html) fetch() is blocked by CORS for
-  // local files, but plain <script src> tags work fine — so never probe
-  // there, just trust the local path.
-  if(IS_FILE) return path;
-  try{ const r = await fetch(path, {method:'HEAD'}); if(r.ok) return path; }catch(e){}
-  return VENDOR_FALLBACKS[path] || path;
-}
-const _loadedScripts = {};
-function loadScript(path, {fallbackOnError=true}={}){
-  if(!_loadedScripts[path]){
-    _loadedScripts[path] = (async ()=>{
-      const src = await vendorAsset(path);
-      const tryLoad = (url)=>new Promise((res, rej)=>{
-        const s = document.createElement('script');
-        s.src = url;
-        s.onload = res;
-        s.onerror = ()=>rej(new Error('Failed to load '+url));
-        document.head.appendChild(s);
-      });
-      try{
-        await tryLoad(src);
-      }catch(e){
-        // e.g. a copy of this file without vendor/ opened via file://
-        const cdn = VENDOR_FALLBACKS[path];
-        if(fallbackOnError && cdn && src!==cdn) await tryLoad(cdn);
         else throw e;
       }
     })();
@@ -7254,9 +7151,6 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 }
 
 }); // end DOMContentLoaded wrapper
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
