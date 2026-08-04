@@ -333,13 +333,6 @@
     margin-bottom: 40px;
   }
 
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 40px;
-  }
-
   .main-content {
     padding: 0 20px;
   }
@@ -6628,6 +6621,7 @@ function makeCard(t, sectionId){
   const card = document.createElement('button');
   card.className='tool-card';
   card.dataset.tool = t.name;
+  card.dataset.search = (t.name + ' ' + t.desc).toLowerCase();
   card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${sectionId==='api-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
   const star=document.createElement('span');
   star.className='fav-star'+(favs.has(t.name)?' faved':'');
@@ -6833,9 +6827,8 @@ document.querySelectorAll('[data-jump]').forEach(el=>{
 
 function fillRow(gridId, labelId, names){
   const grid=document.getElementById(gridId), label=document.getElementById(labelId);
-  grid.innerHTML='';
   const items = names.map(n=>toolIndex[n]).filter(Boolean);
-  items.forEach(({tool, sectionId})=>grid.appendChild(makeCard(tool, sectionId)));
+  grid.replaceChildren(...items.map(({tool, sectionId})=>makeCard(tool, sectionId)));
   const show = items.length>0;
   grid.style.display = show?'':'none';
   label.style.display = show?'':'none';
@@ -6858,35 +6851,34 @@ function applyView(){
   if(q){
     homeRows.style.display='none';
     let anyVisible=false;
-    const sectionHasMatch={};
     SECTION_IDS.forEach(id=>{
       const grid=document.getElementById(id);
+      const label=document.getElementById('label-'+id);
       let sectionAny=false;
       if(id==='api-tools' && !serverAvailable){
         grid.classList.add('search-hidden');
-        document.getElementById('label-'+id).classList.add('search-hidden');
+        label.classList.add('search-hidden');
         return;
       }
       grid.querySelectorAll('.tool-card').forEach(card=>{
-        const match = card.textContent.toLowerCase().includes(q);
+        const match = card.dataset.search.includes(q);
+        if(match) sectionAny=anyVisible=true;
         card.classList.toggle('search-hidden', !match);
-        if(match){ sectionAny=true; anyVisible=true; }
       });
-      sectionHasMatch[id]=sectionAny;
       grid.classList.toggle('search-hidden', !sectionAny);
-      document.getElementById('label-'+id).classList.toggle('search-hidden', !sectionAny);
+      label.classList.toggle('search-hidden', !sectionAny);
     });
     noResultsMsg.style.display = anyVisible?'none':'block';
     return;
   }
-  // no search: category view
   homeRows.style.display = activeCategory==='all' ? '' : 'none';
   SECTION_IDS.forEach(id=>{
     let show = activeCategory==='all' || activeCategory===id;
     if(id==='api-tools' && !serverAvailable) show = false;
     const grid=document.getElementById(id);
+    const label=document.getElementById('label-'+id);
     grid.classList.toggle('search-hidden', !show);
-    document.getElementById('label-'+id).classList.toggle('search-hidden', !show);
+    label.classList.toggle('search-hidden', !show);
     grid.querySelectorAll('.tool-card').forEach(card=>card.classList.remove('search-hidden'));
   });
 }
