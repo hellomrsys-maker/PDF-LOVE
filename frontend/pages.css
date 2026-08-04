@@ -2,13 +2,13 @@
    security, faq, contact, features, pricing). Kept in one file so the
    pages stay visually identical to each other and to the app shell. */
 :root{
-  --paper:#F6F3EC; --paper-raised:#FFFFFF; --ink:#1F2420; --ink-soft:#4A5049;
-  --copper:#C1683A; --copper-deep:#A6522A; --sage:#6B7C6E; --line:#D9D3C4; --ok:#4A7856;
+  --paper:#FFFFFF; --paper-raised:#F9F9F9; --ink:#333333; --ink-soft:#666666;
+  --copper:#E5322D; --copper-deep:#C41E18; --sage:#999999; --line:#EEEEEE; --ok:#4CAF50;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --paper:#181A17; --paper-raised:#22251F; --ink:#ECE8DC; --ink-soft:#A8AD9F;
-    --copper:#D07E4C; --copper-deep:#E0925F; --sage:#8B977F; --line:#3A3E35; --ok:#7FB78F;
+    --paper:#1a1a1a; --paper-raised:#2a2a2a; --ink:#ECE8DC; --ink-soft:#A8AD9F;
+    --copper:#FF6B5B; --copper-deep:#E5322D; --sage:#999999; --line:#3A3E35; --ok:#7FB78F;
   }
 }
 *{box-sizing:border-box;}

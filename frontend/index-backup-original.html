@@ -8,11 +8,12 @@
 <link rel="canonical" href="https://pdflove.co.in/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#E5322D">
+<meta name="theme-color" content="#C1683A">
 <meta name="application-name" content="PDFLove">
 <meta name="apple-mobile-web-app-title" content="PDFLove">
 <meta name="apple-mobile-web-app-capable" content="yes">
 
+<!-- Open Graph / Twitter: controls how a shared link renders. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PDFLove">
 <meta property="og:url" content="https://pdflove.co.in/">
@@ -27,6 +28,7 @@
 <meta name="twitter:description" content="Merge, split, compress, convert, sign and protect PDFs free. Nothing is uploaded, and it works offline.">
 <meta name="twitter:image" content="https://pdflove.co.in/icons/feature-graphic-1024x500.png">
 
+<!-- Structured data: WebApplication + the FAQ answers Google can surface. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -89,651 +91,674 @@
   ]
 }
 </script>
-
+<!-- Fonts are self-hosted in ./vendor/fonts (zero external requests,
+     correct rendering offline). If that directory is missing, the app
+     falls back to system fonts via the CSS font stacks. -->
 <link href="vendor/fonts/fonts.css" rel="stylesheet">
+<!-- Core libraries are self-hosted in ./vendor (no CDN dependency, works
+     fully offline). If a copy of this file is served without the vendor
+     directory, each tag falls back to the same pinned version on a CDN. -->
 <script defer src="vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
 <script defer src="vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
 <script defer src="vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
 <script defer src="vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
 <script defer src="vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
 <script defer src="vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
-
 <style>
-  :root {
-    --primary-red: #E5322D;
-    --primary-red-dark: #C41E18;
-    --white: #FFFFFF;
-    --light-gray: #F5F5F5;
-    --dark-gray: #333333;
-    --text-gray: #666666;
-    --border-gray: #EEEEEE;
-    --success-green: #4CAF50;
-    --blue-convert: #2196F3;
-    --orange-organize: #FF9800;
-    --purple-ai: #9C27B0;
-    --green-image: #4CAF50;
+  :root{
+    --paper:#F6F3EC;
+    --paper-raised:#FFFFFF;
+    --ink:#1F2420;
+    --ink-soft:#4A5049;
+    --copper:#C1683A;
+    --copper-deep:#A6522A;
+    --sage:#6B7C6E;
+    --line:#D9D3C4;
+    --ok:#4A7856;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--copper);color:#fff;}
+  a{color:inherit;}
+
+  /* Use the width of the screen. The tool catalogue is the product, and at
+     1080px it was squeezed into a narrow column with empty gutters on a
+     normal monitor. */
+  .wrap{max-width:1600px;margin:0 auto;padding:0 40px;}
+  @media (max-width:900px){ .wrap{padding:0 20px;} }
+
+  /* ---------- header ---------- */
+  header{
+    border-bottom:1px solid var(--line);
+    padding:18px 0;
+    position:sticky;top:0;
+    background:rgba(246,243,236,0.92);
+    backdrop-filter:blur(6px);
+    z-index:40;
+  }
+  /* scoped to .header-row, not `header .wrap` — the category nav also
+     carries .wrap, and space-between was stretching its pills apart */
+  header .header-row{display:flex;align-items:center;justify-content:space-between;gap:18px;}
+  .brand{display:flex;align-items:baseline;gap:8px;font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;letter-spacing:-0.01em;text-decoration:none;flex-shrink:0;}
+  .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;box-shadow:0 0 0 3px rgba(74,120,86,0.15);}
+
+  /* ---------- primary nav + mega menu ---------- */
+  .mainnav{display:flex;align-items:center;gap:2px;flex:1;min-width:0;}
+  .navlink{
+    font-family:inherit;font-size:0.83rem;font-weight:600;letter-spacing:0.01em;
+    background:none;border:0;color:var(--ink);cursor:pointer;
+    padding:9px 12px;border-radius:8px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:5px;transition:background .12s,color .12s;
+  }
+  .navlink:hover{background:rgba(193,104,58,0.09);color:var(--copper-deep);}
+  .navlink .chev{font-size:0.8em;opacity:.6;transition:transform .15s;}
+  .navdrop{position:relative;}
+  .navdrop.open > .navlink{background:rgba(193,104,58,0.11);color:var(--copper-deep);}
+  .navdrop.open > .navlink .chev{transform:rotate(180deg);}
+  .megamenu{
+    position:absolute;top:calc(100% + 10px);left:0;
+    background:var(--paper-raised);
+    border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 18px 44px rgba(31,36,32,0.16);
+    padding:22px 24px;display:none;z-index:60;
+    grid-template-columns:repeat(var(--mm-cols,2),minmax(190px,1fr));
+    gap:6px 30px;
+  }
+  /* The 4-column menu is wider than the space to the left of its button, so
+     anchoring it to the button pushes it off-screen. Pin it to the page
+     instead: fixed, centred, and never wider than the viewport. */
+  .megamenu-wide{
+    position:fixed;
+    top:var(--hdr-h,84px);
+    left:50%;right:auto;
+    transform:translateX(-50%);
+    width:min(1040px, calc(100vw - 32px));
+    max-height:calc(100vh - var(--hdr-h,84px) - 24px);
+    overflow-y:auto;
+  }
+  .navdrop.open .megamenu{display:grid;}
+  .mm-group{min-width:0;}
+  .mm-head{
+    font-family:'IBM Plex Mono',monospace;font-size:0.66rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.1em;color:var(--sage);
+    margin:6px 0 8px;
+  }
+  .mm-item{
+    display:flex;align-items:center;gap:9px;width:100%;
+    background:none;border:0;font-family:inherit;font-size:0.85rem;color:var(--ink);
+    padding:7px 9px;border-radius:8px;cursor:pointer;text-align:left;
+    transition:background .1s;
+  }
+  .mm-item:hover{background:rgba(193,104,58,0.09);color:var(--copper-deep);}
+  .mm-item .mm-ico{
+    flex-shrink:0;width:26px;height:26px;border-radius:7px;
+    display:grid;place-items:center;font-size:0.9rem;
+    background:rgba(193,104,58,0.12);
+  }
+  .mm-more{grid-column:1/-1;border-top:1px solid var(--line);margin-top:10px;padding-top:10px;}
+
+  .header-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .nav-toggle{display:none;background:none;border:1px solid var(--line);border-radius:8px;font-size:1.05rem;padding:6px 11px;cursor:pointer;color:var(--ink);}
+  .status-pill{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.72rem;
+    color:var(--ok);
+    border:1px solid var(--line);
+    padding:5px 10px;
+    border-radius:100px;
+    display:flex;align-items:center;gap:6px;
+    background:var(--paper-raised);
+  }
+  .install-btn{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:0.8rem;font-weight:600;
+    color:#fff;background:var(--copper);
+    border:none;padding:8px 14px;border-radius:100px;
+    cursor:pointer;white-space:nowrap;display:none;
+  }
+  .install-btn:hover{background:var(--copper-deep);}
+
+  /* ---------- hero ---------- */
+  .hero{padding:64px 0 40px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.78rem;
+    color:var(--copper-deep);
+    letter-spacing:0.02em;
+    margin-bottom:18px;
+    display:flex; gap:8px; align-items:center;
+  }
+  .eyebrow::before{content:"//";color:var(--sage);}
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(2.1rem,5vw,3.4rem);
+    line-height:1.06;
+    margin:0 0 18px;
+    letter-spacing:-0.01em;
+    max-width:22ch;
+  }
+  h1 em{font-style:italic;color:var(--copper);}
+  .lede{font-size:1.08rem;color:var(--ink-soft);max-width:62ch;margin:0 0 30px;}
+
+  /* centred hero (matches how the category-led tool sites read) */
+  .hero{text-align:center;}
+  .hero h1{max-width:22ch;margin-left:auto;margin-right:auto;}
+  .hero .lede{margin-left:auto;margin-right:auto;}
+  .hero .assist-hero{margin-left:auto;margin-right:auto;}
+  .promise-row{
+    list-style:none;display:flex;flex-wrap:wrap;justify-content:center;
+    gap:8px 10px;padding:0;margin:26px 0 0;
+  }
+  .promise-row li{
+    font-size:0.8rem;color:var(--ink-soft);
+    background:var(--paper-raised);border:1px solid var(--line);
+    border-radius:100px;padding:6px 14px;
+    display:flex;align-items:center;gap:6px;
+  }
+  .promise-row li::before{content:"✓";color:var(--ok);font-weight:700;}
+
+  /* signature: the trace/architecture panel */
+  .trace{
+    background:var(--ink);
+    color:#E9E4D8;
+    border-radius:10px;
+    padding:20px 22px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.82rem;
+    max-width:640px;
+    box-shadow:0 18px 40px -20px rgba(31,36,32,0.5);
+  }
+  .trace .line{display:flex;gap:10px;padding:3px 0;opacity:0;animation:fadein 0.4s forwards;}
+  .trace .line:nth-child(1){animation-delay:.1s}
+  .trace .line:nth-child(2){animation-delay:.35s}
+  .trace .line:nth-child(3){animation-delay:.6s}
+  .trace .line:nth-child(4){animation-delay:.85s}
+  @keyframes fadein{to{opacity:1}}
+  .trace .tag{color:var(--sage);width:78px;flex-shrink:0;}
+  .trace .arrow{color:var(--copper);}
+  .trace .no{color:#8B6F63;text-decoration:line-through;}
+
+  @media(prefers-reduced-motion: reduce){
+    .trace .line{animation:none;opacity:1;}
   }
 
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-
-  body {
-    background: var(--white);
-    color: var(--dark-gray);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
+  /* ---------- tool grid ---------- */
+  .section-label{
+    font-family:'Fraunces',serif;
+    font-size:1.35rem;
+    font-weight:600;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+    margin:52px 0 18px;
+    padding-top:26px;
+    border-top:1px solid var(--line);
+    display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+  }
+  .onbadge{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.66rem;font-weight:500;
+    text-transform:uppercase;letter-spacing:0.08em;
+    color:var(--ok);
+    background:rgba(74,120,86,0.10);
+    border-radius:100px;padding:3px 9px;
+  }
+  .onbadge.warn{color:var(--copper-deep);background:rgba(193,104,58,0.11);}
+  .tools{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(258px,1fr));
+    gap:14px;
+    margin-bottom:20px;
+  }
+  .tool-card{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px;
+    cursor:pointer;
+    text-align:left;
+    transition:border-color .15s, transform .15s;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  .tool-card:hover{border-color:var(--copper);transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(31,36,32,0.32);}
+  .tool-card:focus-visible{outline:2px solid var(--copper);outline-offset:2px;}
+  /* icon sits in its own tinted tile, so the grid scans as a product
+     catalogue rather than a wall of loose emoji */
+  .tool-card .icon{
+    width:38px;height:38px;border-radius:10px;
+    display:grid;place-items:center;
+    font-size:1.15rem;line-height:1;
+    background:rgba(193,104,58,0.12);
+    margin-bottom:12px;
+  }
+  .tool-card .name{font-weight:600;font-size:0.95rem;margin-bottom:4px;line-height:1.3;}
+  .tool-card .desc{font-size:0.8rem;color:var(--ink-soft);line-height:1.45;}
+  .tool-card .loc{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.65rem;
+    color:var(--ok);
+    margin-top:10px;
+    display:block;
   }
 
-  a { color: inherit; text-decoration: none; }
-  ::selection { background: var(--primary-red); color: var(--white); }
-
-  .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-
-  /* ===== HEADER ===== */
-  header {
-    background: var(--white);
-    border-bottom: 1px solid var(--border-gray);
-    padding: 16px 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  /* ---------- workspace modal ---------- */
+  /* ---------- tool page (a real page, not a modal) ---------- */
+  .tool-page{padding-top:20px;padding-bottom:70px;}
+  .tool-crumb{margin-bottom:22px;}
+  .crumb-back{
+    background:none;border:1px solid var(--line);border-radius:100px;
+    font-family:inherit;font-size:0.82rem;color:var(--ink-soft);
+    padding:7px 15px;cursor:pointer;transition:all .12s;
+  }
+  .crumb-back:hover{border-color:var(--copper);color:var(--copper-deep);}
+  .tool-head{text-align:center;max-width:62ch;margin:0 auto 34px;}
+  .tool-head h1{
+    font-family:'Fraunces',serif;font-weight:600;
+    font-size:clamp(1.9rem,4vw,3rem);line-height:1.08;
+    margin:0 auto 14px;max-width:20ch;letter-spacing:-0.01em;
+  }
+  .tool-head p{margin:0;color:var(--ink-soft);font-size:1.05rem;}
+  /* the working area stays a comfortable reading width even though the
+     page itself is full-bleed */
+  .tool-body{
+    max-width:680px;margin:0 auto;
+    background:var(--paper-raised);
+    border:1px solid var(--line);border-radius:16px;
+    padding:30px;
+    box-shadow:0 14px 40px -28px rgba(31,36,32,0.45);
+  }
+  .tool-foot{
+    text-align:center;color:var(--sage);font-size:0.82rem;
+    margin:22px auto 0;
   }
 
-  .header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
+  .dropzone{
+    border:1.5px dashed var(--line);
+    border-radius:10px;
+    padding:32px 20px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:0.9rem;
+    cursor:pointer;
+    background:var(--paper);
   }
-
-  .logo {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    white-space: nowrap;
-    flex-shrink: 0;
+  .dropzone.drag{border-color:var(--copper);color:var(--copper-deep);}
+  .filelist{margin:14px 0;display:flex;flex-direction:column;gap:6px;}
+  .filerow{
+    display:flex;justify-content:space-between;align-items:center;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px;font-size:0.85rem;
   }
+  .filerow button{background:none;border:none;color:var(--sage);cursor:pointer;font-size:0.9rem;}
 
-  .logo .heart {
-    color: var(--primary-red);
-    margin: 0 4px;
+  .field{margin:14px 0;}
+  .field label{display:block;font-size:0.82rem;color:var(--ink-soft);margin-bottom:6px;}
+  .field input[type=text], .field input[type=number]{
+    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;
+    font-family:inherit;font-size:0.9rem;background:var(--paper);
   }
+  .field input[type=range]{width:100%;}
+  .row{display:flex;gap:12px;}
+  .row .field{flex:1;}
 
-  .category-filters {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    flex: 1;
-    min-width: 0;
+  .primary-btn{
+    background:var(--copper);color:#fff;border:none;border-radius:8px;
+    padding:12px 20px;font-size:0.92rem;font-weight:600;cursor:pointer;
+    width:100%;margin-top:8px;
   }
+  .primary-btn:hover{background:var(--copper-deep);}
+  .primary-btn:disabled{background:var(--line);color:var(--ink-soft);cursor:not-allowed;}
 
-  .category-btn {
-    background: var(--light-gray);
-    border: 1px solid var(--border-gray);
-    color: var(--text-gray);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    white-space: nowrap;
+  .runlog{
+    font-family:'IBM Plex Mono',monospace;font-size:0.78rem;
+    color:var(--ink-soft);margin-top:14px;min-height:20px;
   }
+  .runlog .ok{color:var(--ok);}
 
-  .category-btn:hover {
-    border-color: var(--primary-red);
-    color: var(--primary-red);
+  footer{border-top:1px solid var(--line);margin-top:80px;padding:48px 0 60px;color:var(--ink-soft);font-size:0.85rem;}
+  .foot-cols{
+    display:grid;
+    grid-template-columns:1.6fr repeat(6,1fr);
+    gap:34px 28px;
+    padding-bottom:34px;
   }
-
-  .category-btn.active {
-    background: var(--primary-red);
-    color: var(--white);
-    border-color: var(--primary-red);
+  .foot-brand{
+    display:flex;align-items:baseline;gap:8px;
+    font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem;
+    color:var(--ink);margin-bottom:10px;
   }
-
-  .header-actions {
-    display: flex;
-    gap: 12px;
-    flex-shrink: 0;
+  .foot-brand .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;}
+  .foot-about p{margin:0 0 14px;max-width:40ch;line-height:1.55;}
+  .foot-platforms{display:flex;flex-wrap:wrap;gap:6px;}
+  .foot-platforms span{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;
+    border:1px solid var(--line);border-radius:100px;padding:3px 10px;
+    background:var(--paper-raised);
   }
-
-  .search-box {
-    background: var(--light-gray);
-    border: 1px solid var(--border-gray);
-    padding: 8px 12px;
-    border-radius: 20px;
-    width: 180px;
-    font-size: 13px;
+  .foot-col h4{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;
+    text-transform:uppercase;letter-spacing:0.1em;color:var(--sage);
+    margin:0 0 12px;
   }
-
-  .search-box::placeholder { color: var(--text-gray); }
-  .search-box:focus { outline: none; border-color: var(--primary-red); }
-
-  .install-btn {
-    background: var(--primary-red);
-    color: var(--white);
-    border: none;
-    padding: 8px 18px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.2s;
-    display: none;
+  .foot-link{
+    display:block;width:100%;text-align:left;
+    background:none;border:0;padding:5px 0;
+    font-family:inherit;font-size:0.85rem;color:var(--ink-soft);
+    cursor:pointer;text-decoration:none;transition:color .12s;
   }
+  .foot-link:hover{color:var(--copper-deep);text-decoration:underline;}
+  .foot-bottom{border-top:1px solid var(--line);padding-top:22px;display:grid;gap:14px;}
+  .foot-note{max-width:78ch;line-height:1.55;}
+  .foot-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
 
-  .install-btn:hover { background: var(--primary-red-dark); }
-
-  /* ===== HERO SECTION ===== */
-  .hero {
-    text-align: center;
-    padding: 48px 0 32px;
-    background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);
+  .note{background:var(--paper);border:1px dashed var(--line);border-radius:8px;padding:12px 14px;font-size:0.8rem;color:var(--ink-soft);margin:12px 0;}
+  .canvas-wrap{position:relative;border:1px solid var(--line);border-radius:8px;overflow:auto;max-height:60vh;margin:10px 0;background:#eee;}
+  .canvas-wrap canvas{display:block;cursor:crosshair;max-width:100%;}
+  .pill-row{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap;}
+  .pill-row select, .pill-row input[type=text], .pill-row input[type=number]{
+    padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--paper-raised);font-family:inherit;font-size:0.85rem;
   }
+  .thumb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin:14px 0;max-height:340px;overflow-y:auto;padding:4px;}
+  .thumb{border:1px solid var(--line);border-radius:8px;padding:6px;text-align:center;background:var(--paper);}
+  .thumb canvas{width:100%;border-radius:4px;border:1px solid var(--line);}
+  .thumb .pnum{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;margin-top:4px;color:var(--ink-soft);}
+  .thumb label{display:flex;align-items:center;gap:5px;justify-content:center;font-size:0.72rem;margin-top:4px;}
+  .small-btn{background:var(--paper-raised);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:0.78rem;cursor:pointer;color:var(--ink);}
+  .small-btn:hover{border-color:var(--copper);}
+  .anno-list{display:flex;flex-direction:column;gap:6px;margin:10px 0;max-height:150px;overflow-y:auto;}
+  .sig-pad{border:1px solid var(--line);border-radius:8px;background:#fff;touch-action:none;cursor:crosshair;}
+  .tab-row{display:flex;gap:8px;margin:12px 0;}
+  .tab-btn{flex:1;padding:14px 10px;border:2px solid var(--line);border-radius:10px;background:var(--paper-raised);cursor:pointer;text-align:center;font-family:inherit;}
+  .tab-btn .tab-title{font-weight:600;font-size:0.95rem;display:block;margin-bottom:3px;}
+  .tab-btn .tab-sub{font-size:0.78rem;color:var(--ink-soft);}
+  .tab-btn.active{border-color:var(--copper);background:#FBEFE6;}
+  .big-input-row{display:flex;gap:8px;align-items:stretch;margin:10px 0;}
+  .big-input-row input[type=number]{flex:1;padding:14px;font-size:1.1rem;border:1.5px solid var(--line);border-radius:9px;background:var(--paper-raised);font-family:inherit;}
+  .big-input-row select{padding:14px 10px;font-size:1rem;border:1.5px solid var(--line);border-radius:9px;background:var(--paper-raised);font-family:inherit;}
+  .helper-line{font-size:0.82rem;color:var(--ink-soft);margin:4px 0 14px;}
+  .promise-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:20px 0 10px;max-width:720px;}
+  .promise-item{font-size:0.88rem;font-weight:500;display:flex;align-items:center;gap:8px;}
+  .promise-check{color:var(--ok);font-weight:700;}
+  .search-bar-wrap{position:sticky;top:64px;z-index:35;background:var(--paper);padding:14px 0 10px;margin-bottom:8px;border-bottom:1px solid var(--line);}
+  #tool-search{width:100%;padding:13px 16px;font-size:1rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-raised);font-family:inherit;}
+  #tool-search:focus{outline:none;border-color:var(--copper);}
+  .jump-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .jump-chip{padding:6px 14px;border:1px solid var(--line);border-radius:100px;background:var(--paper-raised);font-size:0.8rem;cursor:pointer;color:var(--ink-soft);font-family:inherit;}
+  .jump-chip:hover{border-color:var(--copper);color:var(--copper-deep);}
+  .jump-chip.chip-active{background:var(--copper);border-color:var(--copper);color:#fff;}
+  /* Collapses to nothing (zero layout shift) until a real ad network is
+     configured and actually injects content — see AD_CONFIG. */
+  .ad-slot{min-height:0;overflow:hidden;}
+  .ad-slot:empty{display:none;}
+  /* "Ask PDFLove" hero input — the plain-language front door. */
+  .assist-hero{display:flex;gap:8px;margin:0 0 28px;max-width:56ch;}
+  .assist-hero input{flex:1;padding:13px 16px;font-size:0.98rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper-raised);font-family:inherit;}
+  .assist-hero input:focus{outline:none;border-color:var(--copper);}
+  .assist-hero .primary-btn{width:auto;margin-top:0;padding:12px 22px;}
+  .assist-chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+  .assist-step{display:flex;align-items:baseline;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);margin-top:8px;font-size:0.9rem;}
+  .assist-step .num{font-family:'IBM Plex Mono',monospace;color:var(--copper-deep);font-weight:600;flex-shrink:0;}
+  .tool-card.search-hidden{display:none;}
+  .section-label.search-hidden{display:none;}
+  .tools.search-hidden{display:none;}
 
-  .hero h1 {
-    font-size: 32px;
-    font-weight: 700;
-    margin: 0 0 16px;
-    line-height: 1.2;
-    color: var(--dark-gray);
-  }
-
-  .hero-subtitle {
-    font-size: 16px;
-    color: var(--text-gray);
-    margin: 0 0 24px;
-    line-height: 1.5;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .hero-features {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-
-  .hero-feature {
-    font-size: 13px;
-    color: var(--text-gray);
-    background: var(--white);
-    border: 1px solid var(--border-gray);
-    padding: 6px 12px;
-    border-radius: 16px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .hero-feature::before {
-    content: "✓";
-    color: var(--success-green);
-    font-weight: bold;
-  }
-
-  /* ===== TOOL GRID ===== */
-  .tools-section {
-    padding: 40px 0;
-  }
-
-  .section-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 24px;
-    color: var(--dark-gray);
-  }
-
-  .tools {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 40px;
-  }
-
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    margin-bottom: 40px;
-  }
-
-  .tool-card {
-    background: var(--white);
-    border: 1px solid var(--border-gray);
-    border-radius: 8px;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    text-align: left;
-    position: relative;
-    min-height: 160px;
-  }
-
-  .tool-card:hover {
-    border-color: var(--primary-red);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-  }
-
-  .tool-card-icon {
-    font-size: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-    background: var(--light-gray);
-  }
-
-  .tool-card[data-category="merge"] .tool-card-icon,
-  .tool-card[data-category="split"] .tool-card-icon,
-  .tool-card[data-category="edit"] .tool-card-icon {
-    background: rgba(229, 50, 45, 0.1);
-  }
-
-  .tool-card[data-category="compress"] .tool-card-icon,
-  .tool-card[data-category="image"] .tool-card-icon {
-    background: rgba(76, 175, 80, 0.1);
-  }
-
-  .tool-card[data-category="convert"] .tool-card-icon,
-  .tool-card[data-category="security"] .tool-card-icon {
-    background: rgba(33, 150, 243, 0.1);
-  }
-
-  .tool-card[data-category="organize"] .tool-card-icon {
-    background: rgba(255, 152, 0, 0.1);
-  }
-
-  .tool-card[data-category="ai"] .tool-card-icon,
-  .tool-card[data-category="utility"] .tool-card-icon {
-    background: rgba(156, 39, 176, 0.1);
-  }
-
-  .tool-card[data-category="video"] .tool-card-icon {
-    background: rgba(244, 67, 54, 0.1);
-  }
-
-  .tool-card-name {
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--dark-gray);
-    margin: 0;
-  }
-
-  .tool-card-desc {
-    font-size: 13px;
-    color: var(--text-gray);
-    line-height: 1.4;
-    flex: 1;
-    margin: 0;
-  }
-
-  .tool-card-footer {
-    font-size: 12px;
-    color: var(--text-gray);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .tool-card-footer::before {
-    content: "●";
-    color: var(--primary-red);
-  }
-
-  .tool-card-star, .fav-star {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    font-size: 18px;
-    cursor: pointer;
-    opacity: 0.4;
-    transition: opacity 0.2s;
-    background: none;
-    border: none;
-    padding: 0;
-    line-height: 1;
-    user-select: none;
-  }
-
-  .tool-card-star:hover, .fav-star:hover {
-    opacity: 1;
-  }
-
-  .tool-card-star.faved, .fav-star.faved {
-    opacity: 1;
-  }
-
-  /* ===== SEARCH & VISIBILITY ===== */
-  .tool-card.search-hidden {
-    display: none;
-  }
-
-  /* ===== TOOL PANEL (MODAL/FULLSCREEN) ===== */
-  #home-view {
-    display: block;
-  }
-
-  #home-view[hidden] {
-    display: none;
-  }
-
-  #tool-view {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    background: var(--white);
-    overflow-y: auto;
-  }
-
-  #tool-view[hidden] {
-    display: none;
-  }
-
-  .tool-panel-header {
-    background: var(--white);
-    border-bottom: 1px solid var(--border-gray);
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  .tool-panel-header button {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px 8px;
-    color: var(--text-gray);
-  }
-
-  .tool-panel-header button:hover {
-    color: var(--dark-gray);
-  }
-
-  .tool-panel-title {
-    font-weight: 600;
-    font-size: 18px;
-    flex: 1;
-  }
-
-  .tool-panel-body {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 32px 20px;
-  }
-
-  /* ===== RESPONSIVE ===== */
-  @media (max-width: 768px) {
-    .header-content {
-      gap: 12px;
+  /* ================= redesign: nav, tabs, rows, dark mode ================= */
+  header{padding:12px 0 0;}
+  .header-row{display:flex;align-items:center;gap:16px;padding-bottom:12px;}
+  .header-search{flex:1;max-width:520px;margin-left:auto;}
+  .header-search #tool-search{width:100%;padding:10px 14px;font-size:0.92rem;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);font-family:inherit;color:var(--ink);}
+  .header-search #tool-search:focus{outline:none;border-color:var(--copper);}
+  .cat-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;}
+  /* a tool page is not the catalogue — the filter row belongs to the grid */
+  body.on-tool .cat-tabs{display:none;}
+  .cat-tabs::-webkit-scrollbar{display:none;}
+  .cat-tab{flex-shrink:0;padding:7px 15px;border:1px solid var(--line);border-radius:100px;background:var(--paper-raised);font-size:0.82rem;cursor:pointer;color:var(--ink-soft);font-family:inherit;white-space:nowrap;transition:all .12s;}
+  .cat-tab:hover{border-color:var(--copper);color:var(--copper-deep);}
+  .cat-tab.active{background:var(--copper);border-color:var(--copper);color:#fff;font-weight:600;}
+  .hero{padding:44px 0 28px;}
+  .tool-card{position:relative;display:flex;flex-direction:column;min-height:128px;box-shadow:0 1px 2px rgba(31,36,32,0.05);}
+  .tool-card:hover{box-shadow:0 12px 26px -16px rgba(31,36,32,0.4);}
+  .tool-card .desc{flex:1;}
+  .fav-star{position:absolute;top:8px;right:8px;background:none;border:none;font-size:1rem;cursor:pointer;color:var(--line);padding:4px;line-height:1;transition:transform .12s;}
+  .fav-star:hover{transform:scale(1.25);color:#D9A441;}
+  .fav-star.faved{color:#D9A441;}
+  #home-rows .section-label{margin-top:34px;}
+  #status-pill .backend-dot{width:7px;height:7px;border-radius:50%;background:var(--line);display:inline-block;}
+  #status-pill .backend-dot.up{background:var(--ok);box-shadow:0 0 0 3px rgba(74,120,86,0.2);}
+  /* the mega menu needs real width; below this the nav collapses behind ☰ */
+  @media (max-width:1040px){
+    .mainnav{
+      display:none;order:4;flex-basis:100%;
+      flex-direction:column;align-items:stretch;gap:2px;
+      padding:10px 0 4px;border-top:1px solid var(--line);margin-top:10px;
     }
-
-    .category-filters {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      flex-direction: column;
-      background: var(--white);
-      border-bottom: 1px solid var(--border-gray);
-      padding: 12px 20px;
-      gap: 8px;
-      gap: 12px;
+    .mainnav.open{display:flex;}
+    .nav-toggle{display:inline-block;}
+    .navlink{justify-content:space-between;width:100%;padding:11px 10px;}
+    .megamenu{
+      position:static;display:none;border:0;box-shadow:none;padding:4px 0 10px 10px;
+      background:transparent;grid-template-columns:1fr;
     }
-
-    .category-filters.visible {
-      display: flex;
-    }
-
-    .search-box {
-      width: 120px;
-      font-size: 12px;
-    }
-
-    .hero h1 {
-      font-size: 24px;
-    }
-
-    .tools-grid {
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-    }
-
-    .tool-card {
-      padding: 12px;
-      min-height: auto;
-    }
-
-    .tool-card-icon {
-      width: 40px;
-      height: 40px;
-      font-size: 24px;
-    }
-
-    .tool-card-name {
-      font-size: 13px;
-    }
-
-    .tool-card-desc {
-      font-size: 11px;
+    .navdrop.open .megamenu{display:grid;}
+    /* inside the collapsed ☰ drawer the menu is inline, not a popover */
+    .megamenu-wide{
+      position:static;transform:none;width:auto;
+      max-height:none;overflow:visible;top:auto;left:auto;right:auto;
     }
   }
-
-  /* ===== UTILITIES ===== */
-  .hidden { display: none; }
+  @media (max-width:860px){
+    .foot-cols{grid-template-columns:repeat(2,1fr);}
+    .foot-about{grid-column:1/-1;}
+  }
+  @media (max-width:700px){
+    .header-row{flex-wrap:wrap;gap:10px;}
+    .header-search{order:3;flex-basis:100%;max-width:none;}
+    .status-pill{display:none;}
+    .tool-body{padding:20px;border-radius:12px;}
+    .hero{padding:28px 0 18px;}
+    .foot-cols{grid-template-columns:1fr;gap:24px;}
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#181A17; --paper-raised:#22251F; --ink:#ECE8DC; --ink-soft:#A8AD9F;
+      --copper:#D07E4C; --copper-deep:#E0925F; --sage:#8B977F; --line:#3A3E35; --ok:#7FB78F;
+    }
+    header{background:rgba(24,26,23,0.92);}
+    .search-bar-wrap{background:var(--paper);}
+    .tab-btn.active{background:#37281D;}
+    .trace{background:#0E100D;box-shadow:0 18px 40px -20px rgba(0,0,0,0.8);}
+    .sig-pad{background:#ECE8DC;}
+    .canvas-wrap{background:#111;}
+    .tool-card{box-shadow:none;}
+    ::selection{background:var(--copper);color:#181A17;}
+  }
 </style>
 </head>
 <body>
 
-<header id="header">
-  <div class="container">
-    <div class="header-content">
-      <div class="logo">
-        I <span class="heart">❤️</span> PDF
+<header>
+  <div class="wrap header-row">
+    <a class="brand" href="./" aria-label="PDFLove home"><span class="dot"></span>PDFLove</a>
+
+    <nav class="mainnav" id="mainnav" aria-label="Main">
+      <button class="navlink" data-jump="Merge PDF">Merge PDF</button>
+      <button class="navlink" data-jump="Split PDF">Split PDF</button>
+      <button class="navlink" data-jump="Make PDF Smaller">Compress PDF</button>
+      <div class="navdrop">
+        <button class="navlink has-menu" aria-expanded="false" aria-haspopup="true">Convert PDF <span class="chev">⌄</span></button>
+        <div class="megamenu" data-cols="2" role="menu"></div>
       </div>
-      <div class="category-filters" id="category-filters">
-        <button class="category-btn active" data-category="all">All</button>
-        <button class="category-btn" data-category="pdf-tools">Organize PDF</button>
-        <button class="category-btn" data-category="convert-tools">Convert PDF</button>
-        <button class="category-btn" data-category="edit-tools">Edit PDF</button>
-        <button class="category-btn" data-category="security-tools">PDF Security</button>
-        <button class="category-btn" data-category="img-tools">Images</button>
-        <button class="category-btn" data-category="video-tools">Video</button>
-        <button class="category-btn" data-category="ai-tools">PDF Intelligence</button>
-        <button class="category-btn" data-category="utility-tools">Codes</button>
-        <button class="category-btn" data-category="api-tools" id="server-tab" style="display:none;">Server</button>
+      <div class="navdrop">
+        <button class="navlink has-menu" aria-expanded="false" aria-haspopup="true">All tools <span class="chev">⌄</span></button>
+        <div class="megamenu megamenu-wide" data-cols="4" role="menu"></div>
       </div>
-      <div class="header-actions">
-        <input type="text" class="search-box" id="tool-search" placeholder="Search tools...">
-        <button class="install-btn" id="install-btn">Install</button>
-      </div>
+    </nav>
+
+    <div class="header-actions">
+      <div class="header-search"><input type="text" id="tool-search" placeholder="Search tools…  (Ctrl+K)" autocomplete="off" aria-label="Search tools"></div>
+      <div class="status-pill" id="status-pill" title="Core tools run on your device; the dot turns green when your optional backend is reachable."><span class="backend-dot" id="backend-dot"></span> on-device</div>
+      <button class="install-btn" id="install-btn" title="Install PDFLove as an app on this device">Install</button>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Menu" aria-expanded="false">☰</button>
     </div>
   </div>
+  <nav class="wrap cat-tabs" id="cat-tabs" aria-label="Tool categories"></nav>
 </header>
 
-<div id="home-view">
-  <div class="hero">
-    <div class="container">
-      <h1>Every tool you need to work with PDFs in one place</h1>
-      <p class="hero-subtitle">Every tool you need to use PDFs, at your fingertips. All are 100% FREE and easy to use! Merge, split, compress, convert, rotate, unlock and watermark PDFs with just a few clicks.</p>
-      <div class="hero-features">
-        <div class="hero-feature">100% Free</div>
-        <div class="hero-feature">No Login</div>
-        <div class="hero-feature">No Upload</div>
-        <div class="hero-feature">Works Offline</div>
+<div class="wrap ad-slot" id="ad-banner-slot" aria-hidden="true"></div>
+
+<!-- Each tool is its own page view (own URL, own history entry), not a
+     modal. #home-view and #tool-view are swapped by the router below. -->
+<main id="tool-view" hidden>
+  <div class="wrap tool-page" id="tool-page"></div>
+</main>
+
+<div class="wrap" id="home-view">
+  <section class="hero">
+    <h1>Every tool you need to work with PDFs, in one place</h1>
+    <p class="lede">Merge, split, compress, convert, sign and protect PDFs and images — free, with no sign-up and no daily limit. Everything runs inside this tab, so your files never leave your device.</p>
+
+    <div class="assist-hero">
+      <input type="text" id="assist-hero-input" placeholder="Tell me what you need — e.g. &ldquo;make this PDF small enough to email&rdquo;" aria-label="Describe what you want to do">
+      <button class="primary-btn" id="assist-hero-btn">Ask</button>
+    </div>
+
+    <ul class="promise-row">
+      <li>No sign-up</li>
+      <li>No daily limit</li>
+      <li>No watermarks</li>
+      <li>No file-size ceiling</li>
+      <li>Works offline</li>
+    </ul>
+  </section>
+
+  <div id="search-no-results" style="display:none;padding:20px;text-align:center;color:var(--ink-soft);">No tools match that search. <button class="small-btn" id="no-results-ask" style="margin-left:8px;">Ask the assistant instead →</button></div>
+
+  <div id="home-rows">
+    <div class="section-label" id="label-fav-tools">Pinned</div>
+    <div class="tools" id="fav-tools"></div>
+    <div class="section-label" id="label-recent-tools">Recently used</div>
+    <div class="tools" id="recent-tools"></div>
+    <div class="section-label" id="label-popular-tools">Most popular</div>
+    <div class="tools" id="popular-tools"></div>
+  </div>
+
+  <div class="section-label" id="label-pdf-tools">Organize PDF <span class="onbadge">on your device</span></div>
+  <div class="tools" id="pdf-tools"></div>
+
+  <div class="section-label" id="label-convert-tools">Convert PDF <span class="onbadge">on your device</span></div>
+  <div class="tools" id="convert-tools"></div>
+
+  <div class="section-label" id="label-edit-tools">Edit &amp; sign PDF <span class="onbadge">on your device</span></div>
+  <div class="tools" id="edit-tools"></div>
+
+  <div class="section-label" id="label-security-tools">PDF security <span class="onbadge">real AES-256, on your device</span></div>
+  <div class="tools" id="security-tools"></div>
+
+  <div class="section-label" id="label-img-tools">Images &amp; ID photos <span class="onbadge">on your device</span></div>
+  <div class="tools" id="img-tools"></div>
+
+  <div class="section-label" id="label-video-tools">Video <span class="onbadge">on your device</span></div>
+  <div class="tools" id="video-tools"></div>
+
+  <div class="section-label" id="label-api-tools">Server-assisted <span class="onbadge warn">optional — files are sent only when you use these</span></div>
+  <div class="tools" id="api-tools"></div>
+
+  <div class="section-label" id="label-utility-tools">Codes &amp; extras</div>
+  <div class="tools" id="utility-tools"></div>
+
+  <div class="section-label" id="label-ai-tools">PDF intelligence — real AI, running on your device</div>
+  <div class="tools" id="ai-tools"></div>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-cols">
+      <div class="foot-col foot-about">
+        <div class="foot-brand"><span class="dot"></span>PDFLove</div>
+        <p>A static, client-side document toolkit. PDF and image tools run on WebAssembly and Canvas inside your browser — no upload, no account, no daily limit.</p>
+        <div class="foot-platforms" aria-label="Available on">
+          <span>Web</span><span>Windows</span><span>macOS</span><span>Linux</span><span>Android</span>
+        </div>
+      </div>
+
+      <div class="foot-col">
+        <h4>Organize</h4>
+        <button class="foot-link" data-jump="Merge PDF">Merge PDF</button>
+        <button class="foot-link" data-jump="Split PDF">Split PDF</button>
+        <button class="foot-link" data-jump="Make PDF Smaller">Compress PDF</button>
+        <button class="foot-link" data-jump="Rotate PDF">Rotate PDF</button>
+        <button class="foot-link" data-jump="Organize PDF">Organize PDF</button>
+      </div>
+
+      <div class="foot-col">
+        <h4>Convert</h4>
+        <button class="foot-link" data-jump="PDF to Word">PDF to Word</button>
+        <button class="foot-link" data-jump="PDF to JPG">PDF to JPG</button>
+        <button class="foot-link" data-jump="Images to PDF">Images to PDF</button>
+        <button class="foot-link" data-jump="Word to PDF">Word to PDF</button>
+        <button class="foot-link" data-jump="PDF to Excel">PDF to Excel</button>
+      </div>
+
+      <div class="foot-col">
+        <h4>Edit &amp; secure</h4>
+        <button class="foot-link" data-jump="PDF Editor">Edit PDF</button>
+        <button class="foot-link" data-jump="Sign PDF">Sign PDF</button>
+        <button class="foot-link" data-jump="Add Watermark">Add watermark</button>
+        <button class="foot-link" data-jump="Protect PDF">Protect PDF</button>
+        <button class="foot-link" data-jump="Unlock PDF">Unlock PDF</button>
+      </div>
+
+      <div class="foot-col">
+        <h4>Product</h4>
+        <a class="foot-link" href="features.html">Features</a>
+        <a class="foot-link" href="pricing.html">Pricing</a>
+        <a class="foot-link" href="guides/">Guides</a>
+        <a class="foot-link" href="faq.html">FAQ</a>
+      </div>
+
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a class="foot-link" href="about.html">About</a>
+        <a class="foot-link" href="contact.html">Contact</a>
+        <a class="foot-link" href="security.html">Security</a>
+      </div>
+
+      <div class="foot-col">
+        <h4>Legal</h4>
+        <a class="foot-link" href="privacy.html">Privacy policy</a>
+        <a class="foot-link" href="terms.html">Terms &amp; conditions</a>
+        <a class="foot-link" href="cookies.html">Cookies</a>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <div class="foot-note">
+        Once installed, PDFLove works with no internet at all — every tool runs on your own device and the app
+        makes <strong>no network requests of its own</strong>. It reaches the network only when you press
+        “Check for updates”. Server-assisted tools (OCR, Office conversion, deep compression, background
+        removal, chat) are a separate, opt-in backend — see <code>/backend</code> for the self-hosted,
+        open-source API. PDFLove never looks for one automatically.
+      </div>
+      <div class="foot-actions">
+        <button class="small-btn" id="check-update-btn">Check for updates →</button>
+        <span id="check-update-status" style="font-size:0.85rem;"></span>
+        <button class="small-btn" id="check-backend-btn">Have a self-hosted backend? Check for it →</button>
+        <span id="check-backend-status" style="font-size:0.85rem;"></span>
+        <button class="small-btn" id="license-btn">Have a license key? Manage it →</button>
       </div>
     </div>
   </div>
-
-  <div class="container">
-    <div id="fav-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">★ Pinned Tools</h2>
-      <div class="tools" id="fav-tools"></div>
-    </div>
-
-    <div id="recent-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">Recently Used</h2>
-      <div class="tools-grid" id="recent-tools"></div>
-    </div>
-
-    <div id="popular-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">Popular</h2>
-      <div class="tools-grid" id="popular-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">Organize PDF</h2>
-      <div class="tools-grid" id="pdf-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">Convert PDF</h2>
-      <div class="tools-grid" id="convert-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">Edit PDF</h2>
-      <div class="tools-grid" id="edit-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">PDF Security</h2>
-      <div class="tools-grid" id="security-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">Images</h2>
-      <div class="tools-grid" id="img-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">Video</h2>
-      <div class="tools-grid" id="video-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">PDF Intelligence</h2>
-      <div class="tools-grid" id="ai-tools"></div>
-    </div>
-
-    <div class="tools-section">
-      <h2 class="section-title">Codes & Utilities</h2>
-      <div class="tools-grid" id="utility-tools"></div>
-    </div>
-
-    <div id="api-section" class="tools-section" style="display:none;">
-      <h2 class="section-title">Server-Assisted</h2>
-      <div class="tools-grid" id="api-tools"></div>
-    </div>
-  </div>
-</div>
-
-<div id="tool-view">
-  <div id="tool-page">
-    <div class="tool-panel-header">
-      <button id="back-btn">←</button>
-      <div class="tool-panel-title" id="panel-title"></div>
-    </div>
-    <div class="tool-panel-body" id="panel-body"></div>
-  </div>
-</div>
+</footer>
 
 <script>
-window.addEventListener('DOMContentLoaded', function(){
-const { PDFDocument, degrees } = PDFLib;
-
-/* ---------- self-hosted assets, with pinned-version CDN fallback ---------- */
-const VENDOR_FALLBACKS = {
-  'vendor/pdf.worker.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-  'vendor/qrcode.min.js':     'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-  'vendor/jsqr.js':           'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
-  'vendor/jsbarcode.all.min.js': 'https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js',
-  'vendor/qpdf.js':           'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.js',
-  'vendor/qpdf.wasm':         'https://cdn.jsdelivr.net/npm/@neslinesli93/qpdf-wasm@0.3.0/dist/qpdf.wasm',
-};
-
-const AD_CONFIG = {
-  adsense: { client: 'ca-pub-6910175887237387' },
-  banner: { enabled: true, slotId: null },
-  rewarded: { enabled: false, scriptUrl: null },
-  result: { enabled: true, slotId: null },
-};
-
-const LICENSE_PUBLIC_KEY_JWK = null;
-const IS_FILE = location.protocol === 'file:';
-
-async function vendorAsset(path){
-  if(IS_FILE) return path;
-  try{ const r = await fetch(path, {method:'HEAD'}); if(r.ok) return path; }catch(e){}
-  return VENDOR_FALLBACKS[path] || path;
-}
-
-const _loadedScripts = {};
-function loadScript(path, {fallbackOnError=true}={}){
-  if(!_loadedScripts[path]){
-    _loadedScripts[path] = (async ()=>{
-      const src = await vendorAsset(path);
-      const tryLoad = (url)=>new Promise((res, rej)=>{
-        const s = document.createElement('script');
-        s.src = url;
-        s.onload = res;
-        s.onerror = ()=>rej(new Error('Failed to load '+url));
-        document.head.appendChild(s);
-      });
-      try{
-        await tryLoad(src);
-      }catch(e){
-        const cdn = VENDOR_FALLBACKS[path];
-        if(fallbackOnError && cdn && src!==cdn) await tryLoad(cdn);
-        else throw e;
-      }
-    })();
-    _loadedScripts[path].catch(()=>{ delete _loadedScripts[path]; });
-  }
-  return _loadedScripts[path];
-}
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
-if(IS_FILE){
-  loadScript('vendor/pdf.worker.min.js').catch(()=>{});
-} else {
-  vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
-}
-
-(function migrateStorageKeys(){
-  try{
-    const map = {
-      'dockbench.favs':'pdflove.favs',
-      'dockbench.recents':'pdflove.recents',
-      'dockbench.apiBase':'pdflove.apiBase',
-      'dockbench.licenseKey':'pdflove.licenseKey',
-      'dockbench.adsEnabled':'pdflove.adsEnabled',
-    };
-    for(const [oldKey,newKey] of Object.entries(map)){
-      const val = localStorage.getItem(oldKey);
-      if(val !== null && localStorage.getItem(newKey) === null){
-        localStorage.setItem(newKey, val);
-      }
-    }
-  }catch(e){}
-})();
 window.addEventListener('DOMContentLoaded', function(){
 const { PDFDocument, degrees } = PDFLib;
 
@@ -7184,9 +7209,6 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 }
 
 }); // end DOMContentLoaded wrapper
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
