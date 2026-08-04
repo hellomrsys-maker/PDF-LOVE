@@ -200,8 +200,90 @@
     background: var(--primary-red);
   }
 
+  /* ===== NAV DROPDOWNS ===== */
+  .navdrop { position: relative; }
+
+  .navlink { display: inline-flex; align-items: center; gap: 4px; }
+  .navlink .chevron { font-size: 12px; transition: transform 0.15s ease; }
+  .navlink[aria-expanded="true"] { color: var(--primary-red); }
+  .navlink[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+
+  .dropdown-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 16px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--white);
+    border: 1px solid var(--border-gray);
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+    padding: 24px;
+    z-index: 150;
+    text-align: left;
+  }
+
+  .dropdown-panel.open { display: flex; gap: 32px; }
+
+  .dropdown-convert { min-width: 480px; }
+
+  /* Anchored to the viewport rather than the trigger button: the "All PDF
+     Tools" button sits far to the right of the header, and a 900px-wide
+     7-column panel positioned relative to it would overflow off-screen. */
+  .dropdown-all {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1240px, calc(100vw - 40px));
+    display: none;
+    gap: 12px;
+  }
+  .dropdown-all.open { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .dropdown-all .dd-col { min-width: 0; }
+  .dropdown-all .dd-item { white-space: normal; }
+
+  .dropdown-apps { left: auto; right: 0; transform: none; min-width: 420px; }
+
+  .dd-col { display: flex; flex-direction: column; min-width: 160px; }
+  .dd-col h5 {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-gray); margin: 0 0 10px;
+  }
+
+  .dd-item {
+    display: flex; align-items: center; gap: 10px;
+    background: none; border: none; text-align: left;
+    padding: 8px 6px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: #1A1A1A;
+    white-space: nowrap;
+  }
+
+  .dd-item:hover { background: var(--light-gray); }
+  .dd-ico { font-size: 15px; width: 22px; text-align: center; flex-shrink: 0; }
+  .dd-item-title { display: block; font-size: 13px; font-weight: 700; color: #1A1A1A; }
+  .dd-item-sub { display: block; font-size: 11px; font-weight: 400; color: var(--text-gray); white-space: normal; }
+
+  .dd-links { justify-content: center; gap: 4px; border-left: 1px solid var(--border-gray); padding-left: 24px; }
+  .dd-links a { font-size: 13px; font-weight: 600; color: #1A1A1A; padding: 8px 6px; border-radius: 8px; }
+  .dd-links a:hover { background: var(--light-gray); color: var(--primary-red); }
+
+  .apps-grid-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-gray);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 8px;
+    line-height: 1;
+  }
+
+  .apps-grid-btn:hover, .apps-grid-btn[aria-expanded="true"] { background: var(--light-gray); color: #1A1A1A; }
+
   .header-actions {
     display: flex;
+    align-items: center;
     gap: 12px;
     flex-shrink: 0;
   }
@@ -887,6 +969,12 @@
     .split-visual { height: 220px; }
     .footer-cols { grid-template-columns: 1fr; }
     .footer-bottom { flex-direction: column; align-items: flex-start; }
+
+    .dropdown-apps {
+      min-width: calc(100vw - 24px);
+      right: -12px;
+    }
+    .dropdown-apps.open { flex-wrap: wrap; }
   }
 
   /* ===== UTILITIES ===== */
@@ -902,14 +990,114 @@
         PDF<span class="heart">❤️</span>Love
       </div>
       <nav class="main-nav" id="main-nav">
-        <button class="nav-link" data-section="merge">MERGE PDF</button>
-        <button class="nav-link" data-section="split">SPLIT PDF</button>
-        <button class="nav-link" data-section="compress">COMPRESS PDF</button>
-        <button class="nav-link" data-section="convert">CONVERT PDF</button>
-        <button class="nav-link" data-section="all">ALL PDF TOOLS</button>
+        <button class="nav-link" data-jump="Merge PDF">MERGE PDF</button>
+        <button class="nav-link" data-jump="Split PDF">SPLIT PDF</button>
+        <button class="nav-link" data-jump="Make PDF Smaller">COMPRESS PDF</button>
+        <div class="navdrop">
+          <button class="nav-link navlink" data-drop="convert" aria-expanded="false">CONVERT PDF <span class="chevron">⌄</span></button>
+          <div class="dropdown-panel dropdown-convert" id="dropdown-convert">
+            <div class="dd-col">
+              <h5>Convert to PDF</h5>
+              <button class="dd-item" data-jump="Images to PDF"><span class="dd-ico">🖼️</span>JPG to PDF</button>
+              <button class="dd-item" data-jump="Word to PDF"><span class="dd-ico">📘</span>Word to PDF</button>
+              <button class="dd-item" data-jump="PowerPoint to PDF"><span class="dd-ico">📗</span>PowerPoint to PDF</button>
+              <button class="dd-item" data-jump="Excel to PDF"><span class="dd-ico">📙</span>Excel to PDF</button>
+              <button class="dd-item" data-jump="HTML / Text to PDF"><span class="dd-ico">🌐</span>HTML to PDF</button>
+            </div>
+            <div class="dd-col">
+              <h5>Convert from PDF</h5>
+              <button class="dd-item" data-jump="PDF to JPG"><span class="dd-ico">📄</span>PDF to JPG</button>
+              <button class="dd-item" data-jump="PDF to Word"><span class="dd-ico">📃</span>PDF to Word</button>
+              <button class="dd-item" data-jump="PDF to PowerPoint"><span class="dd-ico">📊</span>PDF to PowerPoint</button>
+              <button class="dd-item" data-jump="PDF to Excel"><span class="dd-ico">📈</span>PDF to Excel</button>
+              <button class="dd-item" data-jump="PDF to PDF/A"><span class="dd-ico">📚</span>PDF to PDF/A</button>
+            </div>
+          </div>
+        </div>
+        <div class="navdrop">
+          <button class="nav-link navlink" data-drop="all" aria-expanded="false">ALL PDF TOOLS <span class="chevron">⌄</span></button>
+          <div class="dropdown-panel dropdown-all" id="dropdown-all">
+            <div class="dd-col">
+              <h5>Organize PDF</h5>
+              <button class="dd-item" data-jump="Merge PDF"><span class="dd-ico">⬜</span>Merge PDF</button>
+              <button class="dd-item" data-jump="Split PDF"><span class="dd-ico">✂️</span>Split PDF</button>
+              <button class="dd-item" data-jump="Organize PDF"><span class="dd-ico">🗂️</span>Organize PDF</button>
+              <button class="dd-item" data-jump="Scan Document"><span class="dd-ico">📷</span>Scan to PDF</button>
+            </div>
+            <div class="dd-col">
+              <h5>Optimize PDF</h5>
+              <button class="dd-item" data-jump="Make PDF Smaller"><span class="dd-ico">🗜️</span>Compress PDF</button>
+              <button class="dd-item" data-jump="Repair PDF"><span class="dd-ico">🔧</span>Repair PDF</button>
+              <button class="dd-item" data-jump="OCR — Make Scans Searchable"><span class="dd-ico">🔎</span>OCR PDF</button>
+            </div>
+            <div class="dd-col">
+              <h5>Convert to PDF</h5>
+              <button class="dd-item" data-jump="Images to PDF"><span class="dd-ico">🖼️</span>JPG to PDF</button>
+              <button class="dd-item" data-jump="Word to PDF"><span class="dd-ico">📘</span>Word to PDF</button>
+              <button class="dd-item" data-jump="PowerPoint to PDF"><span class="dd-ico">📗</span>PowerPoint to PDF</button>
+              <button class="dd-item" data-jump="Excel to PDF"><span class="dd-ico">📙</span>Excel to PDF</button>
+              <button class="dd-item" data-jump="HTML / Text to PDF"><span class="dd-ico">🌐</span>HTML to PDF</button>
+            </div>
+            <div class="dd-col">
+              <h5>Convert from PDF</h5>
+              <button class="dd-item" data-jump="PDF to JPG"><span class="dd-ico">📄</span>PDF to JPG</button>
+              <button class="dd-item" data-jump="PDF to Word"><span class="dd-ico">📃</span>PDF to Word</button>
+              <button class="dd-item" data-jump="PDF to PowerPoint"><span class="dd-ico">📊</span>PDF to PowerPoint</button>
+              <button class="dd-item" data-jump="PDF to Excel"><span class="dd-ico">📈</span>PDF to Excel</button>
+              <button class="dd-item" data-jump="PDF to PDF/A"><span class="dd-ico">📚</span>PDF to PDF/A</button>
+            </div>
+            <div class="dd-col">
+              <h5>Edit PDF</h5>
+              <button class="dd-item" data-jump="Rotate PDF"><span class="dd-ico">↻</span>Rotate PDF</button>
+              <button class="dd-item" data-jump="Page Numbering &amp; Document ID"><span class="dd-ico">№</span>Add page numbers</button>
+              <button class="dd-item" data-jump="Add Watermark"><span class="dd-ico">💧</span>Add watermark</button>
+              <button class="dd-item" data-jump="Crop PDF"><span class="dd-ico">⧉</span>Crop PDF</button>
+              <button class="dd-item" data-jump="PDF Editor"><span class="dd-ico">✎</span>Edit PDF</button>
+              <button class="dd-item" data-jump="PDF Forms"><span class="dd-ico">Ab</span>PDF Forms</button>
+            </div>
+            <div class="dd-col">
+              <h5>PDF Security</h5>
+              <button class="dd-item" data-jump="Unlock PDF"><span class="dd-ico">🔓</span>Unlock PDF</button>
+              <button class="dd-item" data-jump="Protect PDF"><span class="dd-ico">🔒</span>Protect PDF</button>
+              <button class="dd-item" data-jump="Sign PDF"><span class="dd-ico">✒️</span>Sign PDF</button>
+              <button class="dd-item" data-jump="Search &amp; Redact"><span class="dd-ico">🔍</span>Redact PDF</button>
+              <button class="dd-item" data-jump="Compare PDF"><span class="dd-ico">⇄</span>Compare PDF</button>
+            </div>
+            <div class="dd-col">
+              <h5>PDF Intelligence</h5>
+              <button class="dd-item" data-jump="AI Summarize (On Your Device)"><span class="dd-ico">🧠</span>AI Summarizer</button>
+              <button class="dd-item" data-jump="Translate Text (On Your Device)"><span class="dd-ico">🌐</span>Translate PDF</button>
+              <button class="dd-item" data-jump="Chat with PDF"><span class="dd-ico">💬</span>Chat with PDF</button>
+              <button class="dd-item" data-jump="PDF to Markdown"><span class="dd-ico">Ⓜ</span>PDF to Markdown</button>
+            </div>
+          </div>
+        </div>
       </nav>
       <div class="header-actions">
         <input type="text" class="search-box" id="tool-search" placeholder="Search tools...">
+        <div class="navdrop">
+          <button class="apps-grid-btn" data-drop="apps" aria-expanded="false" aria-label="More from PDFLove" title="More from PDFLove">⣿</button>
+          <div class="dropdown-panel dropdown-apps" id="dropdown-apps">
+            <div class="dd-col">
+              <h5>Explore</h5>
+              <button class="dd-item" id="apps-images"><span class="dd-ico">🖼️</span><span><span class="dd-item-title">Image tools</span><span class="dd-item-sub">Effortless image editing</span></span></button>
+              <button class="dd-item" data-jump="Sign PDF"><span class="dd-ico">✒️</span><span><span class="dd-item-title">Sign PDF</span><span class="dd-item-sub">Request e-signatures</span></span></button>
+              <button class="dd-item" id="apps-business"><span class="dd-ico">🏢</span><span><span class="dd-item-title">Server-Assisted</span><span class="dd-item-sub">Self-hosted backend for teams</span></span></button>
+            </div>
+            <div class="dd-col">
+              <h5>Applications</h5>
+              <button class="dd-item" id="apps-desktop"><span class="dd-ico">💻</span><span><span class="dd-item-title">Desktop App</span><span class="dd-item-sub">Install for offline use</span></span></button>
+              <button class="dd-item" id="apps-mobile"><span class="dd-ico">📱</span><span><span class="dd-item-title">Mobile App</span><span class="dd-item-sub">Install to your home screen</span></span></button>
+            </div>
+            <div class="dd-col dd-links">
+              <a href="pricing.html">Pricing</a>
+              <a href="security.html">Security</a>
+              <a href="features.html">Features</a>
+              <a href="about.html">About us</a>
+              <a href="faq.html">Help</a>
+            </div>
+          </div>
+        </div>
         <button class="install-btn" id="install-btn">Install</button>
       </div>
     </div>
@@ -7197,6 +7385,58 @@ const showcaseImages = document.getElementById('showcase-images');
 if(showcaseImages) showcaseImages.onclick = ()=>jumpToCategoryTop('img-tools');
 const premiumCta = document.getElementById('premium-cta');
 if(premiumCta) premiumCta.onclick = ()=>showLicensePanel();
+
+// Header nav dropdowns (Convert PDF / All PDF Tools / the apps-grid
+// button) and the direct-jump nav-links (Merge/Split/Compress). Every
+// item routes to a real tool or category — verified against toolIndex
+// by name at click time, so a typo here just silently no-ops instead of
+// throwing (the old mega-menu system reached for #mainnav/#nav-toggle
+// that no longer existed and crashed the entire script on load).
+function openToolByName(name){
+  const hit = toolIndex[name];
+  if(!hit) return false;
+  closeAllDropdowns();
+  openTool(hit.tool);
+  return true;
+}
+function closeAllDropdowns(){
+  document.querySelectorAll('.dropdown-panel.open').forEach(p=>p.classList.remove('open'));
+  document.querySelectorAll('.navlink[aria-expanded="true"], .apps-grid-btn[aria-expanded="true"]').forEach(b=>b.setAttribute('aria-expanded','false'));
+}
+document.querySelectorAll('[data-drop]').forEach(btn=>{
+  const panel = btn.nextElementSibling;
+  if(!panel || !panel.classList.contains('dropdown-panel')) return;
+  btn.onclick = (e)=>{
+    e.stopPropagation();
+    const wasOpen = panel.classList.contains('open');
+    closeAllDropdowns();
+    if(!wasOpen){ panel.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+  };
+});
+document.querySelectorAll('[data-jump]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    if(!openToolByName(el.dataset.jump)){
+      closeAllDropdowns();
+      searchInput.value = el.dataset.jump;
+      applyView();
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+  });
+});
+document.addEventListener('click', (e)=>{
+  if(e.target.closest('.navdrop')) return;
+  closeAllDropdowns();
+});
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeAllDropdowns(); });
+
+const appsImages = document.getElementById('apps-images');
+if(appsImages) appsImages.onclick = ()=>{ closeAllDropdowns(); jumpToCategoryTop('img-tools'); };
+const appsBusiness = document.getElementById('apps-business');
+if(appsBusiness) appsBusiness.onclick = ()=>{ closeAllDropdowns(); jumpToCategoryTop('api-tools'); };
+const appsDesktop = document.getElementById('apps-desktop');
+if(appsDesktop) appsDesktop.onclick = ()=>{ closeAllDropdowns(); const b=document.getElementById('install-btn'); if(b) b.click(); };
+const appsMobile = document.getElementById('apps-mobile');
+if(appsMobile) appsMobile.onclick = ()=>{ closeAllDropdowns(); const b=document.getElementById('install-btn'); if(b) b.click(); };
 
 // "Ask PDFLove" entry points: the search dead-end, and a ?ask=... URL
 // param — the link target for external guide/SEO pages so a page titled
