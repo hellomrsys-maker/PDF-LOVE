@@ -149,16 +149,18 @@
   }
 
   .logo {
-    font-size: 24px;
-    font-weight: 800;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 26px;
+    font-weight: 700;
     letter-spacing: -0.5px;
     white-space: nowrap;
     flex-shrink: 0;
+    color: #1A1A1A;
   }
 
   .logo .heart {
     color: var(--primary-red);
-    margin: 0 4px;
+    margin: 0 2px;
   }
 
   .main-nav {
@@ -234,103 +236,85 @@
   /* ===== HERO SECTION ===== */
   .hero {
     text-align: center;
-    padding: 48px 0 32px;
-    background: linear-gradient(135deg, #fff 0%, #f9f9f9 100%);
+    padding: 56px 0 40px;
+    background: var(--white);
   }
 
   .hero h1 {
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 700;
     margin: 0 0 16px;
-    line-height: 1.2;
-    color: var(--dark-gray);
+    line-height: 1.25;
+    color: #1A1A1A;
+    letter-spacing: -0.3px;
   }
 
   .hero-subtitle {
     font-size: 16px;
     color: var(--text-gray);
-    margin: 0 0 24px;
-    line-height: 1.5;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  .hero-features {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
-
-  .hero-feature {
-    font-size: 13px;
-    color: var(--text-gray);
-    background: var(--white);
-    border: 1px solid var(--border-gray);
-    padding: 6px 12px;
-    border-radius: 16px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .hero-feature::before {
-    content: "✓";
-    color: var(--success-green);
-    font-weight: bold;
+    margin: 0 auto;
+    line-height: 1.6;
+    max-width: 560px;
   }
 
   /* ===== TOOL GRID ===== */
   .tools-section {
-    padding: 40px 0;
+    padding: 0 0 8px;
   }
 
   .section-title {
-    font-size: 18px;
+    display: none;
+  }
+
+  #home-rows .section-title {
+    display: block;
+    font-size: 15px;
     font-weight: 700;
-    margin-bottom: 24px;
-    color: var(--dark-gray);
+    color: var(--text-gray);
+    margin: 0 0 16px;
+    padding: 0 20px;
   }
 
   .category-filters {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    margin: 20px 0;
+    justify-content: center;
+    margin: 32px auto 40px;
     padding: 0 20px;
+    max-width: 900px;
   }
 
   .category-btn {
-    background: var(--light-gray);
-    border: none;
-    color: var(--dark-gray);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 13px;
+    background: var(--white);
+    border: 1px solid var(--border-gray);
+    color: var(--text-gray);
+    padding: 9px 20px;
+    border-radius: 100px;
+    font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     white-space: nowrap;
   }
 
   .category-btn:hover {
-    background: var(--border-gray);
-    color: var(--primary-red);
+    border-color: #CCCCCC;
+    color: #1A1A1A;
   }
 
   .category-btn.active {
-    background: var(--dark-gray);
-    color: var(--white);
+    background: var(--white);
+    border-color: #1A1A1A;
+    color: #1A1A1A;
     font-weight: 600;
   }
 
   .tools {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
   }
 
   .main-content {
@@ -340,99 +324,62 @@
   .tool-card {
     background: var(--white);
     border: 1px solid var(--border-gray);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 14px;
+    padding: 24px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     text-align: left;
     position: relative;
-    min-height: 180px;
+    min-height: 170px;
   }
 
   .tool-card:hover {
-    border-color: var(--primary-red);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
+    border-color: #DDDDDD;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   }
 
-  .tool-card-icon {
-    font-size: 32px;
+  .tool-card .icon {
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     background: var(--light-gray);
+    line-height: 1;
   }
 
-  .tool-card[data-category="merge"] .tool-card-icon,
-  .tool-card[data-category="split"] .tool-card-icon,
-  .tool-card[data-category="edit"] .tool-card-icon {
-    background: rgba(229, 50, 45, 0.1);
-  }
-
-  .tool-card[data-category="compress"] .tool-card-icon,
-  .tool-card[data-category="image"] .tool-card-icon {
-    background: rgba(76, 175, 80, 0.1);
-  }
-
-  .tool-card[data-category="convert"] .tool-card-icon,
-  .tool-card[data-category="security"] .tool-card-icon {
-    background: rgba(33, 150, 243, 0.1);
-  }
-
-  .tool-card[data-category="organize"] .tool-card-icon {
-    background: rgba(255, 152, 0, 0.1);
-  }
-
-  .tool-card[data-category="ai"] .tool-card-icon,
-  .tool-card[data-category="utility"] .tool-card-icon {
-    background: rgba(156, 39, 176, 0.1);
-  }
-
-  .tool-card[data-category="video"] .tool-card-icon {
-    background: rgba(244, 67, 54, 0.1);
-  }
-
-  .tool-card-name {
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--dark-gray);
+  .tool-card .name {
+    font-weight: 700;
+    font-size: 16px;
+    color: #1A1A1A;
     margin: 0;
+    display: block;
   }
 
-  .tool-card-desc {
-    font-size: 13px;
+  .tool-card .desc {
+    font-size: 14px;
     color: var(--text-gray);
-    line-height: 1.4;
+    line-height: 1.45;
     flex: 1;
     margin: 0;
   }
 
-  .tool-card-footer {
-    font-size: 12px;
-    color: var(--text-gray);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .tool-card-footer::before {
-    content: "●";
-    color: var(--primary-red);
+  .tool-card .loc {
+    display: none;
   }
 
   .tool-card-star, .fav-star {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 14px;
+    right: 14px;
     font-size: 18px;
     cursor: pointer;
-    opacity: 0.4;
+    opacity: 0.35;
     transition: opacity 0.2s;
     background: none;
     border: none;
@@ -447,6 +394,271 @@
 
   .tool-card-star.faved, .fav-star.faved {
     opacity: 1;
+  }
+
+  .tool-card-new {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--light-gray);
+    color: var(--text-gray);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 100px;
+  }
+
+  .tool-card:has(.tool-card-new) .fav-star {
+    top: 42px;
+  }
+
+  /* ===== SHOWCASE SECTIONS ("Work your way", "Built for business", "Image tools") ===== */
+  .showcase-section {
+    padding: 56px 0 8px;
+    border-top: 1px solid var(--border-gray);
+  }
+
+  .showcase-heading {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0 0 28px;
+  }
+
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  .showcase-card {
+    display: block;
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--border-gray);
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.15s ease;
+  }
+
+  .showcase-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .showcase-visual {
+    height: 220px;
+    background: #F9DDD8;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .showcase-mock {
+    width: 88%;
+    background: var(--white);
+    border-radius: 10px 10px 0 0;
+    box-shadow: 0 -6px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .showcase-mock-bar {
+    display: flex;
+    gap: 5px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-gray);
+  }
+
+  .showcase-mock-bar span {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--border-gray);
+  }
+
+  .showcase-mock-body {
+    padding: 14px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .showcase-mock-body .bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--light-gray);
+  }
+
+  .showcase-body {
+    padding: 22px 24px 26px;
+    position: relative;
+  }
+
+  .showcase-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0 0 6px;
+  }
+
+  .showcase-desc {
+    font-size: 14px;
+    color: var(--text-gray);
+    line-height: 1.5;
+    margin: 0;
+    max-width: 90%;
+  }
+
+  .showcase-arrow {
+    position: absolute;
+    right: 24px;
+    bottom: 24px;
+    font-size: 18px;
+    color: #1A1A1A;
+  }
+
+  /* ===== PREMIUM SECTION ===== */
+  .premium-section {
+    padding: 56px 0;
+    border-top: 1px solid var(--border-gray);
+    text-align: center;
+  }
+
+  .premium-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin-bottom: 16px;
+  }
+
+  .premium-heading {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0 0 20px;
+  }
+
+  .premium-points {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+  }
+
+  .premium-points li {
+    font-size: 15px;
+    color: var(--text-gray);
+    padding: 8px 0 8px 26px;
+    position: relative;
+  }
+
+  .premium-points li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--success-green);
+    font-weight: bold;
+  }
+
+  .premium-cta {
+    background: var(--white);
+    color: var(--primary-red);
+    border: 1.5px solid var(--primary-red);
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .premium-cta:hover { background: rgba(229, 50, 45, 0.06); }
+
+  /* ===== TRUST SECTION ===== */
+  .trust-section {
+    padding: 56px 0;
+    border-top: 1px solid var(--border-gray);
+    text-align: center;
+  }
+
+  .trust-heading {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0 0 12px;
+  }
+
+  .trust-subtitle {
+    font-size: 15px;
+    color: var(--text-gray);
+    max-width: 620px;
+    margin: 0 auto 36px;
+    line-height: 1.6;
+  }
+
+  .trust-badges {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+
+  .trust-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-gray);
+  }
+
+  .trust-badge .ico { font-size: 18px; }
+
+  /* ===== FOOTER ===== */
+  .site-footer {
+    border-top: 1px solid var(--border-gray);
+    padding: 48px 0 32px;
+    margin-top: 24px;
+  }
+
+  .footer-cols {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+
+  .footer-col h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-gray);
+    margin: 0 0 16px;
+  }
+
+  .footer-col a {
+    display: block;
+    font-size: 14px;
+    color: var(--text-gray);
+    padding: 6px 0;
+  }
+
+  .footer-col a:hover { color: var(--primary-red); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border-gray);
+    margin-top: 32px;
+    padding-top: 20px;
+    font-size: 13px;
+    color: var(--text-gray);
   }
 
   /* ===== SEARCH & VISIBILITY ===== */
@@ -520,22 +732,30 @@
     }
 
     .tool-card {
-      padding: 12px;
-      min-height: 160px;
+      padding: 14px;
+      min-height: 150px;
     }
 
-    .tool-card-icon {
-      width: 36px;
-      height: 36px;
-      font-size: 20px;
+    .tool-card .icon {
+      width: 34px;
+      height: 34px;
+      font-size: 17px;
     }
 
-    .tool-card-name {
+    .tool-card .name {
+      font-size: 13px;
+    }
+
+    .tool-card .desc {
       font-size: 12px;
     }
 
-    .tool-card-desc {
-      font-size: 10px;
+    .showcase-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .footer-cols {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
@@ -552,6 +772,9 @@
     .main-content {
       padding: 0 8px;
     }
+
+    .showcase-visual { height: 180px; }
+    .footer-cols { grid-template-columns: 1fr; }
   }
 
   /* ===== UTILITIES ===== */
@@ -586,12 +809,6 @@
     <div class="container">
       <h1>Every tool you need to work with PDFs in one place</h1>
       <p class="hero-subtitle">Every tool you need to use PDFs, at your fingertips. All are 100% FREE and easy to use! Merge, split, compress, convert, rotate, unlock and watermark PDFs with just a few clicks.</p>
-      <div class="hero-features">
-        <div class="hero-feature">100% Free</div>
-        <div class="hero-feature">No Login</div>
-        <div class="hero-feature">No Upload</div>
-        <div class="hero-feature">Works Offline</div>
-      </div>
     </div>
   </div>
 
@@ -664,6 +881,138 @@
       <div class="tools" id="api-tools"></div>
     </div>
   </div>
+
+  <div class="container">
+    <section class="showcase-section">
+      <h2 class="showcase-heading">Work your way</h2>
+      <div class="showcase-grid">
+        <button class="showcase-card" id="showcase-desktop">
+          <div class="showcase-visual">
+            <div class="showcase-mock">
+              <div class="showcase-mock-bar"><span></span><span></span><span></span></div>
+              <div class="showcase-mock-body">
+                <div class="bar" style="width:70%"></div>
+                <div class="bar" style="width:95%"></div>
+                <div class="bar" style="width:55%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="showcase-body">
+            <h3 class="showcase-title">Work offline with Desktop</h3>
+            <p class="showcase-desc">Install PDFLove on your computer and keep working with no internet and no limits.</p>
+            <span class="showcase-arrow">↗</span>
+          </div>
+        </button>
+
+        <button class="showcase-card" id="showcase-mobile">
+          <div class="showcase-visual">
+            <div class="showcase-mock" style="width:60%;">
+              <div class="showcase-mock-bar"><span></span><span></span><span></span></div>
+              <div class="showcase-mock-body">
+                <div class="bar" style="width:80%"></div>
+                <div class="bar" style="width:60%"></div>
+                <div class="bar" style="width:90%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="showcase-body">
+            <h3 class="showcase-title">On-the-go with Mobile</h3>
+            <p class="showcase-desc">Your favorite tools, right in your pocket. Install the app and keep working anytime, anywhere.</p>
+            <span class="showcase-arrow">↗</span>
+          </div>
+        </button>
+
+        <button class="showcase-card" id="showcase-business">
+          <div class="showcase-visual">
+            <div class="showcase-mock">
+              <div class="showcase-mock-bar"><span></span><span></span><span></span></div>
+              <div class="showcase-mock-body">
+                <div class="bar" style="width:50%"></div>
+                <div class="bar" style="width:85%"></div>
+                <div class="bar" style="width:65%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="showcase-body">
+            <h3 class="showcase-title">Built for business</h3>
+            <p class="showcase-desc">Run heavier jobs — OCR, Office conversion, batch processing — on your own self-hosted backend.</p>
+            <span class="showcase-arrow">↗</span>
+          </div>
+        </button>
+
+        <button class="showcase-card" id="showcase-images">
+          <div class="showcase-visual" style="background:#DDEBDD;">
+            <div class="showcase-mock">
+              <div class="showcase-mock-bar"><span></span><span></span><span></span></div>
+              <div class="showcase-mock-body">
+                <div class="bar" style="width:75%"></div>
+                <div class="bar" style="width:40%"></div>
+                <div class="bar" style="width:60%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="showcase-body">
+            <h3 class="showcase-title">Image editing made simple</h3>
+            <p class="showcase-desc">Compress, resize, convert format, and remove backgrounds — the same on-device speed and privacy, tailored for images.</p>
+            <span class="showcase-arrow">↗</span>
+          </div>
+        </button>
+      </div>
+    </section>
+
+    <section class="premium-section">
+      <div class="premium-eyebrow">👑 Get Premium</div>
+      <h2 class="premium-heading">Get more with a license key</h2>
+      <ul class="premium-points">
+        <li>Free PDF exports never carry a watermark or ad prompt</li>
+        <li>Verified entirely on your device — works forever, even offline</li>
+        <li>One key activates every tool, no subscription required</li>
+      </ul>
+      <button class="premium-cta" id="premium-cta">Enter a license key</button>
+    </section>
+
+    <section class="trust-section">
+      <h2 class="trust-heading">Built to respect your files</h2>
+      <p class="trust-subtitle">PDFLove processes almost every tool entirely on your own device. Files are read into memory, processed, and handed back as a download — they never cross the network.</p>
+      <div class="trust-badges">
+        <div class="trust-badge"><span class="ico">🔒</span> AES-256 encryption for Protect PDF</div>
+        <div class="trust-badge"><span class="ico">📡</span> No upload for on-device tools</div>
+        <div class="trust-badge"><span class="ico">📶</span> Works fully offline once installed</div>
+      </div>
+    </section>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="index.html">Home</a>
+          <a href="features.html">Features</a>
+          <a href="pricing.html">Pricing</a>
+          <a href="index.html?tool=All">Tools</a>
+          <a href="faq.html">FAQ</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="security.html">Security</a>
+          <a href="privacy.html">Privacy policy</a>
+          <a href="terms.html">Terms &amp; conditions</a>
+          <a href="cookies.html">Cookies</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="about.html">About us</a>
+          <a href="contact.html">Contact us</a>
+        </div>
+        <div class="footer-col">
+          <h4>PDFLove</h4>
+          <div class="logo" style="font-size:20px;">I <span class="heart">❤️</span> PDF</div>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 PDFLove. Every tool runs on your own device.</div>
+    </div>
+  </footer>
 </div>
 
 <div id="tool-view" hidden>
@@ -6543,12 +6892,25 @@ window.addEventListener('popstate', (e)=>{
   if(st && st.view === 'tool' && toolIndex[st.name]) openTool(toolIndex[st.name].tool, {push:false});
   else showHome({push:false});
 });
+const CATEGORY_COLORS = {
+  'pdf-tools':'#E5322D', 'convert-tools':'#2196F3', 'edit-tools':'#9C27B0',
+  'security-tools':'#00897B', 'img-tools':'#4CAF50', 'video-tools':'#FF5722',
+  'ai-tools':'#5C6BC0', 'utility-tools':'#FF9800', 'api-tools':'#607D8B',
+};
+const NEW_TOOL_NAMES = new Set(['PDF Forms','AI Summarize (On Your Device)','Translate Text (On Your Device)','PDF to Markdown']);
 function makeCard(t, sectionId){
   const card = document.createElement('button');
   card.className='tool-card';
   card.dataset.tool = t.name;
   card.dataset.search = (t.name + ' ' + t.desc).toLowerCase();
-  card.innerHTML = `<span class="icon">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${sectionId==='api-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
+  const color = CATEGORY_COLORS[sectionId] || '#666666';
+  card.innerHTML = `<span class="icon" style="background:${color}1A;color:${color}">${t.icon}</span><span class="name">${t.name}</span><div class="desc">${t.desc}</div><span class="loc">${sectionId==='api-tools' ? '● server-assisted (opt-in)' : '● runs on-device'}</span>`;
+  if(NEW_TOOL_NAMES.has(t.name)){
+    const badge = document.createElement('span');
+    badge.className = 'tool-card-new';
+    badge.textContent = 'New!';
+    card.appendChild(badge);
+  }
   const star=document.createElement('span');
   star.className='fav-star'+(favs.has(t.name)?' faved':'');
   star.textContent = favs.has(t.name) ? '★' : '☆';
@@ -6692,6 +7054,26 @@ function applyView(){
 }
 searchInput.addEventListener('input', applyView);
 applyView();
+
+// Homepage showcase cards: each jumps to real, existing functionality
+// rather than a fabricated feature — Desktop/Mobile both reuse the same
+// install flow, Business/Images jump to the matching tool category.
+function jumpToCategoryTop(catId){
+  searchInput.value='';
+  setCategory(catId);
+  const label = document.getElementById('label-'+catId) || document.getElementById(catId);
+  if(label) label.scrollIntoView({behavior:'smooth', block:'start'});
+}
+const showcaseDesktop = document.getElementById('showcase-desktop');
+const showcaseMobile = document.getElementById('showcase-mobile');
+if(showcaseDesktop) showcaseDesktop.onclick = ()=>{ const b=document.getElementById('install-btn'); if(b) b.click(); };
+if(showcaseMobile) showcaseMobile.onclick = ()=>{ const b=document.getElementById('install-btn'); if(b) b.click(); };
+const showcaseBusiness = document.getElementById('showcase-business');
+if(showcaseBusiness) showcaseBusiness.onclick = ()=>jumpToCategoryTop('api-tools');
+const showcaseImages = document.getElementById('showcase-images');
+if(showcaseImages) showcaseImages.onclick = ()=>jumpToCategoryTop('img-tools');
+const premiumCta = document.getElementById('premium-cta');
+if(premiumCta) premiumCta.onclick = ()=>showLicensePanel();
 
 // "Ask PDFLove" entry points: the search dead-end, and a ?ask=... URL
 // param — the link target for external guide/SEO pages so a page titled
