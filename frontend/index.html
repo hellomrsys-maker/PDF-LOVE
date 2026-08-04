@@ -161,36 +161,45 @@
     margin: 0 4px;
   }
 
-  .category-filters {
+  .main-nav {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 0;
     flex: 1;
     min-width: 0;
+    align-items: center;
   }
 
-  .category-btn {
-    background: var(--light-gray);
-    border: 1px solid var(--border-gray);
-    color: var(--text-gray);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 500;
+  .nav-link {
+    background: none;
+    border: none;
+    color: var(--dark-gray);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
   }
 
-  .category-btn:hover {
-    border-color: var(--primary-red);
+  .nav-link:hover {
     color: var(--primary-red);
   }
 
-  .category-btn.active {
+  .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
     background: var(--primary-red);
-    color: var(--white);
-    border-color: var(--primary-red);
+  }
+
+  .category-filters {
+    display: none;
   }
 
   .header-actions {
@@ -289,39 +298,77 @@
     color: var(--dark-gray);
   }
 
+  .home-wrapper {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 20px;
+    margin-top: 0;
+  }
+
+  .sidebar-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: sticky;
+    top: 80px;
+  }
+
+  .filter-btn {
+    background: none;
+    border: none;
+    color: var(--dark-gray);
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-align: left;
+  }
+
+  .filter-btn:hover {
+    background: var(--light-gray);
+  }
+
+  .filter-btn.active {
+    background: var(--dark-gray);
+    color: var(--white);
+    font-weight: 600;
+  }
+
   .tools {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
     margin-bottom: 40px;
   }
 
   .tools-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
     margin-bottom: 40px;
   }
 
   .tool-card {
     background: var(--white);
     border: 1px solid var(--border-gray);
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 6px;
+    padding: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     text-align: left;
     position: relative;
-    min-height: 160px;
+    min-height: 180px;
   }
 
   .tool-card:hover {
     border-color: var(--primary-red);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
   }
 
   .tool-card-icon {
@@ -479,60 +526,95 @@
   }
 
   /* ===== RESPONSIVE ===== */
+  @media (max-width: 1024px) {
+    .home-wrapper {
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+    }
+
+    .tools {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
   @media (max-width: 768px) {
     .header-content {
-      gap: 12px;
-    }
-
-    .category-filters {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      flex-direction: column;
-      background: var(--white);
-      border-bottom: 1px solid var(--border-gray);
-      padding: 12px 20px;
       gap: 8px;
-      gap: 12px;
     }
 
-    .category-filters.visible {
-      display: flex;
+    .main-nav {
+      display: none;
     }
 
     .search-box {
-      width: 120px;
+      width: 100px;
       font-size: 12px;
     }
 
     .hero h1 {
-      font-size: 24px;
+      font-size: 22px;
     }
 
-    .tools-grid {
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    .home-wrapper {
+      grid-template-columns: 100px 1fr;
+      gap: 10px;
+    }
+
+    .sidebar-filters {
+      top: 70px;
+    }
+
+    .filter-btn {
+      font-size: 11px;
+      padding: 6px 8px;
+    }
+
+    .tools {
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
 
     .tool-card {
       padding: 12px;
-      min-height: auto;
+      min-height: 160px;
     }
 
     .tool-card-icon {
-      width: 40px;
-      height: 40px;
-      font-size: 24px;
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
     }
 
     .tool-card-name {
-      font-size: 13px;
+      font-size: 12px;
     }
 
     .tool-card-desc {
-      font-size: 11px;
+      font-size: 10px;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .home-wrapper {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar-filters {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      position: static;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .tools {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
@@ -548,18 +630,13 @@
       <div class="logo">
         I <span class="heart">❤️</span> PDF
       </div>
-      <div class="category-filters" id="category-filters">
-        <button class="category-btn active" data-category="all">All</button>
-        <button class="category-btn" data-category="pdf-tools">Organize PDF</button>
-        <button class="category-btn" data-category="convert-tools">Convert PDF</button>
-        <button class="category-btn" data-category="edit-tools">Edit PDF</button>
-        <button class="category-btn" data-category="security-tools">PDF Security</button>
-        <button class="category-btn" data-category="img-tools">Images</button>
-        <button class="category-btn" data-category="video-tools">Video</button>
-        <button class="category-btn" data-category="ai-tools">PDF Intelligence</button>
-        <button class="category-btn" data-category="utility-tools">Codes</button>
-        <button class="category-btn" data-category="api-tools" id="server-tab" style="display:none;">Server</button>
-      </div>
+      <nav class="main-nav" id="main-nav">
+        <button class="nav-link" data-section="merge">MERGE PDF</button>
+        <button class="nav-link" data-section="split">SPLIT PDF</button>
+        <button class="nav-link" data-section="compress">COMPRESS PDF</button>
+        <button class="nav-link" data-section="convert">CONVERT PDF</button>
+        <button class="nav-link" data-section="all">ALL PDF TOOLS</button>
+      </nav>
       <div class="header-actions">
         <input type="text" class="search-box" id="tool-search" placeholder="Search tools...">
         <button class="install-btn" id="install-btn">Install</button>
@@ -583,6 +660,19 @@
   </div>
 
   <div class="container">
+    <div class="home-wrapper">
+      <div class="sidebar-filters" id="sidebar-filters">
+        <button class="filter-btn active" data-category="all">All</button>
+        <button class="filter-btn" data-category="pdf-tools">Organize PDF</button>
+        <button class="filter-btn" data-category="convert-tools">Convert PDF</button>
+        <button class="filter-btn" data-category="edit-tools">Edit PDF</button>
+        <button class="filter-btn" data-category="security-tools">PDF Security</button>
+        <button class="filter-btn" data-category="img-tools">Images</button>
+        <button class="filter-btn" data-category="video-tools">Video</button>
+        <button class="filter-btn" data-category="ai-tools">PDF Intelligence</button>
+        <button class="filter-btn" data-category="utility-tools">Codes</button>
+      </div>
+      <div class="main-content">
     <div id="fav-section" class="tools-section" style="display:none;">
       <h2 class="section-title">★ Pinned Tools</h2>
       <div class="tools" id="fav-tools"></div>
@@ -641,6 +731,8 @@
     <div id="api-section" class="tools-section" style="display:none;">
       <h2 class="section-title">Server-Assisted</h2>
       <div class="tools-grid" id="api-tools"></div>
+    </div>
+      </div>
     </div>
   </div>
 </div>
