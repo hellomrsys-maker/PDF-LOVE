@@ -426,7 +426,7 @@
 
   .showcase-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
   }
 
@@ -518,11 +518,87 @@
     color: #1A1A1A;
   }
 
+  /* ===== SPLIT SECTION (Image editing) ===== */
+  .split-section {
+    padding: 64px 0;
+    border-top: 1px solid var(--border-gray);
+  }
+
+  .split-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+
+  .split-visual {
+    background: var(--light-gray);
+    border-radius: 20px;
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: -20px;
+    position: relative;
+  }
+
+  .split-visual .chip {
+    width: 120px;
+    height: 160px;
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+  }
+
+  .split-visual .chip:nth-child(1) { background: #BFD9F2; transform: rotate(-8deg) translateX(18px); }
+  .split-visual .chip:nth-child(2) { background: #4CAF50; transform: translateY(-6px); z-index: 2; }
+  .split-visual .chip:nth-child(3) { background: #9FD8D0; transform: rotate(8deg) translateX(-18px); }
+
+  .split-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1A1A1A;
+    margin: 0 0 14px;
+  }
+
+  .split-desc {
+    font-size: 15px;
+    color: var(--text-gray);
+    line-height: 1.6;
+    margin: 0 0 24px;
+  }
+
+  .split-cta {
+    display: inline-block;
+    background: var(--white);
+    color: var(--primary-red);
+    border: 1.5px solid var(--primary-red);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .split-cta:hover { background: rgba(229, 50, 45, 0.06); }
+
   /* ===== PREMIUM SECTION ===== */
   .premium-section {
     padding: 56px 0;
-    border-top: 1px solid var(--border-gray);
-    text-align: center;
+  }
+
+  .premium-panel {
+    background: #FCEFD1;
+    border-radius: 24px;
+    padding: 48px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    align-items: center;
+    overflow: hidden;
   }
 
   .premium-eyebrow {
@@ -536,7 +612,7 @@
   }
 
   .premium-heading {
-    font-size: 26px;
+    font-size: 30px;
     font-weight: 700;
     color: #1A1A1A;
     margin: 0 0 20px;
@@ -546,16 +622,13 @@
     list-style: none;
     padding: 0;
     margin: 0 0 28px;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
     text-align: left;
   }
 
   .premium-points li {
     font-size: 15px;
-    color: var(--text-gray);
-    padding: 8px 0 8px 26px;
+    color: #4A4232;
+    padding: 8px 0 8px 30px;
     position: relative;
   }
 
@@ -563,23 +636,43 @@
     content: "✓";
     position: absolute;
     left: 0;
-    color: var(--success-green);
+    top: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--success-green);
+    color: var(--white);
+    font-size: 12px;
     font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .premium-cta {
-    background: var(--white);
-    color: var(--primary-red);
-    border: 1.5px solid var(--primary-red);
-    padding: 12px 28px;
+    background: #1A1A1A;
+    color: var(--white);
+    border: none;
+    padding: 13px 28px;
     border-radius: 10px;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: opacity 0.15s ease;
   }
 
-  .premium-cta:hover { background: rgba(229, 50, 45, 0.06); }
+  .premium-cta:hover { opacity: 0.85; }
+
+  .premium-visual {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 20px;
+    box-shadow: 0 20px 48px rgba(0,0,0,0.12);
+    transform: rotate(2deg);
+  }
+
+  .premium-visual .bar-accent { height: 6px; width: 40%; background: var(--primary-red); border-radius: 3px; margin-bottom: 12px; }
+  .premium-visual .bar { height: 8px; border-radius: 4px; background: var(--light-gray); margin-bottom: 8px; }
 
   /* ===== TRUST SECTION ===== */
   .trust-section {
@@ -623,8 +716,8 @@
 
   /* ===== FOOTER ===== */
   .site-footer {
-    border-top: 1px solid var(--border-gray);
-    padding: 48px 0 32px;
+    background: #1A1A1A;
+    padding: 56px 0 32px;
     margin-top: 24px;
   }
 
@@ -639,25 +732,37 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: var(--text-gray);
+    color: #8A8A8A;
     margin: 0 0 16px;
   }
 
   .footer-col a {
     display: block;
     font-size: 14px;
-    color: var(--text-gray);
+    color: #CCCCCC;
     padding: 6px 0;
   }
 
-  .footer-col a:hover { color: var(--primary-red); }
+  .footer-col a:hover { color: var(--white); }
+
+  .footer-brand-mark {
+    font-size: 18px;
+    color: var(--white);
+  }
+
+  .footer-brand-mark .heart { color: var(--primary-red); }
 
   .footer-bottom {
-    border-top: 1px solid var(--border-gray);
-    margin-top: 32px;
+    border-top: 1px solid #333333;
+    margin-top: 40px;
     padding-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
     font-size: 13px;
-    color: var(--text-gray);
+    color: #8A8A8A;
   }
 
   /* ===== SEARCH & VISIBILITY ===== */
@@ -747,6 +852,18 @@
       grid-template-columns: 1fr;
     }
 
+    .split-grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .premium-panel {
+      grid-template-columns: 1fr;
+      padding: 32px;
+    }
+
+    .premium-visual { transform: none; }
+
     .footer-cols {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -767,7 +884,9 @@
     }
 
     .showcase-visual { height: 180px; }
+    .split-visual { height: 220px; }
     .footer-cols { grid-template-columns: 1fr; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; }
   }
 
   /* ===== UTILITIES ===== */
@@ -933,35 +1052,44 @@
           </div>
         </button>
 
-        <button class="showcase-card" id="showcase-images">
-          <div class="showcase-visual" style="background:#DDEBDD;">
-            <div class="showcase-mock">
-              <div class="showcase-mock-bar"><span></span><span></span><span></span></div>
-              <div class="showcase-mock-body">
-                <div class="bar" style="width:75%"></div>
-                <div class="bar" style="width:40%"></div>
-                <div class="bar" style="width:60%"></div>
-              </div>
-            </div>
-          </div>
-          <div class="showcase-body">
-            <h3 class="showcase-title">Image editing made simple</h3>
-            <p class="showcase-desc">Compress, resize, convert format, and remove backgrounds — the same on-device speed and privacy, tailored for images.</p>
-            <span class="showcase-arrow">↗</span>
-          </div>
-        </button>
+      </div>
+    </section>
+
+    <section class="split-section">
+      <div class="split-grid">
+        <div class="split-visual">
+          <div class="chip">🏔️</div>
+          <div class="chip">🌸</div>
+          <div class="chip">🌊</div>
+        </div>
+        <div>
+          <h2 class="split-title">Image editing made simple</h2>
+          <p class="split-desc">Experience the same speed, simplicity, and on-device privacy you expect from PDFLove, tailored for images. Compress, resize, convert format, and remove backgrounds.</p>
+          <button class="split-cta" id="showcase-images">Explore image tools</button>
+        </div>
       </div>
     </section>
 
     <section class="premium-section">
-      <div class="premium-eyebrow">👑 Get Premium</div>
-      <h2 class="premium-heading">Get more with a license key</h2>
-      <ul class="premium-points">
-        <li>Free PDF exports never carry a watermark or ad prompt</li>
-        <li>Verified entirely on your device — works forever, even offline</li>
-        <li>One key activates every tool, no subscription required</li>
-      </ul>
-      <button class="premium-cta" id="premium-cta">Enter a license key</button>
+      <div class="premium-panel">
+        <div>
+          <div class="premium-eyebrow">👑 Get Premium</div>
+          <h2 class="premium-heading">Get more with a license key</h2>
+          <ul class="premium-points">
+            <li>Free PDF exports never carry a watermark or ad prompt</li>
+            <li>Verified entirely on your device — works forever, even offline</li>
+            <li>One key activates every tool, no subscription required</li>
+          </ul>
+          <button class="premium-cta" id="premium-cta">Enter a license key</button>
+        </div>
+        <div class="premium-visual">
+          <div class="bar-accent"></div>
+          <div class="bar" style="width:80%"></div>
+          <div class="bar" style="width:95%"></div>
+          <div class="bar" style="width:60%"></div>
+          <div class="bar" style="width:85%"></div>
+        </div>
+      </div>
     </section>
 
     <section class="trust-section">
@@ -983,7 +1111,7 @@
           <a href="index.html">Home</a>
           <a href="features.html">Features</a>
           <a href="pricing.html">Pricing</a>
-          <a href="index.html?tool=All">Tools</a>
+          <a href="index.html">Tools</a>
           <a href="faq.html">FAQ</a>
         </div>
         <div class="footer-col">
@@ -1000,10 +1128,12 @@
         </div>
         <div class="footer-col">
           <h4>PDFLove</h4>
-          <div class="logo" style="font-size:20px;">PDF<span class="heart">❤️</span>Love</div>
+          <div class="footer-brand-mark">PDF<span class="heart">❤️</span>Love</div>
         </div>
       </div>
-      <div class="footer-bottom">© 2026 PDFLove. Every tool runs on your own device.</div>
+      <div class="footer-bottom">
+        <span>© 2026 PDFLove. Every tool runs on your own device.</span>
+      </div>
     </div>
   </footer>
 </div>
