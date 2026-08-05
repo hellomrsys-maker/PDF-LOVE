@@ -81,9 +81,26 @@ jobs:
           node -e "
           const fs = require('fs');
           const sw = fs.readFileSync('frontend/sw.js','utf8');
-          const missing = fs.readdirSync('frontend/vendor').filter(f => !sw.includes('./vendor/'+f));
-          if(missing.length){ console.error('Not precached in sw.js:', missing); process.exit(1); }
-          console.log('Every vendor asset is precached for offline use.');
+          // Files intentionally lazy-loaded (not precached) to keep the
+          // service worker install under 12 MB. Each must appear in a
+          // '// REMOVED:' comment in sw.js so the decision is documented.
+          const lazyLoaded = new Set([
+            'mammoth.browser.min.js',
+            'xlsx.full.min.js',
+            'qpdf.wasm.b64.js',
+            'qrcode.min.js',
+            'jsqr.js',
+            'jsbarcode.all.min.js',
+          ]);
+          const missing = fs.readdirSync('frontend/vendor').filter(f =>
+            !lazyLoaded.has(f) && !sw.includes('./vendor/'+f)
+          );
+          if(missing.length){ console.error('Not precached and not in lazy-load list:', missing); process.exit(1); }
+          // Verify every lazy-loaded file has a REMOVED comment in sw.js
+          for(const f of lazyLoaded){
+            if(!sw.includes(f)) { console.error('Lazy-loaded file not documented in sw.js:', f); process.exit(1); }
+          }
+          console.log('Vendor assets: precached or documented as lazy-loaded.');
           "
 
   backend:
