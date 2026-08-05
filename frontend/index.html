@@ -847,6 +847,21 @@
     color: #8A8A8A;
   }
 
+  .footer-update { display: flex; align-items: center; gap: 10px; }
+  .footer-update-btn {
+    background: none;
+    border: 1px solid #444444;
+    color: #CCCCCC;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .footer-update-btn:hover { border-color: #666666; color: var(--white); }
+  .footer-update-btn:disabled { opacity: 0.6; cursor: default; }
+  #check-update-status { font-size: 12px; color: #8A8A8A; }
+
   /* ===== SEARCH & VISIBILITY ===== */
   .tool-card.search-hidden {
     display: none;
@@ -1321,6 +1336,10 @@
       </div>
       <div class="footer-bottom">
         <span>© 2026 PDFLove. Every tool runs on your own device.</span>
+        <span class="footer-update">
+          <button type="button" id="check-update-btn" class="footer-update-btn">Check for updates</button>
+          <span id="check-update-status"></span>
+        </span>
       </div>
     </div>
   </footer>
