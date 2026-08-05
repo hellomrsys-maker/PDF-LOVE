@@ -22,9 +22,51 @@
 /sw.js
   Cache-Control: no-cache
 
-# Version-pinned static assets: cache aggressively.
+# CSS: cache for 30 days (may update with redesigns)
+/pages.css
+  Cache-Control: public, max-age=2592000
+
+# Version-pinned static assets: cache aggressively (1 year).
 /vendor/*
   Cache-Control: public, max-age=31536000, immutable
 
 /icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Fonts: cache for 1 year (font URLs are content-addressed)
+/vendor/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Static pages (about, faq, terms, etc.): cache for 7 days
+/*.html
+  Cache-Control: public, max-age=604800
+
+/guides/*
+  Cache-Control: public, max-age=604800
+
+# Site assets: cache for 30 days
+/favicon.ico
+  Cache-Control: public, max-age=2592000
+
+/*.png
+  Cache-Control: public, max-age=2592000
+
+/*.webp
+  Cache-Control: public, max-age=2592000
+
+/*.json
+  Cache-Control: public, max-age=86400
+
+# Compression: Cloudflare auto-enables for these types, but be explicit
+# for WASM and other assets
+/vendor/*.wasm
+  Content-Encoding: gzip
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendor/*.js
+  Content-Encoding: gzip
+  Cache-Control: public, max-age=31536000, immutable
+
+/vendor/*.css
+  Content-Encoding: gzip
   Cache-Control: public, max-age=31536000, immutable

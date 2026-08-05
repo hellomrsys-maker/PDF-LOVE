@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdflove-v15';
+const CACHE_NAME = 'pdflove-v16';
 const APP_SHELL = [
   './', './index.html', './manifest.json',
   // Static pages, precached so an installed offline copy can still show its
@@ -34,29 +34,29 @@ const APP_SHELL = [
   './icons/icon-512.png',
   './icons/icon-maskable-192.png',
   './icons/icon-maskable-512.png',
-  // Self-hosted libraries: precached so every tool (including the WASM
-  // encryption engine) works fully offline after the first visit.
+  // Critical PDF tools only: pdf-lib (merge, split, protect, etc.)
   './vendor/pdf-lib.min.js',
   './vendor/pdf.min.js',
   './vendor/pdf.worker.min.js',
   './vendor/jszip.min.js',
-  './vendor/mammoth.browser.min.js',
   './vendor/jspdf.umd.min.js',
   './vendor/html2canvas.min.js',
-  './vendor/qrcode.min.js',
-  './vendor/jsqr.js',
-  './vendor/jsbarcode.all.min.js',
   './vendor/qpdf.js',
   './vendor/qpdf.wasm',
-  './vendor/qpdf.wasm.b64.js',
+  // REMOVED: qpdf.wasm.b64.js (redundant, 1.7 MB) — binary format works
+  // REMOVED: mammoth.browser.min.js (628 KB, defer to lazy load, only for docx tools)
+  // REMOVED: xlsx.full.min.js (862 KB, defer to lazy load, only for spreadsheet tools)
+  // REMOVED: qrcode.min.js + jsqr.js + jsbarcode (defer to lazy load)
   './vendor/gifenc.min.js',
-  './vendor/xlsx.full.min.js',
   // On-device OCR engine + English model — offline after first visit.
   './vendor/tesseract/tesseract.min.js',
   './vendor/tesseract/worker.min.js',
-  './vendor/tesseract/tesseract-core-lstm.wasm.js',
+  // OPTIMIZATION: Keep only SIMD-LSTM (most compatible, 3.8 MB) — remove other variants
+  // Tesseract.js auto-detects and loads the variant it needs from disk,
+  // so we cache only the best-performing one that works on 99% of browsers.
   './vendor/tesseract/tesseract-core-simd-lstm.wasm.js',
-  './vendor/tesseract/tesseract-core-relaxedsimd-lstm.wasm.js',
+  // REMOVED: tesseract-core-lstm.wasm.js (save 3.8 MB, fallback is simd-lstm)
+  // REMOVED: tesseract-core-relaxedsimd-lstm.wasm.js (save 3.8 MB, rarely needed)
   './vendor/tesseract/lang/eng.traineddata.gz',
   './vendor/fonts/fonts.css',
   './vendor/fonts/fraunces-latin-400-normal.woff2',
