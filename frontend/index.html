@@ -358,11 +358,6 @@
   }
 
   .section-title {
-    display: none;
-  }
-
-  #home-rows .section-title {
-    display: block;
     font-size: 15px;
     font-weight: 700;
     color: var(--text-gray);
@@ -974,7 +969,9 @@
   .assist-step .num { color: var(--copper-deep); font-weight: 600; flex-shrink: 0; }
 
   /* ===== SEARCH & VISIBILITY ===== */
-  .tool-card.search-hidden {
+  .tool-card.search-hidden,
+  .tools.search-hidden,
+  .section-title.search-hidden {
     display: none;
   }
 
@@ -1462,7 +1459,23 @@
 
 <script>
 window.addEventListener('DOMContentLoaded', function(){
-const { PDFDocument, degrees } = PDFLib;
+// PDFLib is loaded via a <script defer> tag. Normally defer scripts run
+// before DOMContentLoaded, but if the local file 404s the onerror handler
+// creates a *new* deferred CDN script, which may not have executed yet
+// when this handler fires. Destructuring a missing global here used to
+// throw a ReferenceError that silently killed the entire app — no tool
+// cards, no grid, just a blank page. Lazy-init avoids the crash: the
+// grid renders immediately, and PDFDocument/degrees resolve by the time
+// a user actually clicks a tool.
+let PDFDocument, degrees;
+function ensurePDFLib(){
+  if(!PDFDocument && typeof PDFLib !== 'undefined'){
+    ({PDFDocument, degrees} = PDFLib);
+  }
+  if(!PDFDocument) throw new Error('PDF library is still loading — please try again in a moment.');
+}
+// Try eagerly (the normal path — defer ran before DOMContentLoaded):
+try{ ({PDFDocument, degrees} = PDFLib); }catch(e){}
 
 /* ---------- self-hosted assets, with pinned-version CDN fallback ---------- */
 const VENDOR_FALLBACKS = {
@@ -1515,16 +1528,25 @@ function loadScript(path, {fallbackOnError=true}={}){
   return _loadedScripts[path];
 }
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
-if(IS_FILE){
-  // On file:// a real Worker can't be created from a local URL, and pdf.js's
-  // fake-worker fallback would try (and fail) to fetch the script. Loading
-  // the worker bundle as a classic script defines globalThis.pdfjsWorker,
-  // which pdf.js picks up directly — everything then runs on the main
-  // thread, slower but fully functional offline.
-  loadScript('vendor/pdf.worker.min.js').catch(()=>{});
+// pdf.min.js is loaded with <script defer>. Same race as PDFLib above:
+// if the local file 404s, the onerror CDN fallback may not have executed
+// yet. Guard so the app still boots (tool grid renders) even if pdf.js
+// is momentarily missing — tools that need it will get it on demand.
+if(typeof pdfjsLib !== 'undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+  if(IS_FILE){
+    loadScript('vendor/pdf.worker.min.js').catch(()=>{});
+  } else {
+    vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+  }
 } else {
-  vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+  const _pdfWait = setInterval(()=>{
+    if(typeof pdfjsLib !== 'undefined'){
+      clearInterval(_pdfWait);
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdf.worker.min.js';
+      if(!IS_FILE) vendorAsset('vendor/pdf.worker.min.js').then(p=>{ pdfjsLib.GlobalWorkerOptions.workerSrc = p; });
+    }
+  }, 100);
 }
 
 /* ---------- storage migration: dockbench.* -> pdflove.* ----------
@@ -1641,6 +1663,7 @@ function getPdfDoc(data){
 // an owner-locked file), and if the file is truly password-protected tell
 // the user which tool fixes it.
 async function loadPdf(bytes){
+  ensurePDFLib();
   try{
     return await PDFDocument.load(bytes);
   }catch(e){
@@ -1996,6 +2019,7 @@ function fileRowList(container, files, onRemove){
 }
 
 function panelShell({title, desc}){
+  ensurePDFLib();
   panel.innerHTML = `
     <nav class="tool-crumb">
       <button class="crumb-back" onclick="closePanel()">← All tools</button>
