@@ -18,3 +18,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: '.'
+          # Assets-only Workers (no `main` script, just wrangler.jsonc's
+          # `assets.directory`) need Wrangler 4+ — 3.x errors with
+          # "Missing entry-point" because it still expects a main script.
+          wranglerVersion: '4'
