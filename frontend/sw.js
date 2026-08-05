@@ -46,7 +46,7 @@ const APP_SHELL = [
   // REMOVED: qpdf.wasm.b64.js (redundant, 1.7 MB) — binary format works
   // REMOVED: mammoth.browser.min.js (628 KB, defer to lazy load, only for docx tools)
   // REMOVED: xlsx.full.min.js (862 KB, defer to lazy load, only for spreadsheet tools)
-  // REMOVED: qrcode.min.js + jsqr.js + jsbarcode (defer to lazy load)
+  // REMOVED: qrcode.min.js, jsqr.js, jsbarcode.all.min.js (defer to lazy load)
   './vendor/gifenc.min.js',
   // On-device OCR engine + English model — offline after first visit.
   './vendor/tesseract/tesseract.min.js',
