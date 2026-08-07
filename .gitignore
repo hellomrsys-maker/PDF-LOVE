@@ -12,3 +12,4 @@ licensing/private-key.json
 !.dev.vars.example
 .env*
 !.env.example
+frontend/package-lock.json
