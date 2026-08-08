@@ -5065,6 +5065,23 @@ function contactsDatalist(id){
   return dl;
 }
 
+/* Local-only usage counters for the "My Activity" dashboard — real counted
+   actions, nothing inferred or estimated (deliberately no "time saved"
+   style number, since that would be a guess dressed up as a measurement).
+   Only called from a tool's success path, after a download actually
+   happened, so a failed/cancelled export never gets counted. */
+function recordActivity(key, count=1){
+  const stats = loadActivityStats();
+  const entry = stats[key] || {count:0, lastUsed:null};
+  entry.count += count;
+  entry.lastUsed = new Date().toISOString();
+  stats[key] = entry;
+  try{ localStorage.setItem('pdflove.aiKitStats', JSON.stringify(stats)); }catch(e){}
+}
+function loadActivityStats(){
+  try{ return JSON.parse(localStorage.getItem('pdflove.aiKitStats')||'{}'); }catch(e){ return {}; }
+}
+
 function toolAIResumeATS(){
   const body = panelShell({title:'AI Resume Builder (ATS)', desc:'Build a clean, single-column resume that parses correctly in Applicant Tracking Systems — with a live keyword-match score against a job description.'});
   const note=document.createElement('div'); note.className='note';
@@ -5290,6 +5307,7 @@ function toolAIResumeATS(){
       log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded — single-column layout, no tables or graphics, so ATS software parses it correctly.'
         + (warn.hit ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
       saveMyInfo({name, email: document.getElementById('res-email').value.trim(), phone: document.getElementById('res-phone').value.trim(), location: document.getElementById('res-location').value.trim(), link: document.getElementById('res-link').value.trim()});
+      recordActivity('resume');
       offerChain(blob, 'resume.pdf', log);
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
@@ -5404,6 +5422,7 @@ function toolAICoverLetter(){
       saveMyInfo({name, email: document.getElementById('cov-email').value.trim(), phone: document.getElementById('cov-phone').value.trim()});
       const managerName = document.getElementById('cov-manager').value.trim();
       if(managerName) saveContact(managerName, {company: document.getElementById('cov-company').value.trim()});
+      recordActivity('coverLetter');
       offerChain(blob, 'cover-letter.pdf', log);
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
@@ -5513,6 +5532,7 @@ function toolAINoticeGenerator(){
         + (warn ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
       const toName = readValues().to;
       if(toName) saveContact(toName);
+      recordActivity('notice');
       offerChain(blob, 'notice.pdf', log);
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
@@ -5692,11 +5712,67 @@ function toolBatchDocGenerator(){
       const zipBlob = await zip.generateAsync({type:'blob'});
       download(zipBlob, 'batch-'+tpl.label.toLowerCase().replace(/[^\w]+/g,'-')+'.zip');
       log.innerHTML = `<span class="ok">✓ Done — ${generated} document${generated===1?'':'s'} generated${skipped?`, ${skipped} row${skipped===1?'':'s'} skipped (no name)`:''}.${anyWarn?' Some characters were simplified to "?" in a few documents.':''}</span>`;
+      recordActivity('batch', generated);
     }catch(e){
       log.textContent = 'Could not generate the batch: '+(e.message||String(e));
     }
     btn.disabled = false;
   };
+}
+
+const ACTIVITY_ROWS = [
+  ['resume','📄','Resumes generated'],
+  ['coverLetter','✉️','Cover letters generated'],
+  ['notice','📋','Notices generated'],
+  ['batch','📚','Documents generated via Batch Generator'],
+  ['pdfEditScreen','🖥️','PDFs normalized (Screen mode)'],
+  ['pdfEditPrint','🖨️','PDFs made print-ready (bleed + crop marks)'],
+];
+function toolAIKitActivity(){
+  const body = panelShell({title:'My Activity', desc:'A private, on-device summary of what you\'ve generated with the AI Kit.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent = 'This is real counted usage, local to this browser only — nothing estimated, nothing synced. Clearing your browser data, or opening PDFLove in a different browser or device, resets it.';
+  body.appendChild(note);
+
+  const stats = loadActivityStats();
+  const docCountKeys = ['resume','coverLetter','notice','batch'];
+  const totalDocs = docCountKeys.reduce((sum,k)=>sum+(stats[k]?.count||0), 0);
+
+  const summary=document.createElement('div'); summary.style.cssText='text-align:center;margin:14px 0 20px;';
+  summary.innerHTML = `<div style="font-size:2.6rem;font-weight:800;color:var(--primary-red,#E5322D);">${totalDocs}</div><div style="font-size:0.9rem;opacity:0.7;">total documents generated</div>`;
+  body.appendChild(summary);
+
+  ACTIVITY_ROWS.forEach(([key,icon,label])=>{
+    const entry = stats[key];
+    const lastUsed = entry?.lastUsed ? new Date(entry.lastUsed).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '—';
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;';
+    row.innerHTML = `<span style="font-size:1.4rem;">${icon}</span><div style="flex:1;"><div style="font-weight:600;">${escapeXml(label)}</div><div style="font-size:0.8rem;opacity:0.65;">Last used: ${lastUsed}</div></div><div style="font-size:1.3rem;font-weight:700;">${entry?.count||0}</div>`;
+    body.appendChild(row);
+  });
+
+  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.cssText='font-weight:600;margin-top:18px;'; s2.textContent='Saved for reuse across tools'; body.appendChild(s2);
+  const mine = loadMyInfo();
+  const filledFields = ['name','email','phone','location','link'].filter(f=>mine[f]).length;
+  const contacts = loadContacts();
+  const reuseRow=document.createElement('div'); reuseRow.style.cssText='padding:12px;border:1px solid var(--line);border-radius:10px;';
+  reuseRow.innerHTML = `<div>My info: ${filledFields}/5 fields saved${mine.name?` (${escapeXml(mine.name)})`:''}</div><div style="margin-top:6px;">Saved contacts: ${contacts.length}</div>`;
+  body.appendChild(reuseRow);
+
+  if(totalDocs===0){
+    const empty=document.createElement('div'); empty.className='note'; empty.style.marginTop='14px';
+    empty.textContent = 'Nothing generated yet — this fills in as you use the Resume Builder, Cover Letter Generator, Notice Generator, Batch Generator, or PDF Edit.';
+    body.appendChild(empty);
+  }
+
+  const clearBtn=document.createElement('button'); clearBtn.type='button'; clearBtn.className='small-btn'; clearBtn.style.marginTop='16px'; clearBtn.textContent='Clear activity history';
+  clearBtn.onclick = ()=>{
+    if(confirm('Clear your local activity history? This does not affect your saved info or contacts.')){
+      localStorage.removeItem('pdflove.aiKitStats');
+      openTool(toolIndex['My Activity'].tool, {push:false});
+    }
+  };
+  body.appendChild(clearBtn);
 }
 
 /* ================= PDF EDIT: Print & Screen Mode =================
@@ -5861,6 +5937,7 @@ function toolPDFPrintScreenMode(){
       const suffix = mode==='screen' ? '-normalized' : '-print-ready';
       download(blob, file.name.replace(/\.pdf$/i,'')+suffix+'.pdf');
       log.innerHTML = '<span class="ok">✓ Done — processed on-device, nothing uploaded.</span>';
+      recordActivity(mode==='screen' ? 'pdfEditScreen' : 'pdfEditPrint');
       offerChain(blob, (mode==='screen'?'normalized':'print-ready')+'.pdf', log);
     }catch(e){
       log.textContent = 'Could not process this PDF: '+(e.message||String(e));
@@ -8279,7 +8356,7 @@ const CATEGORY_COLORS = {
   'security-tools':'#00897B', 'img-tools':'#4CAF50', 'video-tools':'#FF5722',
   'ai-tools':'#5C6BC0', 'utility-tools':'#FF9800', 'api-tools':'#607D8B',
 };
-const NEW_TOOL_NAMES = new Set(['PDF Forms','PDF to Markdown','AI Resume Builder (ATS)','AI Cover Letter Generator','Notice & Letter Generator','PDF Edit — Print & Screen Mode','Batch Document Generator']);
+const NEW_TOOL_NAMES = new Set(['PDF Forms','PDF to Markdown','AI Resume Builder (ATS)','AI Cover Letter Generator','Notice & Letter Generator','PDF Edit — Print & Screen Mode','Batch Document Generator','My Activity']);
 function makeCard(t, sectionId){
   const card = document.createElement('button');
   card.className='tool-card';
@@ -8347,6 +8424,7 @@ const aiTools = [
   {icon:'✉️', name:'AI Cover Letter Generator', desc:'A few details in, a polished ready-to-send letter out — editable before export.', fn:toolAICoverLetter},
   {icon:'📋', name:'Notice & Letter Generator', desc:'Leave applications, warnings, terminations, payment reminders — formatted in seconds.', fn:toolAINoticeGenerator},
   {icon:'📚', name:'Batch Document Generator', desc:'Upload a spreadsheet of recipients, generate one personalized letter per row, get a ZIP.', fn:toolBatchDocGenerator},
+  {icon:'📊', name:'My Activity', desc:'What you\'ve generated with the AI Kit — real counts, on this device only.', fn:toolAIKitActivity},
   {icon:'🧠', name:'AI Summarize (On Your Device)', desc:'A real AI model, downloaded once, then works offline forever.', fn:toolAISummarizeLocal},
   {icon:'🌐', name:'Translate Text (On Your Device)', desc:'10 languages, real AI translation, completely private.', fn:toolAITranslateLocal},
   {icon:'🎙️', name:'Voice to Text (On Your Device)', desc:'Speak, and watch it get typed out — private AI speech recognition.', fn:toolVoiceToText},
