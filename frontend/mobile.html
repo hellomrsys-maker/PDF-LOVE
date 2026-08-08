@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PDFLove — PDF Tools Mobile App</title>
+<meta name="description" content="PDFLove Mobile App - Free PDF tools on your device">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#E5322D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-red: #E5322D;
+  --primary-dark: #1a1a1a;
+  --white: #ffffff;
+  --gray-light: #f5f5f5;
+  --gray-medium: #e0e0e0;
+  --gray-dark: #666666;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: var(--white);
+  color: var(--primary-dark);
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+/* ===== HEADER ===== */
+.app-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: max(16px, env(safe-area-inset-top)) 16px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  letter-spacing: -0.5px;
+}
+
+.logo-heart {
+  color: var(--primary-red);
+  margin: 0 4px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(229, 50, 45, 0.1);
+  color: var(--primary-red);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+  background: rgba(229, 50, 45, 0.2);
+}
+
+/* ===== MAIN CONTENT ===== */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 70px;
+  padding: 0 12px 70px;
+}
+
+.content-section {
+  display: none;
+}
+
+.content-section.active {
+  display: block;
+}
+
+/* ===== HOME PAGE ===== */
+.home-banner {
+  background: linear-gradient(135deg, rgba(230, 50, 45, 0.15) 0%, rgba(102, 126, 234, 0.15) 100%);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  padding: 24px 16px;
+  margin: 12px 0 16px;
+  text-align: center;
+}
+
+.banner-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--primary-dark);
+}
+
+.banner-subtitle {
+  font-size: 14px;
+  color: var(--gray-dark);
+  margin-bottom: 16px;
+}
+
+.banner-btn {
+  background: var(--primary-red);
+  color: var(--white);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.banner-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.recent-files {
+  margin: 20px 0;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--primary-dark);
+}
+
+.file-item {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.file-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(230, 50, 45, 0.2), rgba(230, 50, 45, 0.1));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary-dark);
+}
+
+.file-size {
+  font-size: 12px;
+  color: var(--gray-dark);
+  margin-top: 4px;
+}
+
+/* ===== TOOLS GRID ===== */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.tool-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.tool-card:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.tool-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(230, 50, 45, 0.15), rgba(102, 126, 234, 0.15));
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.tool-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-dark);
+  line-height: 1.3;
+}
+
+/* ===== FILES PAGE ===== */
+.files-container {
+  margin: 16px 0;
+}
+
+.storage-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.storage-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, rgba(230, 50, 45, 0.2), rgba(230, 50, 45, 0.1));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.storage-info {
+  flex: 1;
+}
+
+.storage-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary-dark);
+}
+
+.storage-count {
+  font-size: 12px;
+  color: var(--gray-dark);
+  margin-top: 4px;
+}
+
+.storage-action {
+  color: var(--primary-red);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ===== SCANNER PAGE ===== */
+.scanner-container {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.scanner-icon-large {
+  font-size: 64px;
+  margin: 32px 0;
+  opacity: 0.5;
+}
+
+.scanner-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 8px;
+}
+
+.scanner-subtitle {
+  font-size: 14px;
+  color: var(--gray-dark);
+  margin-bottom: 24px;
+}
+
+.scanner-btn {
+  background: var(--primary-red);
+  color: var(--white);
+  border: none;
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.scanner-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* ===== SETTINGS PAGE ===== */
+.settings-list {
+  margin: 16px 0;
+}
+
+.settings-item {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--primary-dark);
+}
+
+.toggle-switch {
+  width: 48px;
+  height: 28px;
+  background: var(--gray-medium);
+  border-radius: 14px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active {
+  background: var(--primary-red);
+}
+
+.toggle-dot {
+  width: 24px;
+  height: 24px;
+  background: var(--white);
+  border-radius: 12px;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s ease;
+}
+
+.toggle-switch.active .toggle-dot {
+  left: 22px;
+}
+
+/* ===== PREMIUM SECTION ===== */
+.premium-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 20px 16px;
+  margin: 20px 0;
+  color: var(--white);
+  text-align: center;
+}
+
+.premium-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.premium-subtitle {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 16px;
+}
+
+.premium-btn {
+  background: var(--primary-red);
+  color: var(--white);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.premium-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+/* ===== BOTTOM NAVIGATION ===== */
+.app-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  z-index: 200;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--gray-dark);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.nav-item.active {
+  color: var(--primary-red);
+  background: rgba(229, 50, 45, 0.1);
+}
+
+.nav-icon {
+  font-size: 24px;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gray-medium);
+  border-radius: 2px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (min-width: 768px) {
+  .tools-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .app-content {
+    padding: 0 24px 80px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-dark: #ffffff;
+    --white: #1a1a1a;
+    --gray-light: #2a2a2a;
+    --gray-medium: #444444;
+    --gray-dark: #999999;
+    --glass-bg: rgba(30, 30, 30, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+  }
+  
+  body {
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="app-logo">I<span class="logo-heart">❤️</span>PDF</div>
+  <div class="header-actions">
+    <button class="icon-btn">🔍</button>
+    <button class="icon-btn">👤</button>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="app-content">
+
+  <!-- HOME PAGE -->
+  <div class="content-section active" data-page="home">
+    <div class="home-banner">
+      <div class="banner-title">Do wonders with Premium</div>
+      <div class="banner-subtitle">Unlimited tools & features</div>
+      <button class="banner-btn">Start free trial</button>
+    </div>
+
+    <div class="recent-files">
+      <div class="section-title">Recent files</div>
+      <div class="file-item">
+        <div class="file-icon">📄</div>
+        <div class="file-info">
+          <div class="file-name">User Guide.pdf</div>
+          <div class="file-size">2.4 MB</div>
+        </div>
+      </div>
+      <div class="file-item">
+        <div class="file-icon">🖼️</div>
+        <div class="file-info">
+          <div class="file-name">thumb.png</div>
+          <div class="file-size">856 KB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Popular tools</div>
+    <div class="tools-grid">
+      <div class="tool-card" onclick="openTool('merge')">
+        <div class="tool-icon">🔗</div>
+        <div class="tool-name">Merge PDF</div>
+      </div>
+      <div class="tool-card" onclick="openTool('split')">
+        <div class="tool-icon">✂️</div>
+        <div class="tool-name">Split PDF</div>
+      </div>
+      <div class="tool-card" onclick="openTool('compress')">
+        <div class="tool-icon">📦</div>
+        <div class="tool-name">Compress PDF</div>
+      </div>
+      <div class="tool-card" onclick="openTool('convert')">
+        <div class="tool-icon">🔄</div>
+        <div class="tool-name">Convert PDF</div>
+      </div>
+      <div class="tool-card" onclick="openTool('edit')">
+        <div class="tool-icon">✏️</div>
+        <div class="tool-name">Edit PDF</div>
+      </div>
+      <div class="tool-card" onclick="openTool('sign')">
+        <div class="tool-icon">✍️</div>
+        <div class="tool-name">Sign PDF</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILES PAGE -->
+  <div class="content-section" data-page="files">
+    <div class="section-title" style="margin-top: 16px;">My storage</div>
+    
+    <div class="storage-card">
+      <div class="storage-icon">💾</div>
+      <div class="storage-info">
+        <div class="storage-name">Internal Storage</div>
+        <div class="storage-count">18 files</div>
+      </div>
+    </div>
+
+    <div class="storage-card">
+      <div class="storage-icon">⬇️</div>
+      <div class="storage-info">
+        <div class="storage-name">Downloads</div>
+        <div class="storage-count">26 files</div>
+      </div>
+    </div>
+
+    <div class="storage-card">
+      <div class="storage-icon">📁</div>
+      <div class="storage-info">
+        <div class="storage-name">Processed files</div>
+        <div class="storage-count">0 files</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">Cloud storage</div>
+    
+    <div class="storage-card">
+      <div class="storage-icon">☁️</div>
+      <div class="storage-info">
+        <div class="storage-name">Google Drive</div>
+        <div class="storage-count">Connect your account</div>
+      </div>
+      <div class="storage-action">+</div>
+    </div>
+
+    <div class="storage-card">
+      <div class="storage-icon">📦</div>
+      <div class="storage-info">
+        <div class="storage-name">Dropbox</div>
+        <div class="storage-count">Connect your account</div>
+      </div>
+      <div class="storage-action">+</div>
+    </div>
+
+    <div class="storage-card">
+      <div class="storage-icon">☁️</div>
+      <div class="storage-info">
+        <div class="storage-name">OneDrive</div>
+        <div class="storage-count">Connect your account</div>
+      </div>
+      <div class="storage-action">+</div>
+    </div>
+  </div>
+
+  <!-- TOOLS PAGE -->
+  <div class="content-section" data-page="tools">
+    <div class="section-title" style="margin-top: 16px;">All tools</div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-icon">🔗</div><div class="tool-name">Merge PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">✂️</div><div class="tool-name">Split PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">📦</div><div class="tool-name">Compress PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">📄</div><div class="tool-name">PDF to Word</div></div>
+      <div class="tool-card"><div class="tool-icon">📊</div><div class="tool-name">PDF to Excel</div></div>
+      <div class="tool-card"><div class="tool-icon">🖼️</div><div class="tool-name">PDF to JPG</div></div>
+      <div class="tool-card"><div class="tool-icon">🖼️</div><div class="tool-name">Image to PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">✏️</div><div class="tool-name">Edit PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">✍️</div><div class="tool-name">Sign PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">🔒</div><div class="tool-name">Protect PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">🔑</div><div class="tool-name">Unlock PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">🔍</div><div class="tool-name">OCR</div></div>
+    </div>
+  </div>
+
+  <!-- SCANNER PAGE -->
+  <div class="content-section" data-page="scanner">
+    <div class="scanner-container">
+      <div class="scanner-icon-large">📱</div>
+      <div class="scanner-title">Scan Documents</div>
+      <div class="scanner-subtitle">Turn photos into searchable PDFs</div>
+      <button class="scanner-btn">Open Camera</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS PAGE -->
+  <div class="content-section" data-page="settings">
+    <div class="premium-banner">
+      <div class="premium-title">Upgrade to Premium</div>
+      <div class="premium-subtitle">Unlimited tools & priority support</div>
+      <button class="premium-btn">Start free trial</button>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">Preferences</div>
+    <div class="settings-list">
+      <div class="settings-item">
+        <div class="settings-label">Dark mode</div>
+        <div class="toggle-switch">
+          <div class="toggle-dot"></div>
+        </div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">Notifications</div>
+        <div class="toggle-switch active">
+          <div class="toggle-dot"></div>
+        </div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">Cloud sync</div>
+        <div class="toggle-switch">
+          <div class="toggle-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">Account</div>
+    <div class="settings-list">
+      <div class="settings-item">
+        <div class="settings-label">Current membership: Free</div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">Sign out</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAVIGATION -->
+<div class="app-nav">
+  <div class="nav-item active" onclick="switchPage('home')">
+    <div class="nav-icon">🏠</div>
+    <div>Home</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('files')">
+    <div class="nav-icon">📁</div>
+    <div>Files</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('tools')">
+    <div class="nav-icon">🔧</div>
+    <div>Tools</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('scanner')">
+    <div class="nav-icon">📸</div>
+    <div>Scanner</div>
+  </div>
+  <div class="nav-item" onclick="switchPage('settings')">
+    <div class="nav-icon">⚙️</div>
+    <div>Settings</div>
+  </div>
+</div>
+
+<script>
+function switchPage(page) {
+  // Hide all sections
+  document.querySelectorAll('.content-section').forEach(el => {
+    el.classList.remove('active');
+  });
+  
+  // Remove active from all nav items
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.remove('active');
+  });
+  
+  // Show selected section
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  
+  // Add active to nav item
+  event.target.closest('.nav-item').classList.add('active');
+}
+
+function openTool(tool) {
+  alert(`Opening ${tool} tool...`);
+}
+
+// Handle dark mode toggle
+document.querySelectorAll('.toggle-switch').forEach(toggle => {
+  toggle.addEventListener('click', function() {
+    this.classList.toggle('active');
+  });
+});
+</script>
+
+</body>
+</html>
