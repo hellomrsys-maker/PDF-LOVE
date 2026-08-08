@@ -26,7 +26,8 @@
   --gray-dark: #666666;
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.3);
-  --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --premium-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --blue: #0066ff;
 }
 
 html, body {
@@ -154,6 +155,22 @@ body {
   opacity: 0.9;
 }
 
+.secondary-btn {
+  background: transparent;
+  color: var(--primary-dark);
+  border: 1px solid var(--gray-medium);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.secondary-btn:active {
+  background: var(--gray-light);
+}
+
 .recent-files {
   margin: 20px 0;
 }
@@ -226,11 +243,20 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
+  position: relative;
 }
 
 .tool-card:active {
   transform: scale(0.98);
   background: rgba(255, 255, 255, 0.8);
+}
+
+.tool-card.premium::after {
+  content: '👑';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 16px;
 }
 
 .tool-icon {
@@ -266,6 +292,13 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.storage-card:active {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .storage-icon {
@@ -345,7 +378,126 @@ body {
   opacity: 0.9;
 }
 
-/* ===== SETTINGS PAGE ===== */
+/* ===== PRICING TABLE ===== */
+.pricing-section {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.pricing-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.pricing-header p {
+  font-size: 13px;
+  color: var(--gray-dark);
+}
+
+.pricing-table {
+  margin-bottom: 20px;
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+
+.pricing-row {
+  display: grid;
+  grid-template-columns: 1fr 0.7fr 0.7fr;
+  border-bottom: 1px solid var(--gray-medium);
+  padding: 12px 0;
+  gap: 12px;
+}
+
+.pricing-row.header {
+  font-weight: 600;
+  background: rgba(229, 50, 45, 0.05);
+  padding: 12px;
+  border-radius: 8px;
+  border-bottom: 2px solid var(--gray-medium);
+}
+
+.feature-col {
+  text-align: left;
+  font-weight: 500;
+}
+
+.tier-col {
+  text-align: center;
+  color: var(--gray-dark);
+}
+
+.tier-col.premium {
+  color: var(--primary-red);
+  font-weight: 600;
+}
+
+.pricing-row .tier-col {
+  color: var(--primary-red);
+  font-weight: 600;
+}
+
+.pricing-options {
+  margin: 20px 0;
+}
+
+.price-option {
+  background: rgba(230, 50, 45, 0.05);
+  border: 2px solid var(--gray-medium);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.price-option.selected {
+  border-color: var(--primary-red);
+  background: rgba(230, 50, 45, 0.1);
+}
+
+.price-circle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gray-medium);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.price-option.selected .price-circle {
+  border-color: var(--primary-red);
+  background: var(--primary-red);
+}
+
+.price-text {
+  flex: 1;
+}
+
+.price-amount {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.price-note {
+  font-size: 11px;
+  color: var(--gray-dark);
+  margin-top: 2px;
+}
+
+/* ===== SETTINGS ===== */
 .settings-list {
   margin: 16px 0;
 }
@@ -360,6 +512,12 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.settings-item:active {
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .settings-label {
@@ -397,9 +555,9 @@ body {
   left: 22px;
 }
 
-/* ===== PREMIUM SECTION ===== */
+/* ===== PREMIUM BANNER ===== */
 .premium-banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--premium-gradient);
   border-radius: 16px;
   padding: 20px 16px;
   margin: 20px 0;
@@ -494,9 +652,13 @@ body {
   .tools-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  
+
   .app-content {
     padding: 0 24px 80px;
+  }
+
+  .pricing-table {
+    font-size: 13px;
   }
 }
 
@@ -510,7 +672,7 @@ body {
     --glass-bg: rgba(30, 30, 30, 0.7);
     --glass-border: rgba(255, 255, 255, 0.1);
   }
-  
+
   body {
     background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
   }
@@ -571,13 +733,13 @@ body {
         <div class="tool-icon">📦</div>
         <div class="tool-name">Compress PDF</div>
       </div>
-      <div class="tool-card" onclick="openTool('convert')">
-        <div class="tool-icon">🔄</div>
-        <div class="tool-name">Convert PDF</div>
+      <div class="tool-card premium" onclick="openTool('ai-summary')">
+        <div class="tool-icon">✨</div>
+        <div class="tool-name">AI Summary</div>
       </div>
-      <div class="tool-card" onclick="openTool('edit')">
-        <div class="tool-icon">✏️</div>
-        <div class="tool-name">Edit PDF</div>
+      <div class="tool-card premium" onclick="openTool('ai-chat')">
+        <div class="tool-icon">🤖</div>
+        <div class="tool-name">Ask AI</div>
       </div>
       <div class="tool-card" onclick="openTool('sign')">
         <div class="tool-icon">✍️</div>
@@ -589,7 +751,7 @@ body {
   <!-- FILES PAGE -->
   <div class="content-section" data-page="files">
     <div class="section-title" style="margin-top: 16px;">My storage</div>
-    
+
     <div class="storage-card">
       <div class="storage-icon">💾</div>
       <div class="storage-info">
@@ -615,7 +777,7 @@ body {
     </div>
 
     <div class="section-title" style="margin-top: 20px;">Cloud storage</div>
-    
+
     <div class="storage-card">
       <div class="storage-icon">☁️</div>
       <div class="storage-info">
@@ -642,6 +804,15 @@ body {
       </div>
       <div class="storage-action">+</div>
     </div>
+
+    <div class="storage-card">
+      <div class="storage-icon">👥</div>
+      <div class="storage-info">
+        <div class="storage-name">PDF Spaces (Collaborate)</div>
+        <div class="storage-count">Share & collaborate with team</div>
+      </div>
+      <div class="storage-action">+</div>
+    </div>
   </div>
 
   <!-- TOOLS PAGE -->
@@ -650,16 +821,22 @@ body {
     <div class="tools-grid">
       <div class="tool-card"><div class="tool-icon">🔗</div><div class="tool-name">Merge PDF</div></div>
       <div class="tool-card"><div class="tool-icon">✂️</div><div class="tool-name">Split PDF</div></div>
-      <div class="tool-card"><div class="tool-icon">📦</div><div class="tool-name">Compress PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">📦</div><div class="tool-name">Compress</div></div>
       <div class="tool-card"><div class="tool-icon">📄</div><div class="tool-name">PDF to Word</div></div>
       <div class="tool-card"><div class="tool-icon">📊</div><div class="tool-name">PDF to Excel</div></div>
       <div class="tool-card"><div class="tool-icon">🖼️</div><div class="tool-name">PDF to JPG</div></div>
       <div class="tool-card"><div class="tool-icon">🖼️</div><div class="tool-name">Image to PDF</div></div>
       <div class="tool-card"><div class="tool-icon">✏️</div><div class="tool-name">Edit PDF</div></div>
+      <div class="tool-card"><div class="tool-icon">💬</div><div class="tool-name">Comment</div></div>
+      <div class="tool-card"><div class="tool-icon">🖍️</div><div class="tool-name">Highlight</div></div>
+      <div class="tool-card"><div class="tool-icon">🎨</div><div class="tool-name">Draw</div></div>
+      <div class="tool-card"><div class="tool-icon">📝</div><div class="tool-name">Fill & Sign</div></div>
       <div class="tool-card"><div class="tool-icon">✍️</div><div class="tool-name">Sign PDF</div></div>
       <div class="tool-card"><div class="tool-icon">🔒</div><div class="tool-name">Protect PDF</div></div>
       <div class="tool-card"><div class="tool-icon">🔑</div><div class="tool-name">Unlock PDF</div></div>
       <div class="tool-card"><div class="tool-icon">🔍</div><div class="tool-name">OCR</div></div>
+      <div class="tool-card premium"><div class="tool-icon">✨</div><div class="tool-name">AI Summary</div></div>
+      <div class="tool-card premium"><div class="tool-icon">🤖</div><div class="tool-name">Ask AI</div></div>
     </div>
   </div>
 
@@ -669,47 +846,167 @@ body {
       <div class="scanner-icon-large">📱</div>
       <div class="scanner-title">Scan Documents</div>
       <div class="scanner-subtitle">Turn photos into searchable PDFs</div>
-      <button class="scanner-btn">Open Camera</button>
+      <button class="scanner-btn">📸 Open Camera</button>
+      <div style="margin-top: 20px;">
+        <button class="scanner-btn" style="background: transparent; color: var(--primary-red); border: 2px solid var(--primary-red);">🔊 Read Aloud</button>
+      </div>
     </div>
   </div>
 
   <!-- SETTINGS PAGE -->
   <div class="content-section" data-page="settings">
-    <div class="premium-banner">
-      <div class="premium-title">Upgrade to Premium</div>
-      <div class="premium-subtitle">Unlimited tools & priority support</div>
-      <button class="premium-btn">Start free trial</button>
+    <!-- PREMIUM TIER COMPARISON -->
+    <div class="pricing-section">
+      <div class="pricing-header">
+        <h3>Upgrade to Premium 👑</h3>
+        <p>Get unlimited access to all tools</p>
+      </div>
+
+      <div class="pricing-table">
+        <div class="pricing-row header">
+          <div class="feature-col"></div>
+          <div class="tier-col">Free</div>
+          <div class="tier-col premium">Premium</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">Read, edit & sign PDFs</div>
+          <div class="tier-col">✓</div>
+          <div class="tier-col">✓</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">Merge & split</div>
+          <div class="tier-col">✓</div>
+          <div class="tier-col">✓</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">AI Generative summary</div>
+          <div class="tier-col"></div>
+          <div class="tier-col">✓</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">Ask AI Assistant</div>
+          <div class="tier-col"></div>
+          <div class="tier-col">✓</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">PDF Spaces (Collaborate)</div>
+          <div class="tier-col"></div>
+          <div class="tier-col">✓</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">Comment, Highlight, Draw</div>
+          <div class="tier-col"></div>
+          <div class="tier-col">✓</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">Read aloud & Voice chat</div>
+          <div class="tier-col"></div>
+          <div class="tier-col">✓</div>
+        </div>
+
+        <div class="pricing-row">
+          <div class="feature-col">Ad-free experience</div>
+          <div class="tier-col"></div>
+          <div class="tier-col">✓</div>
+        </div>
+      </div>
+
+      <div class="pricing-options">
+        <div class="price-option selected">
+          <div class="price-circle"></div>
+          <div class="price-text">
+            <div class="price-amount">₹2,600/year</div>
+            <div class="price-note">With free trial • Save 36%</div>
+          </div>
+        </div>
+
+        <div class="price-option">
+          <div class="price-circle"></div>
+          <div class="price-text">
+            <div class="price-amount">₹340/month</div>
+            <div class="price-note">No free trial</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="banner-btn" style="width: 100%; margin: 16px 0;">Start 7-day free trial</button>
+      <button class="secondary-btn" style="width: 100%;">Not now</button>
     </div>
 
-    <div class="section-title" style="margin-top: 20px;">Preferences</div>
+    <div class="section-title" style="margin-top: 24px;">Preferences</div>
     <div class="settings-list">
       <div class="settings-item">
-        <div class="settings-label">Dark mode</div>
+        <div class="settings-label">🌙 Dark mode</div>
         <div class="toggle-switch">
           <div class="toggle-dot"></div>
         </div>
       </div>
       <div class="settings-item">
-        <div class="settings-label">Notifications</div>
+        <div class="settings-label">🔔 Notifications</div>
         <div class="toggle-switch active">
           <div class="toggle-dot"></div>
         </div>
       </div>
       <div class="settings-item">
-        <div class="settings-label">Cloud sync</div>
+        <div class="settings-label">☁️ Cloud sync</div>
         <div class="toggle-switch">
           <div class="toggle-dot"></div>
         </div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">🔊 Read aloud</div>
+        <div class="toggle-switch">
+          <div class="toggle-dot"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">PDF Management</div>
+    <div class="settings-list">
+      <div class="settings-item">
+        <div class="settings-label">📑 View Pages</div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">🔖 Bookmarks</div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">💬 Comments List</div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">👥 PDF Spaces (Collaborate)</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">Advanced Features</div>
+    <div class="settings-list">
+      <div class="settings-item">
+        <div class="settings-label">🎤 Voice chat</div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">🗣️ Read aloud (Text-to-speech)</div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">🤖 AI Assistant</div>
       </div>
     </div>
 
     <div class="section-title" style="margin-top: 20px;">Account</div>
     <div class="settings-list">
       <div class="settings-item">
-        <div class="settings-label">Current membership: Free</div>
+        <div class="settings-label">Current membership: <strong>Free</strong></div>
       </div>
       <div class="settings-item">
-        <div class="settings-label">Sign out</div>
+        <div class="settings-label">👤 View settings</div>
+      </div>
+      <div class="settings-item">
+        <div class="settings-label">🚪 Sign out</div>
       </div>
     </div>
   </div>
@@ -746,15 +1043,15 @@ function switchPage(page) {
   document.querySelectorAll('.content-section').forEach(el => {
     el.classList.remove('active');
   });
-  
+
   // Remove active from all nav items
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.remove('active');
   });
-  
+
   // Show selected section
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
-  
+
   // Add active to nav item
   event.target.closest('.nav-item').classList.add('active');
 }
@@ -765,8 +1062,17 @@ function openTool(tool) {
 
 // Handle dark mode toggle
 document.querySelectorAll('.toggle-switch').forEach(toggle => {
-  toggle.addEventListener('click', function() {
+  toggle.addEventListener('click', function(e) {
+    e.stopPropagation();
     this.classList.toggle('active');
+  });
+});
+
+// Handle price option selection
+document.querySelectorAll('.price-option').forEach(option => {
+  option.addEventListener('click', function() {
+    document.querySelectorAll('.price-option').forEach(o => o.classList.remove('selected'));
+    this.classList.add('selected');
   });
 });
 </script>
