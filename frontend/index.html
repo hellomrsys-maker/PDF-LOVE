@@ -5411,34 +5411,37 @@ function toolAICoverLetter(){
   };
 }
 
-function toolAINoticeGenerator(){
-  const NOTICE_TEMPLATES = {
-    leave: { label:'Leave Application',
-      fields:[['from','Your name','Jordan Rivera'],['to','Manager / recipient','Alex Chen, Engineering Manager'],['reason','Type of leave','Sick leave'],['dates','Dates requested','Aug 12 – Aug 14, 2026'],['detail','Brief reason (optional)','Recovering from a minor illness']],
-      subject:(v)=>`Application for ${v.reason||'Leave'}`,
-      body:(v)=>`Dear ${v.to||'Manager'},\n\nI am writing to formally request ${v.reason?v.reason.toLowerCase():'leave'} for ${v.dates||'the dates below'}.${v.detail?' '+v.detail+'.':''}\n\nI will ensure my responsibilities are handed over before I leave, and I am reachable by email if anything urgent comes up.\n\nThank you for your understanding.\n\nSincerely,\n${v.from||'Your Name'}` },
-    warning: { label:'Warning Letter',
-      fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['issue','Issue being addressed','repeated late arrivals'],['policy','Policy / expectation referenced (optional)','company attendance policy'],['action','Required corrective action','arrive by 9:00 AM starting immediately']],
-      subject:(v)=>`Formal Warning — ${v.issue||'Policy Violation'}`,
-      body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter serves as a formal warning regarding ${v.issue||'a recent issue'}.${v.policy?` This is inconsistent with our ${v.policy}.`:''}\n\nGoing forward, we expect you to ${v.action||'address this immediately'}. Continued issues of this nature may result in further disciplinary action, up to and including termination.\n\nPlease reach out if you would like to discuss this further.\n\nSincerely,\n${v.from||'HR'}` },
-    termination: { label:'Termination Notice',
-      fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['lastday','Last working day','August 22, 2026'],['reason','Reason (optional, kept brief)','position elimination']],
-      subject:()=>'Notice of Termination of Employment',
-      body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter is to formally notify you that your employment will end effective ${v.lastday||'the date below'}.${v.reason?` This decision is due to ${v.reason}.`:''}\n\nPlease reach out to HR to discuss final pay, benefits continuation, and the return of any company property.\n\nWe appreciate your contributions and wish you the best in your next endeavor.\n\nSincerely,\n${v.from||'HR'}` },
-    payment: { label:'Payment Reminder Notice',
-      fields:[['from','Your name / business','Acme Rentals'],['to','Recipient name','Jordan Rivera'],['amount','Amount due','$1,200'],['duedate','Due date','August 1, 2026'],['ref','Reference (invoice #, unit #, etc.)','Invoice #INV-0042']],
-      subject:(v)=>`Payment Reminder — ${v.ref||'Outstanding Balance'}`,
-      body:(v)=>`Dear ${v.to||'Customer'},\n\nThis is a friendly reminder that a payment of ${v.amount||'the amount due'} was due on ${v.duedate||'the date on your invoice'}${v.ref?` (${v.ref})`:''} and remains outstanding.\n\nPlease arrange payment at your earliest convenience. If you have already sent payment, please disregard this notice.\n\nThank you,\n${v.from||'Your Name'}` },
-    general: { label:'General Formal Notice',
-      fields:[['from','Your name',''],['to','Recipient name',''],['subject','Subject of this notice','e.g. Notice regarding overdue matter'],['detail','Details of the notice','Describe the situation and what action you are requesting.'],['deadline','Response / action deadline (optional)','within 14 days']],
-      subject:(v)=>v.subject||'Formal Notice',
-      body:(v)=>`Dear ${v.to||'Sir/Madam'},\n\n${v.detail||'This letter serves as formal notice regarding the matter described above.'}${v.deadline?` We request that this be resolved ${v.deadline}.`:''}\n\nPlease treat this matter with the attention it requires.\n\nSincerely,\n${v.from||'Your Name'}` },
-  };
-  function buildNoticeFullText(tpl, values){
-    const dateStr = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
-    return [dateStr, '', tpl.subject(values), '', tpl.body(values)].join('\n');
-  }
+/* Shared with the Batch Document Generator below — hoisted to module scope
+   so both tools use the exact same template definitions instead of two
+   copies that could quietly drift apart. */
+const NOTICE_TEMPLATES = {
+  leave: { label:'Leave Application',
+    fields:[['from','Your name','Jordan Rivera'],['to','Manager / recipient','Alex Chen, Engineering Manager'],['reason','Type of leave','Sick leave'],['dates','Dates requested','Aug 12 – Aug 14, 2026'],['detail','Brief reason (optional)','Recovering from a minor illness']],
+    subject:(v)=>`Application for ${v.reason||'Leave'}`,
+    body:(v)=>`Dear ${v.to||'Manager'},\n\nI am writing to formally request ${v.reason?v.reason.toLowerCase():'leave'} for ${v.dates||'the dates below'}.${v.detail?' '+v.detail+'.':''}\n\nI will ensure my responsibilities are handed over before I leave, and I am reachable by email if anything urgent comes up.\n\nThank you for your understanding.\n\nSincerely,\n${v.from||'Your Name'}` },
+  warning: { label:'Warning Letter',
+    fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['issue','Issue being addressed','repeated late arrivals'],['policy','Policy / expectation referenced (optional)','company attendance policy'],['action','Required corrective action','arrive by 9:00 AM starting immediately']],
+    subject:(v)=>`Formal Warning — ${v.issue||'Policy Violation'}`,
+    body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter serves as a formal warning regarding ${v.issue||'a recent issue'}.${v.policy?` This is inconsistent with our ${v.policy}.`:''}\n\nGoing forward, we expect you to ${v.action||'address this immediately'}. Continued issues of this nature may result in further disciplinary action, up to and including termination.\n\nPlease reach out if you would like to discuss this further.\n\nSincerely,\n${v.from||'HR'}` },
+  termination: { label:'Termination Notice',
+    fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['lastday','Last working day','August 22, 2026'],['reason','Reason (optional, kept brief)','position elimination']],
+    subject:()=>'Notice of Termination of Employment',
+    body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter is to formally notify you that your employment will end effective ${v.lastday||'the date below'}.${v.reason?` This decision is due to ${v.reason}.`:''}\n\nPlease reach out to HR to discuss final pay, benefits continuation, and the return of any company property.\n\nWe appreciate your contributions and wish you the best in your next endeavor.\n\nSincerely,\n${v.from||'HR'}` },
+  payment: { label:'Payment Reminder Notice',
+    fields:[['from','Your name / business','Acme Rentals'],['to','Recipient name','Jordan Rivera'],['amount','Amount due','$1,200'],['duedate','Due date','August 1, 2026'],['ref','Reference (invoice #, unit #, etc.)','Invoice #INV-0042']],
+    subject:(v)=>`Payment Reminder — ${v.ref||'Outstanding Balance'}`,
+    body:(v)=>`Dear ${v.to||'Customer'},\n\nThis is a friendly reminder that a payment of ${v.amount||'the amount due'} was due on ${v.duedate||'the date on your invoice'}${v.ref?` (${v.ref})`:''} and remains outstanding.\n\nPlease arrange payment at your earliest convenience. If you have already sent payment, please disregard this notice.\n\nThank you,\n${v.from||'Your Name'}` },
+  general: { label:'General Formal Notice',
+    fields:[['from','Your name',''],['to','Recipient name',''],['subject','Subject of this notice','e.g. Notice regarding overdue matter'],['detail','Details of the notice','Describe the situation and what action you are requesting.'],['deadline','Response / action deadline (optional)','within 14 days']],
+    subject:(v)=>v.subject||'Formal Notice',
+    body:(v)=>`Dear ${v.to||'Sir/Madam'},\n\n${v.detail||'This letter serves as formal notice regarding the matter described above.'}${v.deadline?` We request that this be resolved ${v.deadline}.`:''}\n\nPlease treat this matter with the attention it requires.\n\nSincerely,\n${v.from||'Your Name'}` },
+};
+function buildNoticeFullText(tpl, values){
+  const dateStr = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  return [dateStr, '', tpl.subject(values), '', tpl.body(values)].join('\n');
+}
 
+function toolAINoticeGenerator(){
   const body = panelShell({title:'Notice & Letter Generator', desc:'Pick a notice type, fill in the details, get a formatted PDF letter — leave applications, warnings, terminations, payment reminders and general notices.'});
   const disclaimer=document.createElement('div'); disclaimer.className='note';
   disclaimer.textContent = 'These are plain-language starting drafts, not legal advice. For anything with legal weight (termination, formal disputes), have the final letter reviewed by qualified counsel or HR.';
@@ -5514,6 +5517,185 @@ function toolAINoticeGenerator(){
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
     }
+  };
+}
+
+/* Robust CSV/XLSX parsing via the already-bundled SheetJS library — not a
+   naive comma-split, which would break on quoted fields like "Smith, Jr."
+   or embedded newlines. Lazy-loaded the same way the existing PDF-to-Excel
+   tool already loads it. */
+/* RFC4180-ish CSV parser: quoted fields (embedded commas/newlines) and ""
+   as an escaped quote. Deliberately NOT routed through SheetJS — a CSV
+   field is always plain text, but SheetJS's type inference silently
+   reinterprets anything date-looking ("Aug 20 2026") as an Excel date
+   serial number (e.g. 46254), or reformats it (e.g. "8/20/26") even with
+   raw:false. Neither is acceptable for recipient data getting substituted
+   straight into a letter — it must stay exactly what the user typed. */
+function parseCsvText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  const s = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for(let i=0;i<s.length;i++){
+    const ch = s[i];
+    if(inQuotes){
+      if(ch === '"'){ if(s[i+1] === '"'){ field += '"'; i++; } else inQuotes = false; }
+      else field += ch;
+    } else {
+      if(ch === '"') inQuotes = true;
+      else if(ch === ','){ row.push(field); field=''; }
+      else if(ch === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else field += ch;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+async function parseTableFile(file){
+  const isCsv = /\.csv$/i.test(file.name) || file.type==='text/csv';
+  let rows;
+  if(isCsv){
+    rows = parseCsvText(await file.text());
+  } else {
+    // A real .xlsx/.xls DOES have genuinely typed+formatted cells (unlike
+    // CSV, which is always plain text), so showing the formatted value
+    // (raw:false) here is the correct interpretation, not a bug.
+    await loadScript('vendor/xlsx.full.min.js', {fallbackOnError:false});
+    const wb = window.XLSX.read(await file.arrayBuffer(), {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    rows = window.XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', blankrows:false, raw:false});
+  }
+  if(!rows.length) return {headers:[], rows:[]};
+  const headers = rows[0].map(h=>String(h==null?'':h).trim());
+  const dataRows = rows.slice(1).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  return {headers, rows:dataRows};
+}
+function guessColumn(headers, fieldId, fieldLabel){
+  const norm = s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+  const normHeaders = headers.map(norm);
+  let idx = normHeaders.indexOf(norm(fieldId));
+  if(idx===-1){
+    const labelWord = fieldLabel.split(/[\s(/]/)[0];
+    idx = normHeaders.indexOf(norm(labelWord));
+  }
+  return idx;
+}
+
+function toolBatchDocGenerator(){
+  const body = panelShell({title:'Batch Document Generator', desc:'Upload a spreadsheet of recipients, map the columns once, and generate a personalized notice or letter for every row — all zipped into one download.'});
+  const note=document.createElement('div'); note.className='note';
+  note.textContent = 'Uses the same templates as Notice & Letter Generator. Your file is parsed and every PDF built entirely on-device — nothing is uploaded. First row of your file must be column headers.';
+  body.appendChild(note);
+  const disclaimer=document.createElement('div'); disclaimer.className='note';
+  disclaimer.textContent = 'These are plain-language starting drafts, not legal advice. For anything with legal weight (termination, formal disputes), have the letters reviewed by qualified counsel or HR before sending.';
+  body.appendChild(disclaimer);
+
+  const s1=document.createElement('div'); s1.className='helper-line'; s1.style.fontWeight='600'; s1.textContent='1 · Choose a notice type'; body.appendChild(s1);
+  const select=document.createElement('select'); select.id='batch-type'; select.style.cssText='width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);margin-bottom:12px;';
+  Object.entries(NOTICE_TEMPLATES).forEach(([key,t])=>{ const opt=document.createElement('option'); opt.value=key; opt.textContent=t.label; select.appendChild(opt); });
+  body.appendChild(select);
+
+  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.cssText='font-weight:600;margin-top:6px;'; s2.textContent='2 · Upload recipients (.csv or .xlsx)'; body.appendChild(s2);
+  let table = null; // {headers, rows}
+  buildDropzone(body, {multiple:false, accept:'.csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', onFiles: async (f)=>{
+    const file = f[0];
+    try{
+      log.textContent = 'Reading file...';
+      table = await parseTableFile(file);
+      if(!table.headers.length || !table.rows.length){ throw new Error('No data rows found — the first row must be column headers, with at least one row below it.'); }
+      fileInfo.textContent = `${file.name} — ${table.rows.length} row${table.rows.length===1?'':'s'}, columns: ${table.headers.join(', ')}`;
+      renderMapping();
+      mappingSection.style.display='block';
+      log.textContent = '';
+    }catch(e){
+      table = null; fileInfo.textContent=''; mappingSection.style.display='none';
+      log.textContent = e.message;
+    }
+  }});
+  const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:8px 0;font-size:0.85rem;color:var(--muted-ink,#666);'; body.appendChild(fileInfo);
+
+  const mappingSection=document.createElement('div'); mappingSection.style.display='none'; body.appendChild(mappingSection);
+  const s3=document.createElement('div'); s3.className='helper-line'; s3.style.cssText='font-weight:600;margin-top:6px;'; s3.textContent='3 · Match columns to fields'; mappingSection.appendChild(s3);
+  const mapWrap=document.createElement('div'); mappingSection.appendChild(mapWrap);
+  function renderMapping(){
+    const tpl = NOTICE_TEMPLATES[select.value];
+    mapWrap.innerHTML='';
+    tpl.fields.forEach(([id,label])=>{
+      const field=document.createElement('div'); field.className='field';
+      const guess = guessColumn(table.headers, id, label);
+      field.innerHTML = `<label>${label}</label><select class="batch-map" data-id="${id}">
+        <option value="-1">— Leave blank for every row —</option>
+        ${table.headers.map((h,i)=>`<option value="${i}"${i===guess?' selected':''}>${escapeXml(h)}</option>`).join('')}
+      </select>`;
+      mapWrap.appendChild(field);
+    });
+  }
+  select.onchange = ()=>{ if(table) renderMapping(); };
+
+  const previewBtn=document.createElement('button'); previewBtn.type='button'; previewBtn.className='small-btn'; previewBtn.textContent='👁 Preview first row'; mappingSection.appendChild(previewBtn);
+  const previewBox=document.createElement('div'); previewBox.className='note'; previewBox.style.display='none'; previewBox.style.whiteSpace='pre-wrap'; mappingSection.appendChild(previewBox);
+
+  function readMapping(){
+    const mapping={};
+    mapWrap.querySelectorAll('.batch-map').forEach(sel=>{ mapping[sel.dataset.id] = parseInt(sel.value,10); });
+    return mapping;
+  }
+  function valuesForRow(row, mapping){
+    const values={};
+    Object.entries(mapping).forEach(([id,colIdx])=>{
+      values[id] = colIdx>=0 ? String(row[colIdx]==null?'':row[colIdx]).trim() : '';
+    });
+    return values;
+  }
+  previewBtn.onclick = ()=>{
+    if(!table || !table.rows.length) return;
+    const tpl = NOTICE_TEMPLATES[select.value];
+    const values = valuesForRow(table.rows[0], readMapping());
+    previewBox.textContent = buildNoticeFullText(tpl, values);
+    previewBox.style.display='block';
+  };
+
+  const BATCH_ROW_LIMIT = 500;
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='14px'; btn.textContent='Generate All & Download ZIP'; mappingSection.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+
+  btn.onclick = async ()=>{
+    if(!table || !table.rows.length){ log.textContent='Upload a spreadsheet first.'; return; }
+    if(table.rows.length > BATCH_ROW_LIMIT){ log.textContent = `This tool supports up to ${BATCH_ROW_LIMIT} rows at a time — your file has ${table.rows.length}. Please split it.`; return; }
+    const tpl = NOTICE_TEMPLATES[select.value];
+    const mapping = readMapping();
+    btn.disabled = true;
+    log.textContent = `Generating 0 of ${table.rows.length}...`;
+    try{
+      const zip = new JSZip();
+      const usedNames = new Set();
+      function uniqueFilename(base){
+        let clean = base.replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60) || 'document';
+        let candidate = clean, n = 2;
+        while(usedNames.has(candidate.toLowerCase())){ candidate = clean+'_'+n; n++; }
+        usedNames.add(candidate.toLowerCase());
+        return candidate;
+      }
+      let skipped = 0, anyWarn = false;
+      for(let i=0;i<table.rows.length;i++){
+        const values = valuesForRow(table.rows[i], mapping);
+        if(!values.to && !values.from){ skipped++; continue; }
+        const text = buildNoticeFullText(tpl, values);
+        const {bytes, warn} = await buildLetterPDF(text);
+        if(warn) anyWarn = true;
+        const filename = uniqueFilename(values.to || values.from || ('row-'+(i+1))) + '.pdf';
+        zip.file(filename, bytes);
+        log.textContent = `Generating ${i+1} of ${table.rows.length}...`;
+        if(i%5===4) await new Promise(r=>setTimeout(r,0)); // let the UI repaint during a large batch
+      }
+      const generated = table.rows.length - skipped;
+      if(generated===0){ log.textContent = 'No documents were generated — every row was missing both a "from" and a "to" value.'; btn.disabled=false; return; }
+      const zipBlob = await zip.generateAsync({type:'blob'});
+      download(zipBlob, 'batch-'+tpl.label.toLowerCase().replace(/[^\w]+/g,'-')+'.zip');
+      log.innerHTML = `<span class="ok">✓ Done — ${generated} document${generated===1?'':'s'} generated${skipped?`, ${skipped} row${skipped===1?'':'s'} skipped (no name)`:''}.${anyWarn?' Some characters were simplified to "?" in a few documents.':''}</span>`;
+    }catch(e){
+      log.textContent = 'Could not generate the batch: '+(e.message||String(e));
+    }
+    btn.disabled = false;
   };
 }
 
@@ -8097,7 +8279,7 @@ const CATEGORY_COLORS = {
   'security-tools':'#00897B', 'img-tools':'#4CAF50', 'video-tools':'#FF5722',
   'ai-tools':'#5C6BC0', 'utility-tools':'#FF9800', 'api-tools':'#607D8B',
 };
-const NEW_TOOL_NAMES = new Set(['PDF Forms','PDF to Markdown','AI Resume Builder (ATS)','AI Cover Letter Generator','Notice & Letter Generator','PDF Edit — Print & Screen Mode']);
+const NEW_TOOL_NAMES = new Set(['PDF Forms','PDF to Markdown','AI Resume Builder (ATS)','AI Cover Letter Generator','Notice & Letter Generator','PDF Edit — Print & Screen Mode','Batch Document Generator']);
 function makeCard(t, sectionId){
   const card = document.createElement('button');
   card.className='tool-card';
@@ -8164,6 +8346,7 @@ const aiTools = [
   {icon:'📄', name:'AI Resume Builder (ATS)', desc:'Single-column resume that parses cleanly in ATS software, with a live keyword-match score.', fn:toolAIResumeATS},
   {icon:'✉️', name:'AI Cover Letter Generator', desc:'A few details in, a polished ready-to-send letter out — editable before export.', fn:toolAICoverLetter},
   {icon:'📋', name:'Notice & Letter Generator', desc:'Leave applications, warnings, terminations, payment reminders — formatted in seconds.', fn:toolAINoticeGenerator},
+  {icon:'📚', name:'Batch Document Generator', desc:'Upload a spreadsheet of recipients, generate one personalized letter per row, get a ZIP.', fn:toolBatchDocGenerator},
   {icon:'🧠', name:'AI Summarize (On Your Device)', desc:'A real AI model, downloaded once, then works offline forever.', fn:toolAISummarizeLocal},
   {icon:'🌐', name:'Translate Text (On Your Device)', desc:'10 languages, real AI translation, completely private.', fn:toolAITranslateLocal},
   {icon:'🎙️', name:'Voice to Text (On Your Device)', desc:'Speak, and watch it get typed out — private AI speech recognition.', fn:toolVoiceToText},
