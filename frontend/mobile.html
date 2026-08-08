@@ -10,6 +10,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script defer src="vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/pdf.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/jszip.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/mammoth.browser.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/jspdf.umd.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';document.head.appendChild(s)"></script>
+<script defer src="vendor/html2canvas.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';document.head.appendChild(s)"></script>
+<script defer src="tools-engine.js"></script>
 
 <style>
 * {
@@ -29,6 +35,23 @@
   --glass-border: rgba(255, 255, 255, 0.3);
   --premium-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --blue: #0066ff;
+
+  /* Aliases matching the desktop app's CSS variable names (--paper, --ink,
+     etc.) — the shared tool engine's markup (copied verbatim from
+     index.html) references these directly. Pointing them at this file's
+     own light/dark-adaptive variables means the shared tools inherit
+     mobile's theming automatically instead of needing a second dark-mode
+     override block. */
+  --paper: var(--white);
+  --paper-raised: var(--white);
+  --ink: var(--primary-dark);
+  --ink-soft: var(--gray-dark);
+  --copper: var(--primary-red);
+  --copper-deep: #C41E18;
+  --line: var(--gray-medium);
+  --ok: #4CAF50;
+  --sage: var(--gray-dark);
+  --light-gray: var(--gray-light);
 }
 
 html, body {
@@ -634,6 +657,65 @@ body {
   font-size: 24px;
 }
 
+/* ===== Desktop-compatible tool-engine classes =====
+   Copied from index.html's stylesheet (colors routed through the --paper/
+   --ink/etc aliases above) — the shared tool functions in tools-engine.js
+   reference these class names directly, unmodified from desktop. */
+.dropzone {
+  border: 1.5px dashed var(--line); border-radius: 10px; padding: 32px 20px;
+  text-align: center; color: var(--ink-soft); font-size: 0.9rem;
+  cursor: pointer; background: var(--light-gray);
+}
+.dropzone.drag { border-color: var(--copper); color: var(--copper-deep); }
+.filelist { margin: 14px 0; display: flex; flex-direction: column; gap: 6px; }
+.filerow {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--light-gray); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 12px; font-size: 0.85rem;
+}
+.filerow button { background: none; border: none; color: var(--sage); cursor: pointer; font-size: 0.9rem; }
+.field { margin: 14px 0; }
+.field label { display: block; font-size: 0.82rem; color: var(--ink-soft); margin-bottom: 6px; }
+.field input[type=text], .field input[type=number], .field input[type=email], .field input[type=date] {
+  width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 7px;
+  font-family: inherit; font-size: 0.9rem; background: var(--white); color: var(--ink);
+}
+.field input[type=range] { width: 100%; }
+.row { display: flex; gap: 12px; }
+.row .field { flex: 1; }
+.primary-btn {
+  background: var(--copper); color: #fff; border: none; border-radius: 8px;
+  padding: 12px 20px; font-size: 0.92rem; font-weight: 600; cursor: pointer;
+  width: 100%; margin-top: 8px;
+}
+.primary-btn:disabled { background: var(--line); color: var(--ink-soft); cursor: not-allowed; }
+.runlog { font-family: monospace; font-size: 0.78rem; color: var(--ink-soft); margin-top: 14px; min-height: 20px; }
+.runlog .ok { color: var(--ok); }
+.note { background: var(--light-gray); border: 1px dashed var(--line); border-radius: 8px; padding: 12px 14px; font-size: 0.8rem; color: var(--ink-soft); margin: 12px 0; }
+.canvas-wrap { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: auto; max-height: 60vh; margin: 10px 0; background: #eee; }
+.canvas-wrap canvas { display: block; cursor: crosshair; max-width: 100%; }
+.pill-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+.pill-row select, .pill-row input[type=text], .pill-row input[type=number] {
+  padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--white); font-family: inherit; font-size: 0.85rem;
+}
+.thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin: 14px 0; max-height: 340px; overflow-y: auto; padding: 4px; }
+.thumb { border: 1px solid var(--line); border-radius: 8px; padding: 6px; text-align: center; background: var(--light-gray); }
+.thumb canvas { width: 100%; border-radius: 4px; border: 1px solid var(--line); }
+.thumb .pnum { font-size: 0.7rem; margin-top: 4px; color: var(--ink-soft); }
+.thumb label { display: flex; align-items: center; gap: 5px; justify-content: center; font-size: 0.72rem; margin-top: 4px; }
+.small-btn { background: var(--white); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 0.78rem; cursor: pointer; color: var(--ink); }
+.anno-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; max-height: 150px; overflow-y: auto; }
+.sig-pad { border: 1px solid var(--line); border-radius: 8px; background: #fff; touch-action: none; cursor: crosshair; }
+.tab-row { display: flex; gap: 8px; margin: 12px 0; }
+.tab-btn { flex: 1; padding: 14px 10px; border: 2px solid var(--line); border-radius: 10px; background: var(--white); cursor: pointer; text-align: center; font-family: inherit; }
+.tab-btn .tab-title { font-weight: 600; font-size: 0.95rem; display: block; margin-bottom: 3px; }
+.tab-btn .tab-sub { font-size: 0.78rem; color: var(--ink-soft); }
+.tab-btn.active { border-color: var(--copper); background: rgba(229, 50, 45, 0.06); }
+.big-input-row { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; }
+.big-input-row input[type=number] { flex: 1; padding: 14px; font-size: 1.1rem; border: 1.5px solid var(--line); border-radius: 9px; background: var(--white); font-family: inherit; }
+.big-input-row select { padding: 14px 10px; font-size: 1rem; border: 1.5px solid var(--line); border-radius: 9px; background: var(--white); font-family: inherit; }
+.helper-line { font-size: 0.82rem; color: var(--ink-soft); margin: 4px 0 14px; }
+
 /* ===== TOOL DETAIL (AI Kit + PDF Edit — the only functional tools today) ===== */
 .tool-detail {
   position: fixed;
@@ -1006,15 +1088,40 @@ body {
       <div class="tool-card" onclick="openToolDetail('PDF Edit — Print & Screen', renderPDFEditPrintScreen)"><div class="tool-icon">🖨️</div><div class="tool-name">Print & Screen Mode</div></div>
     </div>
 
-    <div class="section-title" style="margin-top: 20px;">All tools</div>
+    <div class="section-title" style="margin-top: 20px;">Organize PDF</div>
     <div class="tools-grid">
-      <div class="tool-card"><div class="tool-icon">🔗</div><div class="tool-name">Merge PDF</div></div>
-      <div class="tool-card"><div class="tool-icon">✂️</div><div class="tool-name">Split PDF</div></div>
-      <div class="tool-card"><div class="tool-icon">📦</div><div class="tool-name">Compress</div></div>
+      <div class="tool-card" onclick="toolMergePDF()"><div class="tool-icon">⬜</div><div class="tool-name">Merge PDF</div></div>
+      <div class="tool-card" onclick="toolSplitPDF()"><div class="tool-icon">✂️</div><div class="tool-name">Split PDF</div></div>
+      <div class="tool-card" onclick="toolImageToPDF()"><div class="tool-icon">🖼️</div><div class="tool-name">Images to PDF</div></div>
+      <div class="tool-card" onclick="toolPDFToJPG()"><div class="tool-icon">📄</div><div class="tool-name">PDF to JPG</div></div>
+      <div class="tool-card" onclick="toolRotatePDF()"><div class="tool-icon">↻</div><div class="tool-name">Rotate PDF</div></div>
+      <div class="tool-card" onclick="toolOrganizePDF()"><div class="tool-icon">🗂️</div><div class="tool-name">Organize PDF</div></div>
+      <div class="tool-card" onclick="toolCropPDF()"><div class="tool-icon">⧉</div><div class="tool-name">Crop PDF</div></div>
+      <div class="tool-card" onclick="toolCompressPDF()"><div class="tool-icon">🗜️</div><div class="tool-name">Make PDF Smaller</div></div>
+      <div class="tool-card" onclick="toolRepairPDF()"><div class="tool-icon">🔧</div><div class="tool-name">Repair PDF</div></div>
+      <div class="tool-card" onclick="toolLocalOCR()"><div class="tool-icon">🔎</div><div class="tool-name">OCR — Make Scans Searchable</div></div>
+      <div class="tool-card" onclick="toolScanToPDF()"><div class="tool-icon">📷</div><div class="tool-name">Scan Document</div></div>
+      <div class="tool-card" onclick="toolComparePDF()"><div class="tool-icon">⇄</div><div class="tool-name">Compare PDF</div></div>
+      <div class="tool-card" onclick="toolRemoveDuplicateBlank()"><div class="tool-icon">♻️</div><div class="tool-name">Remove Duplicate/Blank Pages</div></div>
+      <div class="tool-card" onclick="toolExtractImages()"><div class="tool-icon">🖼</div><div class="tool-name">Extract Images</div></div>
+      <div class="tool-card" onclick="toolEditMetadata()"><div class="tool-icon">ⓘ</div><div class="tool-name">Edit Metadata</div></div>
+      <div class="tool-card" onclick="toolBatesNumbering()"><div class="tool-icon">№</div><div class="tool-name">Page Numbering & Document ID</div></div>
+      <div class="tool-card" onclick="toolHeaderFooter()"><div class="tool-icon">▦</div><div class="tool-name">Add Header & Footer</div></div>
+      <div class="tool-card" onclick="toolNUp()"><div class="tool-icon">⊞</div><div class="tool-name">Put Multiple Pages on One Sheet</div></div>
+      <div class="tool-card" onclick="toolInsertReplacePage()"><div class="tool-icon">⎘</div><div class="tool-name">Insert / Replace Page</div></div>
+      <div class="tool-card" onclick="toolSplitByBookmark()"><div class="tool-icon">🔖</div><div class="tool-name">Split by Bookmark</div></div>
+      <div class="tool-card" onclick="toolSplitBySize()"><div class="tool-icon">📦</div><div class="tool-name">Split by File Size</div></div>
+      <div class="tool-card" onclick="toolBookmarkEditor()"><div class="tool-icon">▤</div><div class="tool-name">Bookmarks / TOC</div></div>
+      <div class="tool-card" onclick="toolSearchRedact()"><div class="tool-icon">🔍</div><div class="tool-name">Search & Redact</div></div>
+      <div class="tool-card" onclick="toolFlattenPDF()"><div class="tool-icon">▭</div><div class="tool-name">Flatten PDF</div></div>
+      <div class="tool-card" onclick="toolSanitizePDF()"><div class="tool-icon">🧼</div><div class="tool-name">Sanitize PDF</div></div>
+      <div class="tool-card" onclick="toolGrayscalePDF()"><div class="tool-icon">◐</div><div class="tool-name">Grayscale PDF</div></div>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">More tools (coming soon)</div>
+    <div class="tools-grid">
       <div class="tool-card"><div class="tool-icon">📄</div><div class="tool-name">PDF to Word</div></div>
       <div class="tool-card"><div class="tool-icon">📊</div><div class="tool-name">PDF to Excel</div></div>
-      <div class="tool-card"><div class="tool-icon">🖼️</div><div class="tool-name">PDF to JPG</div></div>
-      <div class="tool-card"><div class="tool-icon">🖼️</div><div class="tool-name">Image to PDF</div></div>
       <div class="tool-card"><div class="tool-icon">✏️</div><div class="tool-name">Edit PDF</div></div>
       <div class="tool-card"><div class="tool-icon">💬</div><div class="tool-name">Comment</div></div>
       <div class="tool-card"><div class="tool-icon">🖍️</div><div class="tool-name">Highlight</div></div>
@@ -1023,7 +1130,6 @@ body {
       <div class="tool-card"><div class="tool-icon">✍️</div><div class="tool-name">Sign PDF</div></div>
       <div class="tool-card"><div class="tool-icon">🔒</div><div class="tool-name">Protect PDF</div></div>
       <div class="tool-card"><div class="tool-icon">🔑</div><div class="tool-name">Unlock PDF</div></div>
-      <div class="tool-card"><div class="tool-icon">🔍</div><div class="tool-name">OCR</div></div>
       <div class="tool-card premium"><div class="tool-icon">✨</div><div class="tool-name">AI Summary</div></div>
       <div class="tool-card premium"><div class="tool-icon">🤖</div><div class="tool-name">Ask AI</div></div>
     </div>
@@ -1295,6 +1401,41 @@ function openToolDetail(title, renderFn){
 }
 function closeToolDetail(){
   document.getElementById('tool-detail').classList.remove('active');
+}
+
+/* Desktop-compatible panelShell()/buildDropzone() — the ~76 shared tool
+   functions in tools-engine.js are copied verbatim from index.html and
+   call these two by name with these exact signatures. panelShell here
+   reuses the same tool-detail overlay as openToolDetail() above, just
+   with the opposite calling convention: desktop's tool functions call
+   panelShell({title,desc}) THEMSELVES to get a body element, rather than
+   being handed one by a wrapper. Both conventions share the same
+   underlying DOM (#tool-detail/#tool-detail-title/#tool-detail-body) and
+   the same fresh-container-per-open fix, so there's no listener-leak risk
+   whichever calling convention a given tool uses. */
+function panelShell({title, desc}){
+  document.getElementById('tool-detail-title').textContent = title;
+  const container = document.getElementById('tool-detail-body');
+  container.innerHTML = '';
+  const fresh = document.createElement('div');
+  container.appendChild(fresh);
+  document.getElementById('tool-detail').classList.add('active');
+  return fresh;
+}
+function buildDropzone(container, {multiple, accept, onFiles}){
+  const dz = document.createElement('div');
+  dz.className = 'dropzone';
+  dz.innerHTML = `<strong>Tap to choose ${multiple?'files':'a file'}</strong><br>stays on this device`;
+  const input = document.createElement('input');
+  input.type='file'; input.multiple=!!multiple; input.accept=accept||''; input.style.display='none';
+  dz.appendChild(input);
+  dz.addEventListener('click', ()=>input.click());
+  input.addEventListener('change', ()=>onFiles([...input.files]));
+  ['dragenter','dragover'].forEach(evt=>dz.addEventListener(evt, e=>{e.preventDefault();dz.classList.add('drag');}));
+  ['dragleave','drop'].forEach(evt=>dz.addEventListener(evt, e=>{e.preventDefault();dz.classList.remove('drag');}));
+  dz.addEventListener('drop', e=>{ onFiles([...e.dataTransfer.files]); });
+  container.appendChild(dz);
+  return dz;
 }
 
 async function loadPdf(bytes){
