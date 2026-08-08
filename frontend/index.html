@@ -4935,8 +4935,34 @@ function toolInvoiceGenerator(){
    reliable for structured documents like these. Everything still runs
    entirely on-device. */
 
-function wrapTextLines(font, size, text, maxWidth){
-  const words = String(text||'').split(/\s+/).filter(Boolean);
+/* pdf-lib's standard 14 fonts use WinAnsi encoding, which cannot represent
+   emoji, CJK, Arabic, Devanagari, etc. — page.drawText() THROWS on those
+   rather than degrading gracefully. Every string that reaches drawText in
+   this AI Kit is user-typed (names, summaries, letter bodies), so this
+   sanitizer is required to prevent a silent, unrecoverable crash mid-export.
+   Common "smart" punctuation (curly quotes, em/en dash, ellipsis, bullet)
+   is mapped to a plain-ASCII equivalent since those are visually
+   indistinguishable losses; anything else unencodable becomes "?" and sets
+   warn.hit so the caller can tell the user. */
+const PDF_CHAR_FALLBACK = {'‘':"'",'’':"'",'“':'"','”':'"','–':'-','—':'-','…':'...','•':'*',' ':' '};
+function pdfSafe(font, text, warn){
+  const str = String(text==null?'':text);
+  try{ font.widthOfTextAtSize(str, 10); return str; }
+  catch(e){
+    let out = '';
+    for(const ch of str){
+      if(PDF_CHAR_FALLBACK[ch] !== undefined){ out += PDF_CHAR_FALLBACK[ch]; if(warn) warn.hit = true; continue; }
+      try{ font.widthOfTextAtSize(ch, 10); out += ch; }
+      catch(e2){ out += '?'; if(warn) warn.hit = true; }
+    }
+    return out;
+  }
+}
+function safeDrawText(page, text, opts, warn){
+  page.drawText(pdfSafe(opts.font, text, warn), opts);
+}
+function wrapTextLines(font, size, text, maxWidth, warn){
+  const words = pdfSafe(font, text, warn).split(/\s+/).filter(Boolean);
   const lines = []; let line='';
   words.forEach(w=>{
     const test = line ? line+' '+w : w;
@@ -4949,47 +4975,63 @@ function wrapTextLines(font, size, text, maxWidth){
 
 /* Builds a plain single-column letter PDF from freeform text — blank lines
    become spacing, everything else word-wraps. Shared by the cover letter
-   and notice generators below. */
+   and notice generators below. Returns {bytes, warn} so callers can flag
+   any characters this font couldn't render. */
 async function buildLetterPDF(text){
   const doc = await PDFDocument.create();
   let page = doc.addPage([612,792]);
   const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   let y = 740;
+  const warn = {hit:false};
   function ensureSpace(n=1, lh=15){ if(y-n*lh<60){ page=doc.addPage([612,792]); y=740; } }
   String(text).split('\n').forEach(line=>{
     if(!line.trim()){ y-=10; return; }
-    wrapTextLines(font, 11, line, 512).forEach(l=>{
+    wrapTextLines(font, 11, line, 512, warn).forEach(l=>{
       ensureSpace(1,15);
       page.drawText(l, {x:50,y,size:11,font,color:PDFLib.rgb(0.15,0.15,0.15)});
       y-=15;
     });
   });
-  return doc.save();
+  return {bytes: await doc.save(), warn: warn.hit};
 }
 
-const ATS_STOPWORDS = new Set(['the','and','for','with','that','this','you','your','are','will','have','has','had','from','our','their','they','them','a','an','of','to','in','on','at','as','is','be','or','it','we','us','job','role','work','working','team','years','year','experience','required','requirement','requirements','preferred','including','etc','other','such','who','into','also','using','use','across','ability','strong','excellent','skills','skill','looking','apply','applicants','candidate','candidates','ideal','plus','including','responsibilities','responsible','company','position','new','all','any','can','may','must','should','ll','re','ve','per','you\'ll','you\'re']);
+/* "role." (trailing sentence punctuation) must become "role" — otherwise it
+   both dodges the stopword list (which only has the clean word) and shows
+   up as an ugly keyword chip. */
+const ATS_STOPWORDS = new Set(['the','and','for','with','that','this','you','your','are','will','have','has','had','from','our','their','they','them','a','an','of','to','in','on','at','as','is','be','or','it','we','us','job','role','work','working','team','years','year','experience','required','requirement','requirements','preferred','including','etc','other','such','who','into','also','using','use','across','ability','strong','excellent','skills','skill','looking','apply','applicants','candidate','candidates','ideal','plus','including','responsibilities','responsible','company','position','new','all','any','can','may','must','should','ll','re','ve','per','you\'ll','you\'re','if','by','up','no','so','do','my','ok']);
 function extractKeywords(text, limit=25){
   const freq = {};
-  String(text||'').toLowerCase().replace(/[^a-z0-9+#./\s-]/g,' ').split(/\s+/).forEach(w=>{
-    w = w.trim();
-    if(w.length<3 || ATS_STOPWORDS.has(w) || /^\d+$/.test(w)) return;
+  String(text||'').toLowerCase().replace(/[^a-z0-9+#./\s-]/g,' ').split(/\s+/).forEach(raw=>{
+    const w = raw.trim().replace(/^[.\-/]+|[.\-/]+$/g,''); // strip leading/trailing punctuation, keep internal (Node.js, C++)
+    if(w.length<2 || ATS_STOPWORDS.has(w) || /^\d+$/.test(w)) return;
     freq[w] = (freq[w]||0)+1;
   });
   return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(e=>e[0]);
+}
+/* Plain substring matching lets a keyword like "react" false-positive
+   inside an unrelated word like "reactive", inflating the score. Use a
+   word-boundary regex for pure alphanumeric keywords (the common case);
+   fall back to substring only for tokens containing symbols (c++, node.js)
+   where boundary regex is unreliable anyway. */
+function keywordFoundIn(text, kw){
+  if(/^[a-z0-9]+$/.test(kw)){
+    return new RegExp('(?:^|[^a-z0-9])'+kw+'(?:[^a-z0-9]|$)').test(text);
+  }
+  return text.includes(kw);
 }
 function computeATSScore(resumeText, jdText){
   const kws = extractKeywords(jdText, 25);
   if(!kws.length) return null;
   const resumeLower = String(resumeText||'').toLowerCase();
-  const found = kws.filter(k=>resumeLower.includes(k));
-  const missing = kws.filter(k=>!resumeLower.includes(k));
+  const found = kws.filter(k=>keywordFoundIn(resumeLower,k));
+  const missing = kws.filter(k=>!keywordFoundIn(resumeLower,k));
   return {score: Math.round(found.length/kws.length*100), found, missing};
 }
 
 function toolAIResumeATS(){
   const body = panelShell({title:'AI Resume Builder (ATS)', desc:'Build a clean, single-column resume that parses correctly in Applicant Tracking Systems — with a live keyword-match score against a job description.'});
   const note=document.createElement('div'); note.className='note';
-  note.textContent = 'Date of birth is intentionally left off — most ATS-safe resume guidance recommends against including it. Everything here runs on-device; nothing is uploaded, even the job description you paste in for scoring.';
+  note.textContent = 'Date of birth is intentionally left off — most ATS-safe resume guidance recommends against including it. Everything here runs on-device; nothing is uploaded, even the job description you paste in for scoring. Note: the PDF font supports Latin/Western European text well; names or text in scripts like Chinese, Arabic, or Devanagari may show as "?" placeholders.';
   body.appendChild(note);
 
   const s1=document.createElement('div'); s1.className='helper-line'; s1.style.fontWeight='600'; s1.textContent='1 · Contact details'; body.appendChild(s1);
@@ -5120,67 +5162,95 @@ function toolAIResumeATS(){
 
   btn.onclick = async ()=>{
     const name = document.getElementById('res-name').value.trim() || 'Your Name';
+    const title0 = document.getElementById('res-title').value.trim();
+    const summary0 = document.getElementById('res-summary').value.trim();
+    const hasExp = [...expWrap.querySelectorAll('[data-res-exp]')].some(row=>row.querySelector('.res-exp-title').value.trim() || row.querySelector('.res-exp-company').value.trim());
+    const hasEdu = [...eduWrap.querySelectorAll('[data-res-edu]')].some(row=>row.querySelector('.res-edu-degree').value.trim() || row.querySelector('.res-edu-school').value.trim());
+    if(document.getElementById('res-name').value.trim()==='' && !summary0 && !hasExp && !hasEdu){
+      log.textContent = 'Add at least your name plus a summary, one role, or one education entry before downloading.';
+      return;
+    }
     log.textContent = 'Building your resume...';
-    const doc = await PDFDocument.create();
-    let page = doc.addPage([612,792]);
-    const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
-    const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-    let y = 740;
-    function ensureSpace(n=1, lh=14){ if(y-n*lh<55){ page=doc.addPage([612,792]); y=740; } }
-    function heading(text){ y-=6; ensureSpace(1,18); page.drawText(text.toUpperCase(), {x:50,y,size:11,font:bold,color:PDFLib.rgb(0.1,0.1,0.1)}); y-=6; page.drawLine({start:{x:50,y},end:{x:562,y},thickness:0.75,color:PDFLib.rgb(0.75,0.75,0.75)}); y-=16; }
-    function paragraph(text, {size=10.5, f=font, lh=14, color=PDFLib.rgb(0.2,0.2,0.2)}={}){
-      wrapTextLines(f, size, text, 512).forEach(l=>{ ensureSpace(1,lh); page.drawText(l, {x:50,y,size,font:f,color}); y-=lh; });
-    }
-
-    page.drawText(name, {x:50,y,size:22,font:bold,color:PDFLib.rgb(0.1,0.1,0.1)}); y-=20;
-    const title = document.getElementById('res-title').value.trim();
-    if(title){ page.drawText(title, {x:50,y,size:12,font,color:PDFLib.rgb(0.35,0.35,0.35)}); y-=18; }
-    const contactBits = [document.getElementById('res-email').value.trim(), document.getElementById('res-phone').value.trim(), document.getElementById('res-location').value.trim(), document.getElementById('res-link').value.trim()].filter(Boolean);
-    if(contactBits.length){ page.drawText(contactBits.join('  ·  '), {x:50,y,size:9.5,font,color:PDFLib.rgb(0.45,0.45,0.45)}); y-=20; }
-
-    const summary = document.getElementById('res-summary').value.trim();
-    if(summary){ heading('Summary'); paragraph(summary); y-=8; }
-
-    const skills = document.getElementById('res-skills').value.trim();
-    if(skills){ heading('Skills'); paragraph(skills); y-=8; }
-
-    const expRows = [...expWrap.querySelectorAll('[data-res-exp]')].filter(row=>row.querySelector('.res-exp-title').value.trim() || row.querySelector('.res-exp-company').value.trim());
-    if(expRows.length){
-      heading('Experience');
-      expRows.forEach(row=>{
-        const t = row.querySelector('.res-exp-title').value.trim();
-        const c = row.querySelector('.res-exp-company').value.trim();
-        const d = row.querySelector('.res-exp-dates').value.trim();
+    try{
+      const doc = await PDFDocument.create();
+      let page = doc.addPage([612,792]);
+      const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+      let y = 740;
+      const warn = {hit:false};
+      function ensureSpace(n=1, lh=14){ if(y-n*lh<55){ page=doc.addPage([612,792]); y=740; } }
+      function heading(text){ y-=6; ensureSpace(1,18); safeDrawText(page, text.toUpperCase(), {x:50,y,size:11,font:bold,color:PDFLib.rgb(0.1,0.1,0.1)}, warn); y-=6; page.drawLine({start:{x:50,y},end:{x:562,y},thickness:0.75,color:PDFLib.rgb(0.75,0.75,0.75)}); y-=16; }
+      function paragraph(text, {size=10.5, f=font, lh=14, color=PDFLib.rgb(0.2,0.2,0.2)}={}){
+        wrapTextLines(f, size, text, 512, warn).forEach(l=>{ ensureSpace(1,lh); page.drawText(l, {x:50,y,size,font:f,color}); y-=lh; });
+      }
+      /* Draws a left label with an optional right-aligned date/year on the
+         same line — but only when there's genuinely room; otherwise the
+         date drops to its own line instead of overlapping the label. This
+         is what the un-fixed version got wrong for long titles/companies. */
+      function labelWithAside(label, aside, {size=11, f=bold, asideX=400, color=PDFLib.rgb(0.1,0.1,0.1), asideColor=PDFLib.rgb(0.45,0.45,0.45)}={}){
+        const safeLabel = pdfSafe(f, label, warn);
         ensureSpace(1,14);
-        page.drawText([t,c].filter(Boolean).join(' — '), {x:50,y,size:11,font:bold,color:PDFLib.rgb(0.1,0.1,0.1)});
-        if(d){ page.drawText(d, {x:400,y,size:9.5,font,color:PDFLib.rgb(0.45,0.45,0.45)}); }
-        y-=15;
-        row.querySelector('.res-exp-bullets').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(b=>{
-          paragraph('•  '+b, {lh:13});
+        page.drawText(safeLabel, {x:50,y,size,font:f,color});
+        if(aside){
+          const labelWidth = f.widthOfTextAtSize(safeLabel, size);
+          const safeAside = pdfSafe(font, aside, warn);
+          if(50+labelWidth+20 <= asideX){
+            page.drawText(safeAside, {x:asideX,y,size:9.5,font,color:asideColor});
+            y-=15;
+          } else {
+            y-=13;
+            ensureSpace(1,12);
+            page.drawText(safeAside, {x:50,y,size:9.5,font,color:asideColor});
+            y-=14;
+          }
+        } else { y-=15; }
+      }
+
+      safeDrawText(page, name, {x:50,y,size:22,font:bold,color:PDFLib.rgb(0.1,0.1,0.1)}, warn); y-=20;
+      if(title0){ safeDrawText(page, title0, {x:50,y,size:12,font,color:PDFLib.rgb(0.35,0.35,0.35)}, warn); y-=18; }
+      const contactBits = [document.getElementById('res-email').value.trim(), document.getElementById('res-phone').value.trim(), document.getElementById('res-location').value.trim(), document.getElementById('res-link').value.trim()].filter(Boolean);
+      if(contactBits.length){ safeDrawText(page, contactBits.join('  ·  '), {x:50,y,size:9.5,font,color:PDFLib.rgb(0.45,0.45,0.45)}, warn); y-=20; }
+
+      if(summary0){ heading('Summary'); paragraph(summary0); y-=8; }
+
+      const skills = document.getElementById('res-skills').value.trim();
+      if(skills){ heading('Skills'); paragraph(skills); y-=8; }
+
+      const expRows = [...expWrap.querySelectorAll('[data-res-exp]')].filter(row=>row.querySelector('.res-exp-title').value.trim() || row.querySelector('.res-exp-company').value.trim());
+      if(expRows.length){
+        heading('Experience');
+        expRows.forEach(row=>{
+          const t = row.querySelector('.res-exp-title').value.trim();
+          const c = row.querySelector('.res-exp-company').value.trim();
+          const d = row.querySelector('.res-exp-dates').value.trim();
+          labelWithAside([t,c].filter(Boolean).join(' — '), d, {size:11, f:bold, asideX:400});
+          row.querySelector('.res-exp-bullets').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(b=>{
+            paragraph('•  '+b, {lh:13});
+          });
+          y-=6;
         });
-        y-=6;
-      });
-    }
+      }
 
-    const eduRows = [...eduWrap.querySelectorAll('[data-res-edu]')].filter(row=>row.querySelector('.res-edu-degree').value.trim() || row.querySelector('.res-edu-school').value.trim());
-    if(eduRows.length){
-      heading('Education');
-      eduRows.forEach(row=>{
-        const deg = row.querySelector('.res-edu-degree').value.trim();
-        const sch = row.querySelector('.res-edu-school').value.trim();
-        const yr = row.querySelector('.res-edu-year').value.trim();
-        ensureSpace(1,14);
-        page.drawText([deg,sch].filter(Boolean).join(', '), {x:50,y,size:10.5,font,color:PDFLib.rgb(0.2,0.2,0.2)});
-        if(yr){ page.drawText(yr, {x:480,y,size:9.5,font,color:PDFLib.rgb(0.45,0.45,0.45)}); }
-        y-=16;
-      });
-    }
+      const eduRows = [...eduWrap.querySelectorAll('[data-res-edu]')].filter(row=>row.querySelector('.res-edu-degree').value.trim() || row.querySelector('.res-edu-school').value.trim());
+      if(eduRows.length){
+        heading('Education');
+        eduRows.forEach(row=>{
+          const deg = row.querySelector('.res-edu-degree').value.trim();
+          const sch = row.querySelector('.res-edu-school').value.trim();
+          const yr = row.querySelector('.res-edu-year').value.trim();
+          labelWithAside([deg,sch].filter(Boolean).join(', '), yr, {size:10.5, f:font, asideX:480, color:PDFLib.rgb(0.2,0.2,0.2)});
+        });
+      }
 
-    const out = await doc.save();
-    const blob = new Blob([out],{type:'application/pdf'});
-    download(blob, name.replace(/[^\w\-]+/g,'_')+'-resume.pdf');
-    log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded — single-column layout, no tables or graphics, so ATS software parses it correctly.</span>';
-    offerChain(blob, 'resume.pdf', log);
+      const out = await doc.save();
+      const blob = new Blob([out],{type:'application/pdf'});
+      download(blob, name.replace(/[^\w\-]+/g,'_')+'-resume.pdf');
+      log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded — single-column layout, no tables or graphics, so ATS software parses it correctly.'
+        + (warn.hit ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
+      offerChain(blob, 'resume.pdf', log);
+    }catch(e){
+      log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
+    }
   };
 }
 
@@ -5254,20 +5324,39 @@ function toolAICoverLetter(){
   const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
   const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.cssText='font-weight:600;margin-top:12px;'; previewLabel.textContent='Review & edit before exporting'; body.appendChild(previewLabel);
   const bodyTextarea=document.createElement('textarea'); bodyTextarea.id='cov-body'; bodyTextarea.rows=10; bodyTextarea.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);'; body.appendChild(bodyTextarea);
-  genBtn.onclick = ()=>{ bodyTextarea.value = generateCoverLetterBody(); };
-  genBtn.onclick();
+
+  /* Auto-refresh the draft as name/company/title/tone/highlights change, so
+     the letter body can't silently go stale relative to the form — but
+     stop auto-syncing the moment the user edits the draft directly, so
+     their hand-edits are never clobbered. */
+  let coverDirty = false;
+  function refreshCoverDraft(force){
+    if(coverDirty && !force) return;
+    bodyTextarea.value = generateCoverLetterBody();
+  }
+  genBtn.onclick = ()=>{ coverDirty=false; refreshCoverDraft(true); };
+  refreshCoverDraft(true);
+  body.addEventListener('input', (e)=>{
+    if(e.target === bodyTextarea){ coverDirty = true; return; }
+    refreshCoverDraft(false);
+  });
 
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='10px'; btn.textContent='Download PDF'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
     if(!bodyTextarea.value.trim()){ log.textContent='Generate or write the letter body first.'; return; }
     log.textContent = 'Building your cover letter...';
-    const out = await buildLetterPDF(buildFullCoverLetterText());
-    const blob = new Blob([out],{type:'application/pdf'});
-    const name = document.getElementById('cov-name').value.trim() || 'cover-letter';
-    download(blob, name.replace(/[^\w\-]+/g,'_')+'-cover-letter.pdf');
-    log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.</span>';
-    offerChain(blob, 'cover-letter.pdf', log);
+    try{
+      const {bytes, warn} = await buildLetterPDF(buildFullCoverLetterText());
+      const blob = new Blob([bytes],{type:'application/pdf'});
+      const name = document.getElementById('cov-name').value.trim() || 'cover-letter';
+      download(blob, name.replace(/[^\w\-]+/g,'_')+'-cover-letter.pdf');
+      log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.'
+        + (warn ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
+      offerChain(blob, 'cover-letter.pdf', log);
+    }catch(e){
+      log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
+    }
   };
 }
 
@@ -5276,7 +5365,7 @@ function toolAINoticeGenerator(){
     leave: { label:'Leave Application',
       fields:[['from','Your name','Jordan Rivera'],['to','Manager / recipient','Alex Chen, Engineering Manager'],['reason','Type of leave','Sick leave'],['dates','Dates requested','Aug 12 – Aug 14, 2026'],['detail','Brief reason (optional)','Recovering from a minor illness']],
       subject:(v)=>`Application for ${v.reason||'Leave'}`,
-      body:(v)=>`Dear ${v.to||'Manager'},\n\nI am writing to formally request ${v.reason?v.reason.toLowerCase():'leave'} from ${v.dates||'the dates below'}.${v.detail?' '+v.detail+'.':''}\n\nI will ensure my responsibilities are handed over before I leave, and I am reachable by email if anything urgent comes up.\n\nThank you for your understanding.\n\nSincerely,\n${v.from||'Your Name'}` },
+      body:(v)=>`Dear ${v.to||'Manager'},\n\nI am writing to formally request ${v.reason?v.reason.toLowerCase():'leave'} for ${v.dates||'the dates below'}.${v.detail?' '+v.detail+'.':''}\n\nI will ensure my responsibilities are handed over before I leave, and I am reachable by email if anything urgent comes up.\n\nThank you for your understanding.\n\nSincerely,\n${v.from||'Your Name'}` },
     warning: { label:'Warning Letter',
       fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['issue','Issue being addressed','repeated late arrivals'],['policy','Policy / expectation referenced (optional)','company attendance policy'],['action','Required corrective action','arrive by 9:00 AM starting immediately']],
       subject:(v)=>`Formal Warning — ${v.issue||'Policy Violation'}`,
@@ -5320,9 +5409,6 @@ function toolAINoticeGenerator(){
       fieldsWrap.appendChild(field);
     });
   }
-  select.onchange = ()=>{ renderFields(); generateDraft(); };
-  renderFields();
-
   const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
   const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.cssText='font-weight:600;margin-top:12px;'; previewLabel.textContent='3 · Review & edit'; body.appendChild(previewLabel);
   const preview=document.createElement('textarea'); preview.id='ntc-preview'; preview.rows=14; preview.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);'; body.appendChild(preview);
@@ -5332,9 +5418,22 @@ function toolAINoticeGenerator(){
     fieldsWrap.querySelectorAll('.ntc-field').forEach(inp=>{ values[inp.dataset.id]=inp.value.trim(); });
     return values;
   }
-  function generateDraft(){ preview.value = buildNoticeFullText(NOTICE_TEMPLATES[select.value], readValues()); }
-  genBtn.onclick = generateDraft;
-  generateDraft();
+  /* Same staleness risk as the cover letter: auto-refresh the preview from
+     the fields as the user types, but stop the moment they edit the
+     preview directly, so a forgotten "Generate draft" click can no longer
+     export a letter that still says "Dear Manager" after the user typed a
+     real recipient name. */
+  let noticeDirty = false;
+  function generateDraft(force){
+    if(noticeDirty && !force) return;
+    preview.value = buildNoticeFullText(NOTICE_TEMPLATES[select.value], readValues());
+  }
+  select.onchange = ()=>{ noticeDirty=false; renderFields(); generateDraft(true); };
+  renderFields();
+  genBtn.onclick = ()=>{ noticeDirty=false; generateDraft(true); };
+  generateDraft(true);
+  fieldsWrap.addEventListener('input', ()=>generateDraft(false));
+  preview.addEventListener('input', ()=>{ noticeDirty = true; });
 
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='10px'; btn.textContent='Download PDF'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
@@ -5342,11 +5441,16 @@ function toolAINoticeGenerator(){
     const text = preview.value.trim();
     if(!text){ log.textContent='Fill in the details and generate a draft first.'; return; }
     log.textContent = 'Building your notice...';
-    const out = await buildLetterPDF(text);
-    const blob = new Blob([out],{type:'application/pdf'});
-    download(blob, NOTICE_TEMPLATES[select.value].label.toLowerCase().replace(/[^\w]+/g,'-')+'.pdf');
-    log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.</span>';
-    offerChain(blob, 'notice.pdf', log);
+    try{
+      const {bytes, warn} = await buildLetterPDF(text);
+      const blob = new Blob([bytes],{type:'application/pdf'});
+      download(blob, NOTICE_TEMPLATES[select.value].label.toLowerCase().replace(/[^\w]+/g,'-')+'.pdf');
+      log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.'
+        + (warn ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
+      offerChain(blob, 'notice.pdf', log);
+    }catch(e){
+      log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
+    }
   };
 }
 
