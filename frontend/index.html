@@ -5454,6 +5454,175 @@ function toolAINoticeGenerator(){
   };
 }
 
+/* ================= PDF EDIT: Print & Screen Mode =================
+   Two mechanically distinct, honestly-scoped outputs:
+   - Screen/Normal: pages with mismatched sizes (common after merges or
+     scans) get resized onto one uniform canvas, content scaled to fit and
+     centered — nothing cropped.
+   - Print-Ready: adds a real bleed margin (by slightly extending the page
+     content to cover it — the standard "scale to bleed" technique, not
+     fabricated artwork) plus crop marks at each trim corner, using
+     standard print-production geometry.
+   Deliberately does NOT claim RGB→CMYK conversion: that needs ICC color
+   management this app has no way to do correctly client-side, and a
+   cosmetic-only "conversion" would be worse than not offering it. */
+
+const STANDARD_PAGE_SIZES = { 'Letter (8.5×11in)':[612,792], 'A4 (210×297mm)':[595.28,841.89], 'Legal (8.5×14in)':[612,1008] };
+function ptToIn(pt){ return Math.round(pt/72*100)/100; }
+function mmToPt(mm){ return mm*72/25.4; }
+function summarizePageSizes(doc){
+  const sizes = doc.getPages().map(p=>p.getSize());
+  const buckets = new Map();
+  sizes.forEach(({width,height})=>{
+    const key = Math.round(width)+'x'+Math.round(height);
+    buckets.set(key, (buckets.get(key)||0)+1);
+  });
+  let modeKey=null, modeCount=0;
+  buckets.forEach((count,key)=>{ if(count>modeCount){ modeCount=count; modeKey=key; } });
+  const [mw,mh] = modeKey.split('x').map(Number);
+  const modeSize = sizes.find(s=>Math.round(s.width)===mw && Math.round(s.height)===mh);
+  return { sizes, buckets, mixed: buckets.size>1, modeSize };
+}
+
+function toolPDFPrintScreenMode(){
+  const body = panelShell({title:'PDF Edit — Print & Screen Mode', desc:'Prepare a PDF for exactly where it\'s going: a uniform layout for on-screen reading, or bleed and crop marks ready for a print shop.'});
+  let file=null, doc=null, pageInfo=null;
+  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+    file=f[0];
+    try{
+      const bytes = await file.arrayBuffer();
+      doc = await loadPdf(bytes);
+      if(doc.getPageCount()===0){ throw new Error('This PDF has no pages.'); }
+      pageInfo = summarizePageSizes(doc);
+      renderReport();
+      modeSection.style.display='block';
+      log.textContent='';
+    }catch(e){
+      doc=null; report.innerHTML=''; modeSection.style.display='none';
+      log.textContent = e.message;
+    }
+  }});
+  const report=document.createElement('div'); report.style.cssText='margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:0.88rem;'; body.appendChild(report);
+  function renderReport(){
+    const n = doc.getPageCount();
+    let html = `<div style="font-weight:600;margin-bottom:4px;">${escapeXml(file.name)} — ${n} page${n===1?'':'s'}</div>`;
+    pageInfo.buckets.forEach((count,key)=>{
+      const [w,h] = key.split('x').map(Number);
+      html += `<div>${ptToIn(w)}" × ${ptToIn(h)}" — ${count} page${count===1?'':'s'}</div>`;
+    });
+    if(pageInfo.mixed) html += `<div style="color:#C1683A;margin-top:6px;">⚠ Mixed page sizes detected (${pageInfo.buckets.size} different sizes) — Screen mode can make these consistent.</div>`;
+    report.innerHTML = html;
+  }
+
+  const modeSection = document.createElement('div'); modeSection.style.display='none'; body.appendChild(modeSection);
+  const tabRow=document.createElement('div'); tabRow.className='tab-row';
+  tabRow.innerHTML = `
+    <button type="button" class="tab-btn active" data-mode="screen"><span class="tab-title">Screen / Normal</span><span class="tab-sub">uniform size for reading</span></button>
+    <button type="button" class="tab-btn" data-mode="print"><span class="tab-title">Print-Ready</span><span class="tab-sub">bleed + crop marks</span></button>
+  `;
+  modeSection.appendChild(tabRow);
+  let mode='screen';
+  tabRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick=()=>{ tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); mode=b.dataset.mode; screenOpts.style.display = mode==='screen'?'block':'none'; printOpts.style.display = mode==='print'?'block':'none'; };
+  });
+
+  const screenOpts=document.createElement('div'); modeSection.appendChild(screenOpts);
+  const targetLabel=document.createElement('div'); targetLabel.className='field';
+  targetLabel.innerHTML = `<label>Target page size</label><select id="ps-target" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">
+    <option value="auto">Auto — match this PDF's most common page size</option>
+    ${Object.keys(STANDARD_PAGE_SIZES).map(k=>`<option value="${escapeXml(k)}">${escapeXml(k)}</option>`).join('')}
+  </select>`;
+  screenOpts.appendChild(targetLabel);
+  const screenNote=document.createElement('div'); screenNote.className='note'; screenNote.textContent='Every page is scaled to fit inside the target size and centered — nothing is cropped.'; screenOpts.appendChild(screenNote);
+
+  const printOpts=document.createElement('div'); printOpts.style.display='none'; modeSection.appendChild(printOpts);
+  const bleedField=document.createElement('div'); bleedField.className='field';
+  bleedField.innerHTML = `<label>Bleed</label><select id="ps-bleed" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">
+    <option value="0">None — crop marks only</option>
+    <option value="3mm" selected>3mm (standard commercial bleed)</option>
+    <option value="9pt">1/8 in (common US print)</option>
+    <option value="5mm">5mm</option>
+  </select>`;
+  printOpts.appendChild(bleedField);
+  const printSizeField=document.createElement('div'); printSizeField.className='field';
+  printSizeField.innerHTML = `<label>Trim size</label><select id="ps-print-size" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">
+    <option value="keep">Keep each page's original size</option>
+    ${Object.keys(STANDARD_PAGE_SIZES).map(k=>`<option value="${escapeXml(k)}">${escapeXml(k)}</option>`).join('')}
+  </select>`;
+  printOpts.appendChild(printSizeField);
+  const printNote=document.createElement('div'); printNote.className='note'; printNote.textContent='Bleed is added by slightly extending the page content to fill the bleed margin (the standard "scale to bleed" technique) — this does not fabricate new artwork. It does not convert colors to CMYK; check color-profile requirements with your print shop separately.'; printOpts.appendChild(printNote);
+
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='12px'; btn.textContent='Apply & Download'; modeSection.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; modeSection.appendChild(log);
+
+  function targetSizeFor(selectEl){
+    const v = selectEl.value;
+    if(v==='auto') return {width:pageInfo.modeSize.width, height:pageInfo.modeSize.height};
+    if(v==='keep') return null;
+    return {width:STANDARD_PAGE_SIZES[v][0], height:STANDARD_PAGE_SIZES[v][1]};
+  }
+  function parseBleed(v){
+    if(v==='0') return 0;
+    if(v==='9pt') return 9;
+    return mmToPt(parseFloat(v));
+  }
+
+  btn.onclick = async ()=>{
+    if(!doc){ log.textContent='Choose a PDF first.'; return; }
+    log.textContent = 'Processing on-device...';
+    try{
+      const out = await PDFDocument.create();
+      if(mode==='screen'){
+        const target = targetSizeFor(document.getElementById('ps-target'));
+        for(let i=0;i<doc.getPageCount();i++){
+          const src = doc.getPage(i);
+          const {width:sw, height:sh} = src.getSize();
+          const tw = target ? target.width : sw, th = target ? target.height : sh;
+          const [embedded] = await out.embedPdf(doc, [i]);
+          const newPage = out.addPage([tw, th]);
+          const scale = Math.min(tw/sw, th/sh);
+          const dw = sw*scale, dh = sh*scale;
+          newPage.drawPage(embedded, {x:(tw-dw)/2, y:(th-dh)/2, width:dw, height:dh});
+        }
+      } else {
+        const bleed = parseBleed(document.getElementById('ps-bleed').value);
+        const target = targetSizeFor(document.getElementById('ps-print-size'));
+        const markLen=18, gap=2, marksZone=gap+markLen;
+        const pageMargin = bleed + marksZone;
+        for(let i=0;i<doc.getPageCount();i++){
+          const src = doc.getPage(i);
+          const {width:sw, height:sh} = src.getSize();
+          const trimW = target ? target.width : sw, trimH = target ? target.height : sh;
+          const [embedded] = await out.embedPdf(doc, [i]);
+          const pageW = trimW + 2*pageMargin, pageH = trimH + 2*pageMargin;
+          const newPage = out.addPage([pageW, pageH]);
+          const fitScale = Math.min(trimW/sw, trimH/sh);
+          const dw = sw*fitScale, dh = sh*fitScale;
+          const bleedScaleX = bleed>0 ? (trimW+2*bleed)/trimW : 1;
+          const bleedScaleY = bleed>0 ? (trimH+2*bleed)/trimH : 1;
+          const finalDw = dw*bleedScaleX, finalDh = dh*bleedScaleY;
+          const finalX = pageMargin + trimW/2 - finalDw/2;
+          const finalY = pageMargin + trimH/2 - finalDh/2;
+          newPage.drawPage(embedded, {x:finalX, y:finalY, width:finalDw, height:finalDh});
+          const corners = [[pageMargin,pageMargin,-1,-1],[pageMargin+trimW,pageMargin,1,-1],[pageMargin,pageMargin+trimH,-1,1],[pageMargin+trimW,pageMargin+trimH,1,1]];
+          corners.forEach(([cx,cy,dx,dy])=>{
+            newPage.drawLine({start:{x:cx+dx*gap,y:cy}, end:{x:cx+dx*(gap+markLen),y:cy}, thickness:0.75, color:PDFLib.rgb(0,0,0)});
+            newPage.drawLine({start:{x:cx,y:cy+dy*gap}, end:{x:cx,y:cy+dy*(gap+markLen)}, thickness:0.75, color:PDFLib.rgb(0,0,0)});
+          });
+        }
+      }
+      const bytes = await out.save();
+      const blob = new Blob([bytes],{type:'application/pdf'});
+      const suffix = mode==='screen' ? '-normalized' : '-print-ready';
+      download(blob, file.name.replace(/\.pdf$/i,'')+suffix+'.pdf');
+      log.innerHTML = '<span class="ok">✓ Done — processed on-device, nothing uploaded.</span>';
+      offerChain(blob, (mode==='screen'?'normalized':'print-ready')+'.pdf', log);
+    }catch(e){
+      log.textContent = 'Could not process this PDF: '+(e.message||String(e));
+    }
+  };
+}
+
 /* ================= SERVER-ASSISTED TOOLS (self-hosted backend) =================
    These are the only tools that send your file anywhere — and "anywhere"
    is a backend YOU run (see /backend: FastAPI + Tesseract/Ghostscript/
@@ -7793,6 +7962,7 @@ const editTools = [
   {icon:'✒️', name:'Sign PDF', desc:'Draw and place a signature.', fn:toolSignPDF},
   {icon:'Ab', name:'PDF Forms', desc:'Fill in existing form fields.', fn:toolPDFForms},
   {icon:'🔖', name:'Digital Stamp', desc:'APPROVED, PAID, or your own stamp text.', fn:toolDigitalStamp},
+  {icon:'🖨️', name:'PDF Edit — Print & Screen Mode', desc:'Normalize mixed page sizes for reading, or add bleed and crop marks for a print shop.', fn:toolPDFPrintScreenMode},
 ];
 const securityTools = [
   {icon:'🔒', name:'Protect PDF', desc:'Add a real password (AES-256), encrypted on-device.', fn:toolProtectPDF},
@@ -7864,7 +8034,7 @@ const CATEGORY_COLORS = {
   'security-tools':'#00897B', 'img-tools':'#4CAF50', 'video-tools':'#FF5722',
   'ai-tools':'#5C6BC0', 'utility-tools':'#FF9800', 'api-tools':'#607D8B',
 };
-const NEW_TOOL_NAMES = new Set(['PDF Forms','PDF to Markdown','AI Resume Builder (ATS)','AI Cover Letter Generator','Notice & Letter Generator']);
+const NEW_TOOL_NAMES = new Set(['PDF Forms','PDF to Markdown','AI Resume Builder (ATS)','AI Cover Letter Generator','Notice & Letter Generator','PDF Edit — Print & Screen Mode']);
 function makeCard(t, sectionId){
   const card = document.createElement('button');
   card.className='tool-card';
