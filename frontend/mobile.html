@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#E5322D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script defer src="vendor/pdf-lib.min.js" onerror="this.remove();var s=document.createElement('script');s.defer=true;s.integrity='sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI';s.crossOrigin='anonymous';s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';document.head.appendChild(s)"></script>
 
 <style>
 * {
@@ -633,6 +634,186 @@ body {
   font-size: 24px;
 }
 
+/* ===== TOOL DETAIL (AI Kit + PDF Edit — the only functional tools today) ===== */
+.tool-detail {
+  position: fixed;
+  inset: 0;
+  background: var(--white);
+  z-index: 300;
+  display: none;
+  flex-direction: column;
+}
+.tool-detail.active { display: flex; }
+
+.tool-detail-header {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  padding: max(16px, env(safe-area-inset-top)) 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+}
+
+.tool-detail-back {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(229, 50, 45, 0.1);
+  color: var(--primary-red);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tool-detail-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.tool-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.form-note {
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--gray-dark);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.form-step {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin: 16px 0 8px;
+}
+.form-step:first-of-type { margin-top: 0; }
+
+.form-field { margin-bottom: 10px; }
+
+.form-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-dark);
+  margin-bottom: 5px;
+}
+
+.form-field input[type="text"],
+.form-field input[type="email"],
+.form-field input[type="date"],
+.form-field textarea,
+.form-field select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--gray-medium);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--primary-dark);
+}
+
+.form-field textarea { resize: vertical; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.form-card-row {
+  display: flex;
+  border: 1px solid var(--gray-medium);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.form-card-row button {
+  flex: 1;
+  border: none;
+  background: var(--white);
+  padding: 10px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-dark);
+  cursor: pointer;
+}
+.form-card-row button.active {
+  background: var(--primary-red);
+  color: var(--white);
+}
+
+.small-action-btn {
+  background: rgba(229, 50, 45, 0.1);
+  color: var(--primary-red);
+  border: none;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.big-action-btn {
+  width: 100%;
+  background: var(--primary-red);
+  color: var(--white);
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 14px 0 8px;
+}
+.big-action-btn:active { opacity: 0.9; }
+
+.status-log {
+  font-size: 12px;
+  color: var(--gray-dark);
+  min-height: 16px;
+  padding: 4px 0;
+}
+.status-log.ok { color: #2E7D32; font-weight: 600; }
+
+.ats-score-panel {
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--glass-bg);
+  display: none;
+}
+
+.exp-entry {
+  border: 1px solid var(--gray-medium);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.page-size-report {
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--glass-bg);
+  font-size: 13px;
+}
+
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
   width: 4px;
@@ -817,7 +998,15 @@ body {
 
   <!-- TOOLS PAGE -->
   <div class="content-section" data-page="tools">
-    <div class="section-title" style="margin-top: 16px;">All tools</div>
+    <div class="section-title" style="margin-top: 16px;">AI Kit</div>
+    <div class="tools-grid">
+      <div class="tool-card" onclick="openToolDetail('AI Resume Builder (ATS)', renderResumeATS)"><div class="tool-icon">📄</div><div class="tool-name">AI Resume Builder</div></div>
+      <div class="tool-card" onclick="openToolDetail('AI Cover Letter', renderCoverLetter)"><div class="tool-icon">✉️</div><div class="tool-name">Cover Letter</div></div>
+      <div class="tool-card" onclick="openToolDetail('Notice & Letter Generator', renderNoticeGenerator)"><div class="tool-icon">📋</div><div class="tool-name">Notice Generator</div></div>
+      <div class="tool-card" onclick="openToolDetail('PDF Edit — Print & Screen', renderPDFEditPrintScreen)"><div class="tool-icon">🖨️</div><div class="tool-name">Print & Screen Mode</div></div>
+    </div>
+
+    <div class="section-title" style="margin-top: 20px;">All tools</div>
     <div class="tools-grid">
       <div class="tool-card"><div class="tool-icon">🔗</div><div class="tool-name">Merge PDF</div></div>
       <div class="tool-card"><div class="tool-icon">✂️</div><div class="tool-name">Split PDF</div></div>
@@ -1037,6 +1226,17 @@ body {
   </div>
 </div>
 
+<!-- TOOL DETAIL OVERLAY — used by the AI Kit and PDF Edit tools, the only
+     functional tools in this mobile app today. Every other card above is
+     still a design mockup (see openTool() below). -->
+<div class="tool-detail" id="tool-detail">
+  <div class="tool-detail-header">
+    <button class="tool-detail-back" onclick="closeToolDetail()">←</button>
+    <div class="tool-detail-title" id="tool-detail-title"></div>
+  </div>
+  <div class="tool-detail-body" id="tool-detail-body"></div>
+</div>
+
 <script>
 function switchPage(page) {
   // Hide all sections
@@ -1058,6 +1258,662 @@ function switchPage(page) {
 
 function openTool(tool) {
   alert(`Opening ${tool} tool...`);
+}
+
+/* ================= AI KIT + PDF EDIT (mobile) =================
+   The only functional tools in this app today. Logic ported verbatim from
+   the desktop app's already-tested implementation (frontend/index.html) —
+   same pdfSafe encoding guard, same word-boundary ATS matching, same
+   bleed/crop-mark geometry — only the DOM/CSS is adapted to this app's
+   card-based mobile layout. Everything else on this screen (Merge PDF,
+   Split PDF, etc.) is still a design mockup; see openTool() above. */
+
+function escapeXml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function download(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+function openToolDetail(title, renderFn){
+  document.getElementById('tool-detail-title').textContent = title;
+  const container = document.getElementById('tool-detail-body');
+  container.innerHTML = '';
+  // Each render function attaches an 'input' listener to the body it's
+  // given (for live ATS scoring / draft refresh). #tool-detail-body itself
+  // is a persistent node reused across every tool open, so wiping only its
+  // children would leave every previous tool's listener still attached —
+  // it'd keep firing on the next tool's fields and crash reading elements
+  // that no longer exist. Giving each render call a fresh throwaway div
+  // means the old node (and its listeners) is simply discarded instead.
+  const fresh = document.createElement('div');
+  container.appendChild(fresh);
+  document.getElementById('tool-detail').classList.add('active');
+  renderFn(fresh);
+}
+function closeToolDetail(){
+  document.getElementById('tool-detail').classList.remove('active');
+}
+
+async function loadPdf(bytes){
+  const { PDFDocument } = PDFLib;
+  try{ return await PDFDocument.load(bytes); }
+  catch(e){
+    if(String(e).includes('encrypted')){
+      try{ return await PDFDocument.load(bytes, {ignoreEncryption:true}); }
+      catch(e2){ throw new Error('This PDF is password-protected.'); }
+    }
+    throw new Error('Could not read this PDF — it may be corrupted.');
+  }
+}
+
+const PDF_CHAR_FALLBACK = {'‘':"'",'’':"'",'“':'"','”':'"','–':'-','—':'-','…':'...','•':'*',' ':' '};
+function pdfSafe(font, text, warn){
+  const str = String(text==null?'':text);
+  try{ font.widthOfTextAtSize(str, 10); return str; }
+  catch(e){
+    let out = '';
+    for(const ch of str){
+      if(PDF_CHAR_FALLBACK[ch] !== undefined){ out += PDF_CHAR_FALLBACK[ch]; if(warn) warn.hit = true; continue; }
+      try{ font.widthOfTextAtSize(ch, 10); out += ch; }
+      catch(e2){ out += '?'; if(warn) warn.hit = true; }
+    }
+    return out;
+  }
+}
+function safeDrawText(page, text, opts, warn){ page.drawText(pdfSafe(opts.font, text, warn), opts); }
+function wrapTextLines(font, size, text, maxWidth, warn){
+  const words = pdfSafe(font, text, warn).split(/\s+/).filter(Boolean);
+  const lines = []; let line='';
+  words.forEach(w=>{
+    const test = line ? line+' '+w : w;
+    if(font.widthOfTextAtSize(test, size) > maxWidth && line){ lines.push(line); line=w; }
+    else line = test;
+  });
+  if(line) lines.push(line);
+  return lines.length ? lines : [''];
+}
+async function buildLetterPDF(text){
+  const { PDFDocument } = PDFLib;
+  const doc = await PDFDocument.create();
+  let page = doc.addPage([612,792]);
+  const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  let y = 740;
+  const warn = {hit:false};
+  function ensureSpace(n=1, lh=15){ if(y-n*lh<60){ page=doc.addPage([612,792]); y=740; } }
+  String(text).split('\n').forEach(line=>{
+    if(!line.trim()){ y-=10; return; }
+    wrapTextLines(font, 11, line, 512, warn).forEach(l=>{
+      ensureSpace(1,15);
+      page.drawText(l, {x:50,y,size:11,font,color:PDFLib.rgb(0.15,0.15,0.15)});
+      y-=15;
+    });
+  });
+  return {bytes: await doc.save(), warn: warn.hit};
+}
+
+const ATS_STOPWORDS = new Set(['the','and','for','with','that','this','you','your','are','will','have','has','had','from','our','their','they','them','a','an','of','to','in','on','at','as','is','be','or','it','we','us','job','role','work','working','team','years','year','experience','required','requirement','requirements','preferred','including','etc','other','such','who','into','also','using','use','across','ability','strong','excellent','skills','skill','looking','apply','applicants','candidate','candidates','ideal','plus','including','responsibilities','responsible','company','position','new','all','any','can','may','must','should','ll','re','ve','per','you\'ll','you\'re','if','by','up','no','so','do','my','ok']);
+function extractKeywords(text, limit=25){
+  const freq = {};
+  String(text||'').toLowerCase().replace(/[^a-z0-9+#./\s-]/g,' ').split(/\s+/).forEach(raw=>{
+    const w = raw.trim().replace(/^[.\-/]+|[.\-/]+$/g,'');
+    if(w.length<2 || ATS_STOPWORDS.has(w) || /^\d+$/.test(w)) return;
+    freq[w] = (freq[w]||0)+1;
+  });
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,limit).map(e=>e[0]);
+}
+function keywordFoundIn(text, kw){
+  if(/^[a-z0-9]+$/.test(kw)) return new RegExp('(?:^|[^a-z0-9])'+kw+'(?:[^a-z0-9]|$)').test(text);
+  return text.includes(kw);
+}
+function computeATSScore(resumeText, jdText){
+  const kws = extractKeywords(jdText, 25);
+  if(!kws.length) return null;
+  const resumeLower = String(resumeText||'').toLowerCase();
+  const found = kws.filter(k=>keywordFoundIn(resumeLower,k));
+  const missing = kws.filter(k=>!keywordFoundIn(resumeLower,k));
+  return {score: Math.round(found.length/kws.length*100), found, missing};
+}
+
+/* Shared with the desktop app via the same localStorage keys, so saving
+   your info or a contact in the browser tab also autofills the app view
+   (and vice versa) when both run on the same device/profile. */
+function loadMyInfo(){ try{ return JSON.parse(localStorage.getItem('pdflove.myInfo')||'null') || {}; }catch(e){ return {}; } }
+function saveMyInfo(patch){ const info={...loadMyInfo(),...patch}; try{ localStorage.setItem('pdflove.myInfo', JSON.stringify(info)); }catch(e){} }
+function loadContacts(){ try{ return JSON.parse(localStorage.getItem('pdflove.contacts')||'[]'); }catch(e){ return []; } }
+function saveContact(name, extra={}){
+  name = String(name||'').trim();
+  if(!name) return;
+  const list = loadContacts();
+  const idx = list.findIndex(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(idx>=0) list[idx] = {...list[idx], name, ...extra};
+  else list.push({name, ...extra});
+  try{ localStorage.setItem('pdflove.contacts', JSON.stringify(list.slice(-50))); }catch(e){}
+}
+function fillIfEmpty(id, value){ const el=document.getElementById(id); if(el && !el.value.trim() && value) el.value = value; }
+function contactsDatalist(id){
+  const dl = document.createElement('datalist'); dl.id = id;
+  loadContacts().forEach(c=>{ const opt=document.createElement('option'); opt.value=c.name; dl.appendChild(opt); });
+  return dl;
+}
+
+const STANDARD_PAGE_SIZES = { 'Letter (8.5×11in)':[612,792], 'A4 (210×297mm)':[595.28,841.89], 'Legal (8.5×14in)':[612,1008] };
+function ptToIn(pt){ return Math.round(pt/72*100)/100; }
+function mmToPt(mm){ return mm*72/25.4; }
+function summarizePageSizes(doc){
+  const sizes = doc.getPages().map(p=>p.getSize());
+  const buckets = new Map();
+  sizes.forEach(({width,height})=>{
+    const key = Math.round(width)+'x'+Math.round(height);
+    buckets.set(key, (buckets.get(key)||0)+1);
+  });
+  let modeKey=null, modeCount=0;
+  buckets.forEach((count,key)=>{ if(count>modeCount){ modeCount=count; modeKey=key; } });
+  const [mw,mh] = modeKey.split('x').map(Number);
+  const modeSize = sizes.find(s=>Math.round(s.width)===mw && Math.round(s.height)===mh);
+  return { sizes, buckets, mixed: buckets.size>1, modeSize };
+}
+
+/* Simple tap-to-choose file picker — mobile doesn't need drag-and-drop. */
+function buildFilePicker(container, {accept, onFile}){
+  const wrap = document.createElement('div');
+  const btn = document.createElement('button'); btn.type='button'; btn.className='small-action-btn'; btn.textContent='📄 Choose a PDF';
+  const input = document.createElement('input'); input.type='file'; input.accept=accept||''; input.style.display='none';
+  btn.onclick = ()=>input.click();
+  input.onchange = ()=>{ if(input.files[0]) onFile(input.files[0]); };
+  wrap.appendChild(btn); wrap.appendChild(input);
+  container.appendChild(wrap);
+  return wrap;
+}
+
+function renderResumeATS(body){
+  const note=document.createElement('div'); note.className='form-note';
+  note.textContent = 'Date of birth is intentionally left off — most ATS-safe resume guidance recommends against including it. Runs on-device; nothing is uploaded. Names/text in scripts like Chinese, Arabic, or Devanagari may show as "?" in the PDF font.';
+  body.appendChild(note);
+
+  const s1=document.createElement('div'); s1.className='form-step'; s1.textContent='Contact details'; body.appendChild(s1);
+  const row=document.createElement('div'); row.className='form-row form-field';
+  row.innerHTML = `<div class="form-field"><label>Full name</label><input type="text" id="res-name" placeholder="Jordan Rivera"></div>
+    <div class="form-field"><label>Target job title</label><input type="text" id="res-title" placeholder="Senior Product Designer"></div>`;
+  body.appendChild(row);
+  const row2=document.createElement('div'); row2.className='form-row form-field';
+  row2.innerHTML = `<div class="form-field"><label>Email</label><input type="email" id="res-email" placeholder="jordan@email.com"></div>
+    <div class="form-field"><label>Phone</label><input type="text" id="res-phone" placeholder="+1 555 010 1234"></div>`;
+  body.appendChild(row2);
+  const row3=document.createElement('div'); row3.className='form-row form-field';
+  row3.innerHTML = `<div class="form-field"><label>Location</label><input type="text" id="res-location" placeholder="Austin, TX"></div>
+    <div class="form-field"><label>LinkedIn / portfolio (optional)</label><input type="text" id="res-link" placeholder="linkedin.com/in/jordan"></div>`;
+  body.appendChild(row3);
+  { const mine=loadMyInfo(); fillIfEmpty('res-name',mine.name); fillIfEmpty('res-email',mine.email); fillIfEmpty('res-phone',mine.phone); fillIfEmpty('res-location',mine.location); fillIfEmpty('res-link',mine.link); }
+
+  const s2=document.createElement('div'); s2.className='form-step'; s2.textContent='Target job (for ATS scoring, optional)'; body.appendChild(s2);
+  const jdField=document.createElement('div'); jdField.className='form-field';
+  jdField.innerHTML = `<textarea id="res-jd" rows="4" placeholder="Paste the job posting to see which keywords your resume is missing..."></textarea>`;
+  body.appendChild(jdField);
+  const atsPanel=document.createElement('div'); atsPanel.id='res-ats-panel'; atsPanel.className='ats-score-panel'; body.appendChild(atsPanel);
+
+  const s3=document.createElement('div'); s3.className='form-step'; s3.textContent='Summary'; body.appendChild(s3);
+  const sumField=document.createElement('div'); sumField.className='form-field';
+  sumField.innerHTML = `<textarea id="res-summary" rows="3" placeholder="A 2-3 sentence professional summary..."></textarea>`;
+  body.appendChild(sumField);
+  const draftBtn=document.createElement('button'); draftBtn.type='button'; draftBtn.className='small-action-btn'; draftBtn.textContent='✨ Draft a starting summary'; body.appendChild(draftBtn);
+
+  const s4=document.createElement('div'); s4.className='form-step'; s4.textContent='Skills (comma-separated)'; body.appendChild(s4);
+  const skillsField=document.createElement('div'); skillsField.className='form-field';
+  skillsField.innerHTML = `<input type="text" id="res-skills" placeholder="Figma, User Research, Design Systems">`;
+  body.appendChild(skillsField);
+
+  const s5=document.createElement('div'); s5.className='form-step'; s5.textContent='Work experience'; body.appendChild(s5);
+  const expWrap=document.createElement('div'); expWrap.id='res-exp-wrap'; body.appendChild(expWrap);
+  function addExpRow(){
+    const row=document.createElement('div'); row.dataset.resExp='1'; row.className='exp-entry';
+    row.innerHTML = `<div class="form-field"><label>Job title</label><input type="text" class="res-exp-title" placeholder="Senior Product Designer"></div>
+      <div class="form-field"><label>Company</label><input type="text" class="res-exp-company" placeholder="Acme Inc."></div>
+      <div class="form-field"><label>Dates</label><input type="text" class="res-exp-dates" placeholder="Jan 2022 – Present"></div>
+      <div class="form-field"><label>Achievements (one per line)</label><textarea class="res-exp-bullets" rows="3" placeholder="Led a redesign that increased conversion by 18%"></textarea></div>
+      <button type="button" class="small-action-btn">✕ Remove this role</button>`;
+    row.querySelector('button').onclick=()=>{ row.remove(); updateATS(); };
+    expWrap.appendChild(row);
+  }
+  const addExpBtn=document.createElement('button'); addExpBtn.type='button'; addExpBtn.className='small-action-btn'; addExpBtn.textContent='+ Add another role'; body.appendChild(addExpBtn);
+  addExpBtn.onclick=()=>addExpRow(); addExpRow();
+
+  const s6=document.createElement('div'); s6.className='form-step'; s6.textContent='Education'; body.appendChild(s6);
+  const eduWrap=document.createElement('div'); eduWrap.id='res-edu-wrap'; body.appendChild(eduWrap);
+  function addEduRow(){
+    const row=document.createElement('div'); row.dataset.resEdu='1'; row.className='exp-entry';
+    row.innerHTML = `<div class="form-field"><label>Degree</label><input type="text" class="res-edu-degree" placeholder="B.S. Computer Science"></div>
+      <div class="form-field"><label>School</label><input type="text" class="res-edu-school" placeholder="State University"></div>
+      <div class="form-field"><label>Year</label><input type="text" class="res-edu-year" placeholder="2021"></div>
+      <button type="button" class="small-action-btn">✕ Remove</button>`;
+    row.querySelector('button').onclick=()=>{ row.remove(); updateATS(); };
+    eduWrap.appendChild(row);
+  }
+  const addEduBtn=document.createElement('button'); addEduBtn.type='button'; addEduBtn.className='small-action-btn'; addEduBtn.textContent='+ Add another'; body.appendChild(addEduBtn);
+  addEduBtn.onclick=()=>addEduRow(); addEduRow();
+
+  const btn=document.createElement('button'); btn.className='big-action-btn'; btn.textContent='Download PDF'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='status-log'; body.appendChild(log);
+
+  function currentResumeText(){
+    const bits=[document.getElementById('res-title').value, document.getElementById('res-summary').value, document.getElementById('res-skills').value];
+    expWrap.querySelectorAll('[data-res-exp]').forEach(row=>bits.push(row.querySelector('.res-exp-title').value, row.querySelector('.res-exp-company').value, row.querySelector('.res-exp-bullets').value));
+    eduWrap.querySelectorAll('[data-res-edu]').forEach(row=>bits.push(row.querySelector('.res-edu-degree').value, row.querySelector('.res-edu-school').value));
+    return bits.join(' ');
+  }
+  function updateATS(){
+    const jd = document.getElementById('res-jd').value.trim();
+    if(!jd){ atsPanel.style.display='none'; return; }
+    const result = computeATSScore(currentResumeText(), jd);
+    if(!result){ atsPanel.style.display='none'; return; }
+    atsPanel.style.display='block';
+    const color = result.score>=70?'#2E7D32':result.score>=40?'#E08A00':'#C62828';
+    atsPanel.innerHTML = `<div style="display:flex;align-items:center;gap:12px;"><div style="font-size:1.7rem;font-weight:800;color:${color};">${result.score}%</div><div style="flex:1;"><div style="font-weight:600;font-size:13px;">ATS keyword match</div><div style="font-size:11px;color:var(--gray-dark);">Based on the job description above.</div></div></div>
+      ${result.missing.length ? `<div style="margin-top:8px;font-size:12px;font-weight:600;">Missing keywords:</div><div id="res-missing-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;"></div>` : `<div style="margin-top:6px;color:#2E7D32;font-size:12px;">✓ Great coverage.</div>`}`;
+    if(result.missing.length){
+      const chipsWrap = atsPanel.querySelector('#res-missing-chips');
+      result.missing.slice(0,15).forEach(kw=>{
+        const b=document.createElement('button'); b.type='button'; b.className='small-action-btn'; b.style.margin='0'; b.textContent='+ '+kw;
+        b.onclick=()=>{ const el=document.getElementById('res-skills'); const cur=el.value.split(',').map(s=>s.trim()).filter(Boolean); if(!cur.includes(kw)){ cur.push(kw); el.value=cur.join(', '); updateATS(); } };
+        chipsWrap.appendChild(b);
+      });
+    }
+  }
+  body.addEventListener('input', updateATS);
+
+  draftBtn.onclick = ()=>{
+    const title = document.getElementById('res-title').value.trim() || 'professional';
+    const skills = document.getElementById('res-skills').value.split(',').map(s=>s.trim()).filter(Boolean).slice(0,4);
+    const skillsStr = skills.length ? ` skilled in ${skills.length>1?skills.slice(0,-1).join(', ')+' and '+skills[skills.length-1]:skills[0]}` : '';
+    document.getElementById('res-summary').value = `Results-driven ${title}${skillsStr}. Proven track record of delivering high-quality work, collaborating cross-functionally, and driving measurable outcomes.`;
+    updateATS();
+  };
+
+  btn.onclick = async ()=>{
+    const name = document.getElementById('res-name').value.trim() || 'Your Name';
+    const summary0 = document.getElementById('res-summary').value.trim();
+    const hasExp = [...expWrap.querySelectorAll('[data-res-exp]')].some(row=>row.querySelector('.res-exp-title').value.trim() || row.querySelector('.res-exp-company').value.trim());
+    const hasEdu = [...eduWrap.querySelectorAll('[data-res-edu]')].some(row=>row.querySelector('.res-edu-degree').value.trim() || row.querySelector('.res-edu-school').value.trim());
+    if(document.getElementById('res-name').value.trim()==='' && !summary0 && !hasExp && !hasEdu){
+      log.textContent = 'Add at least your name plus a summary, one role, or one education entry.';
+      return;
+    }
+    log.textContent = 'Building your resume...'; log.className='status-log';
+    try{
+      const { PDFDocument } = PDFLib;
+      const doc = await PDFDocument.create();
+      let page = doc.addPage([612,792]);
+      const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+      const bold = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+      let y = 740;
+      const warn = {hit:false};
+      function ensureSpace(n=1, lh=14){ if(y-n*lh<55){ page=doc.addPage([612,792]); y=740; } }
+      function heading(text){ y-=6; ensureSpace(1,18); safeDrawText(page, text.toUpperCase(), {x:50,y,size:11,font:bold,color:PDFLib.rgb(0.1,0.1,0.1)}, warn); y-=6; page.drawLine({start:{x:50,y},end:{x:562,y},thickness:0.75,color:PDFLib.rgb(0.75,0.75,0.75)}); y-=16; }
+      function paragraph(text, {size=10.5, f=font, lh=14, color=PDFLib.rgb(0.2,0.2,0.2)}={}){
+        wrapTextLines(f, size, text, 512, warn).forEach(l=>{ ensureSpace(1,lh); page.drawText(l, {x:50,y,size,font:f,color}); y-=lh; });
+      }
+      function labelWithAside(label, aside, {size=11, f=bold, asideX=400, color=PDFLib.rgb(0.1,0.1,0.1), asideColor=PDFLib.rgb(0.45,0.45,0.45)}={}){
+        const safeLabel = pdfSafe(f, label, warn);
+        ensureSpace(1,14);
+        page.drawText(safeLabel, {x:50,y,size,font:f,color});
+        if(aside){
+          const labelWidth = f.widthOfTextAtSize(safeLabel, size);
+          const safeAside = pdfSafe(font, aside, warn);
+          if(50+labelWidth+20 <= asideX){ page.drawText(safeAside, {x:asideX,y,size:9.5,font,color:asideColor}); y-=15; }
+          else { y-=13; ensureSpace(1,12); page.drawText(safeAside, {x:50,y,size:9.5,font,color:asideColor}); y-=14; }
+        } else { y-=15; }
+      }
+
+      safeDrawText(page, name, {x:50,y,size:22,font:bold,color:PDFLib.rgb(0.1,0.1,0.1)}, warn); y-=20;
+      const title0 = document.getElementById('res-title').value.trim();
+      if(title0){ safeDrawText(page, title0, {x:50,y,size:12,font,color:PDFLib.rgb(0.35,0.35,0.35)}, warn); y-=18; }
+      const contactBits=[document.getElementById('res-email').value.trim(), document.getElementById('res-phone').value.trim(), document.getElementById('res-location').value.trim(), document.getElementById('res-link').value.trim()].filter(Boolean);
+      if(contactBits.length){ safeDrawText(page, contactBits.join('  ·  '), {x:50,y,size:9.5,font,color:PDFLib.rgb(0.45,0.45,0.45)}, warn); y-=20; }
+
+      if(summary0){ heading('Summary'); paragraph(summary0); y-=8; }
+      const skills = document.getElementById('res-skills').value.trim();
+      if(skills){ heading('Skills'); paragraph(skills); y-=8; }
+
+      const expRows=[...expWrap.querySelectorAll('[data-res-exp]')].filter(row=>row.querySelector('.res-exp-title').value.trim() || row.querySelector('.res-exp-company').value.trim());
+      if(expRows.length){
+        heading('Experience');
+        expRows.forEach(row=>{
+          const t=row.querySelector('.res-exp-title').value.trim(), c=row.querySelector('.res-exp-company').value.trim(), d=row.querySelector('.res-exp-dates').value.trim();
+          labelWithAside([t,c].filter(Boolean).join(' — '), d, {size:11, f:bold, asideX:400});
+          row.querySelector('.res-exp-bullets').value.split('\n').map(s=>s.trim()).filter(Boolean).forEach(b=>paragraph('•  '+b, {lh:13}));
+          y-=6;
+        });
+      }
+      const eduRows=[...eduWrap.querySelectorAll('[data-res-edu]')].filter(row=>row.querySelector('.res-edu-degree').value.trim() || row.querySelector('.res-edu-school').value.trim());
+      if(eduRows.length){
+        heading('Education');
+        eduRows.forEach(row=>{
+          const deg=row.querySelector('.res-edu-degree').value.trim(), sch=row.querySelector('.res-edu-school').value.trim(), yr=row.querySelector('.res-edu-year').value.trim();
+          labelWithAside([deg,sch].filter(Boolean).join(', '), yr, {size:10.5, f:font, asideX:480, color:PDFLib.rgb(0.2,0.2,0.2)});
+        });
+      }
+
+      const out = await doc.save();
+      const blob = new Blob([out],{type:'application/pdf'});
+      download(blob, name.replace(/[^\w\-]+/g,'_')+'-resume.pdf');
+      log.textContent = '✓ Done! Made on your device, nothing uploaded.' + (warn.hit ? ' Some characters were simplified to "?".' : '');
+      log.className = 'status-log ok';
+      saveMyInfo({name, email: document.getElementById('res-email').value.trim(), phone: document.getElementById('res-phone').value.trim(), location: document.getElementById('res-location').value.trim(), link: document.getElementById('res-link').value.trim()});
+    }catch(e){
+      log.textContent = 'Could not build the PDF: '+(e.message||String(e));
+      log.className = 'status-log';
+    }
+  };
+}
+
+function generateCoverLetterBody(){
+  const manager = document.getElementById('cov-manager').value.trim() || 'Hiring Manager';
+  const company = document.getElementById('cov-company').value.trim() || 'the company';
+  const title = document.getElementById('cov-title').value.trim() || 'the position';
+  const tone = document.getElementById('cov-tone').value;
+  const highlights = document.getElementById('cov-highlights').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const openers = {
+    professional: `I am writing to apply for the ${title} role at ${company}. With a proven record of delivering results and a strong fit for this team, I am confident I can contribute from day one.`,
+    enthusiastic: `I was thrilled to see the ${title} opening at ${company} — it's exactly the kind of role I've been hoping to find, and I'd love the chance to bring my energy and skills to your team.`,
+    concise: `I'm applying for the ${title} role at ${company}. Here's why I'm a strong fit.`,
+  };
+  const closers = {
+    professional: `I would welcome the opportunity to discuss how my background aligns with your team's goals. Thank you for your time and consideration.`,
+    enthusiastic: `I'd love to talk more about how I can contribute to ${company} — thank you so much for considering my application!`,
+    concise: `I'd welcome a conversation. Thank you for your consideration.`,
+  };
+  const highlightPara = highlights.length ? 'A few highlights from my background:\n' + highlights.map(h=>'•  '+h).join('\n') : '';
+  return [openers[tone]||openers.professional, highlightPara, closers[tone]||closers.professional].filter(Boolean).join('\n\n');
+}
+function buildFullCoverLetterText(){
+  const name = document.getElementById('cov-name').value.trim() || 'Your Name';
+  const email = document.getElementById('cov-email').value.trim();
+  const phone = document.getElementById('cov-phone').value.trim();
+  const dateVal = document.getElementById('cov-date').value;
+  const dateStr = dateVal ? new Date(dateVal).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'}) : new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  const manager = document.getElementById('cov-manager').value.trim() || 'Hiring Manager';
+  const company = document.getElementById('cov-company').value.trim();
+  const bodyText = document.getElementById('cov-body').value.trim();
+  const contactLine = [email,phone].filter(Boolean).join('  ·  ');
+  const lines=[name];
+  if(contactLine) lines.push(contactLine);
+  lines.push(dateStr);
+  if(company) lines.push(company);
+  lines.push('', `Dear ${manager},`, '', bodyText, '', 'Sincerely,', name);
+  return lines.join('\n');
+}
+function renderCoverLetter(body){
+  const row=document.createElement('div'); row.className='form-row form-field';
+  row.innerHTML = `<div class="form-field"><label>Your name</label><input type="text" id="cov-name" placeholder="Jordan Rivera"></div>
+    <div class="form-field"><label>Your email</label><input type="email" id="cov-email" placeholder="jordan@email.com"></div>`;
+  body.appendChild(row);
+  const row2=document.createElement('div'); row2.className='form-row form-field';
+  row2.innerHTML = `<div class="form-field"><label>Your phone (optional)</label><input type="text" id="cov-phone" placeholder="+1 555 010 1234"></div>
+    <div class="form-field"><label>Date</label><input type="date" id="cov-date"></div>`;
+  body.appendChild(row2);
+  const row3=document.createElement('div'); row3.className='form-row form-field';
+  row3.innerHTML = `<div class="form-field"><label>Hiring manager (optional)</label><input type="text" id="cov-manager" placeholder="Hiring Manager" list="cov-contacts-list"></div>
+    <div class="form-field"><label>Company</label><input type="text" id="cov-company" placeholder="Acme Inc."></div>`;
+  body.appendChild(row3);
+  body.appendChild(contactsDatalist('cov-contacts-list'));
+  const titleField=document.createElement('div'); titleField.className='form-field';
+  titleField.innerHTML = `<label>Job title you're applying for</label><input type="text" id="cov-title" placeholder="Senior Product Designer">`;
+  body.appendChild(titleField);
+  const toneField=document.createElement('div'); toneField.className='form-field';
+  toneField.innerHTML = `<label>Tone</label><select id="cov-tone"><option value="professional" selected>Professional</option><option value="enthusiastic">Enthusiastic</option><option value="concise">Concise</option></select>`;
+  body.appendChild(toneField);
+  const hlField=document.createElement('div'); hlField.className='form-field';
+  hlField.innerHTML = `<label>Key highlights (one per line)</label><textarea id="cov-highlights" rows="3" placeholder="Led a redesign that increased conversion by 18%"></textarea>`;
+  body.appendChild(hlField);
+  document.getElementById('cov-date').value = new Date().toISOString().slice(0,10);
+  { const mine=loadMyInfo(); fillIfEmpty('cov-name',mine.name); fillIfEmpty('cov-email',mine.email); fillIfEmpty('cov-phone',mine.phone); }
+
+  const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-action-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
+  const previewLabel=document.createElement('div'); previewLabel.className='form-step'; previewLabel.textContent='Review & edit before exporting'; body.appendChild(previewLabel);
+  const bodyTextarea=document.createElement('textarea'); bodyTextarea.id='cov-body'; bodyTextarea.rows=9; bodyTextarea.style.cssText='width:100%;padding:11px 12px;border:1px solid var(--gray-medium);border-radius:10px;font-family:inherit;font-size:14px;background:var(--white);color:var(--primary-dark);'; body.appendChild(bodyTextarea);
+
+  let coverDirty = false;
+  function refreshCoverDraft(force){ if(coverDirty && !force) return; bodyTextarea.value = generateCoverLetterBody(); }
+  genBtn.onclick = ()=>{ coverDirty=false; refreshCoverDraft(true); };
+  refreshCoverDraft(true);
+  body.addEventListener('input', (e)=>{ if(e.target===bodyTextarea){ coverDirty=true; return; } refreshCoverDraft(false); });
+
+  const btn=document.createElement('button'); btn.className='big-action-btn'; btn.textContent='Download PDF'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='status-log'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    if(!bodyTextarea.value.trim()){ log.textContent='Generate or write the letter body first.'; return; }
+    log.textContent = 'Building your cover letter...';
+    try{
+      const {bytes, warn} = await buildLetterPDF(buildFullCoverLetterText());
+      const blob = new Blob([bytes],{type:'application/pdf'});
+      const name = document.getElementById('cov-name').value.trim() || 'cover-letter';
+      download(blob, name.replace(/[^\w\-]+/g,'_')+'-cover-letter.pdf');
+      log.textContent = '✓ Done! Made on your device, nothing uploaded.' + (warn ? ' Some characters were simplified to "?".' : '');
+      log.className = 'status-log ok';
+      saveMyInfo({name, email: document.getElementById('cov-email').value.trim(), phone: document.getElementById('cov-phone').value.trim()});
+      const managerName = document.getElementById('cov-manager').value.trim();
+      if(managerName) saveContact(managerName, {company: document.getElementById('cov-company').value.trim()});
+    }catch(e){
+      log.textContent = 'Could not build the PDF: '+(e.message||String(e));
+      log.className = 'status-log';
+    }
+  };
+}
+
+function renderNoticeGenerator(body){
+  const NOTICE_TEMPLATES = {
+    leave: { label:'Leave Application',
+      fields:[['from','Your name','Jordan Rivera'],['to','Manager / recipient','Alex Chen, Engineering Manager'],['reason','Type of leave','Sick leave'],['dates','Dates requested','Aug 12 – Aug 14, 2026'],['detail','Brief reason (optional)','Recovering from a minor illness']],
+      subject:(v)=>`Application for ${v.reason||'Leave'}`,
+      body:(v)=>`Dear ${v.to||'Manager'},\n\nI am writing to formally request ${v.reason?v.reason.toLowerCase():'leave'} for ${v.dates||'the dates below'}.${v.detail?' '+v.detail+'.':''}\n\nI will ensure my responsibilities are handed over before I leave, and I am reachable by email if anything urgent comes up.\n\nThank you for your understanding.\n\nSincerely,\n${v.from||'Your Name'}` },
+    warning: { label:'Warning Letter',
+      fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['issue','Issue being addressed','repeated late arrivals'],['policy','Policy / expectation referenced (optional)','company attendance policy'],['action','Required corrective action','arrive by 9:00 AM starting immediately']],
+      subject:(v)=>`Formal Warning — ${v.issue||'Policy Violation'}`,
+      body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter serves as a formal warning regarding ${v.issue||'a recent issue'}.${v.policy?` This is inconsistent with our ${v.policy}.`:''}\n\nGoing forward, we expect you to ${v.action||'address this immediately'}. Continued issues of this nature may result in further disciplinary action, up to and including termination.\n\nPlease reach out if you would like to discuss this further.\n\nSincerely,\n${v.from||'HR'}` },
+    termination: { label:'Termination Notice',
+      fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['lastday','Last working day','August 22, 2026'],['reason','Reason (optional, kept brief)','position elimination']],
+      subject:()=>'Notice of Termination of Employment',
+      body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter is to formally notify you that your employment will end effective ${v.lastday||'the date below'}.${v.reason?` This decision is due to ${v.reason}.`:''}\n\nPlease reach out to HR to discuss final pay, benefits continuation, and the return of any company property.\n\nWe appreciate your contributions and wish you the best in your next endeavor.\n\nSincerely,\n${v.from||'HR'}` },
+    payment: { label:'Payment Reminder Notice',
+      fields:[['from','Your name / business','Acme Rentals'],['to','Recipient name','Jordan Rivera'],['amount','Amount due','$1,200'],['duedate','Due date','August 1, 2026'],['ref','Reference (invoice #, unit #, etc.)','Invoice #INV-0042']],
+      subject:(v)=>`Payment Reminder — ${v.ref||'Outstanding Balance'}`,
+      body:(v)=>`Dear ${v.to||'Customer'},\n\nThis is a friendly reminder that a payment of ${v.amount||'the amount due'} was due on ${v.duedate||'the date on your invoice'}${v.ref?` (${v.ref})`:''} and remains outstanding.\n\nPlease arrange payment at your earliest convenience. If you have already sent payment, please disregard this notice.\n\nThank you,\n${v.from||'Your Name'}` },
+    general: { label:'General Formal Notice',
+      fields:[['from','Your name',''],['to','Recipient name',''],['subject','Subject of this notice','e.g. Notice regarding overdue matter'],['detail','Details of the notice','Describe the situation and what action you are requesting.'],['deadline','Response / action deadline (optional)','within 14 days']],
+      subject:(v)=>v.subject||'Formal Notice',
+      body:(v)=>`Dear ${v.to||'Sir/Madam'},\n\n${v.detail||'This letter serves as formal notice regarding the matter described above.'}${v.deadline?` We request that this be resolved ${v.deadline}.`:''}\n\nPlease treat this matter with the attention it requires.\n\nSincerely,\n${v.from||'Your Name'}` },
+  };
+  function buildNoticeFullText(tpl, values){
+    const dateStr = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+    return [dateStr, '', tpl.subject(values), '', tpl.body(values)].join('\n');
+  }
+
+  const disclaimer=document.createElement('div'); disclaimer.className='form-note';
+  disclaimer.textContent = 'These are plain-language starting drafts, not legal advice. For anything with legal weight, have the final letter reviewed by qualified counsel or HR.';
+  body.appendChild(disclaimer);
+
+  const tplLabel=document.createElement('div'); tplLabel.className='form-step'; tplLabel.textContent='Choose a notice type'; body.appendChild(tplLabel);
+  const select=document.createElement('select'); select.id='ntc-type'; select.style.cssText='width:100%;padding:11px 12px;border:1px solid var(--gray-medium);border-radius:10px;font-size:14px;background:var(--white);color:var(--primary-dark);margin-bottom:12px;';
+  Object.entries(NOTICE_TEMPLATES).forEach(([key,t])=>{ const opt=document.createElement('option'); opt.value=key; opt.textContent=t.label; select.appendChild(opt); });
+  body.appendChild(select);
+
+  const fieldsLabel=document.createElement('div'); fieldsLabel.className='form-step'; fieldsLabel.textContent='Details'; body.appendChild(fieldsLabel);
+  const fieldsWrap=document.createElement('div'); body.appendChild(fieldsWrap);
+  body.appendChild(contactsDatalist('ntc-contacts-list'));
+  function renderFields(){
+    const tpl = NOTICE_TEMPLATES[select.value];
+    fieldsWrap.innerHTML='';
+    tpl.fields.forEach(([id,label,ph])=>{
+      const field=document.createElement('div'); field.className='form-field';
+      const listAttr = id==='to' ? ' list="ntc-contacts-list"' : '';
+      field.innerHTML = `<label>${label}</label><input type="text" class="ntc-field" data-id="${id}" placeholder="${ph||''}"${listAttr}>`;
+      fieldsWrap.appendChild(field);
+    });
+    const fromField = fieldsWrap.querySelector('.ntc-field[data-id="from"]');
+    const mineName = loadMyInfo().name;
+    if(fromField && !fromField.value.trim() && mineName) fromField.value = mineName;
+  }
+
+  const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-action-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
+  const previewLabel=document.createElement('div'); previewLabel.className='form-step'; previewLabel.textContent='Review & edit'; body.appendChild(previewLabel);
+  const preview=document.createElement('textarea'); preview.id='ntc-preview'; preview.rows=12; preview.style.cssText='width:100%;padding:11px 12px;border:1px solid var(--gray-medium);border-radius:10px;font-family:inherit;font-size:14px;background:var(--white);color:var(--primary-dark);'; body.appendChild(preview);
+
+  function readValues(){ const values={}; fieldsWrap.querySelectorAll('.ntc-field').forEach(inp=>{ values[inp.dataset.id]=inp.value.trim(); }); return values; }
+  let noticeDirty = false;
+  function generateDraft(force){ if(noticeDirty && !force) return; preview.value = buildNoticeFullText(NOTICE_TEMPLATES[select.value], readValues()); }
+  select.onchange = ()=>{ noticeDirty=false; renderFields(); generateDraft(true); };
+  renderFields();
+  genBtn.onclick = ()=>{ noticeDirty=false; generateDraft(true); };
+  generateDraft(true);
+  fieldsWrap.addEventListener('input', ()=>generateDraft(false));
+  preview.addEventListener('input', ()=>{ noticeDirty=true; });
+
+  const btn=document.createElement('button'); btn.className='big-action-btn'; btn.textContent='Download PDF'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='status-log'; body.appendChild(log);
+  btn.onclick = async ()=>{
+    const text = preview.value.trim();
+    if(!text){ log.textContent='Fill in the details and generate a draft first.'; return; }
+    log.textContent = 'Building your notice...';
+    try{
+      const {bytes, warn} = await buildLetterPDF(text);
+      const blob = new Blob([bytes],{type:'application/pdf'});
+      download(blob, NOTICE_TEMPLATES[select.value].label.toLowerCase().replace(/[^\w]+/g,'-')+'.pdf');
+      log.textContent = '✓ Done! Made on your device, nothing uploaded.' + (warn ? ' Some characters were simplified to "?".' : '');
+      log.className = 'status-log ok';
+      const toName = readValues().to;
+      if(toName) saveContact(toName);
+    }catch(e){
+      log.textContent = 'Could not build the PDF: '+(e.message||String(e));
+      log.className = 'status-log';
+    }
+  };
+}
+
+function renderPDFEditPrintScreen(body){
+  const note=document.createElement('div'); note.className='form-note';
+  note.textContent = 'Normalize mixed page sizes for consistent on-screen reading, or add bleed and crop marks for a print shop. Does not convert colors to CMYK — check color-profile requirements with your print shop separately.';
+  body.appendChild(note);
+
+  let file=null, doc=null, pageInfo=null;
+  buildFilePicker(body, {accept:'application/pdf', onFile: async (f)=>{
+    file=f;
+    try{
+      const bytes = await file.arrayBuffer();
+      doc = await loadPdf(bytes);
+      if(doc.getPageCount()===0){ throw new Error('This PDF has no pages.'); }
+      pageInfo = summarizePageSizes(doc);
+      renderReport();
+      modeSection.style.display='block';
+      log.textContent='';
+    }catch(e){
+      doc=null; report.innerHTML=''; modeSection.style.display='none';
+      log.textContent = e.message;
+    }
+  }});
+  const report=document.createElement('div'); report.className='page-size-report'; body.appendChild(report);
+  function renderReport(){
+    const n = doc.getPageCount();
+    let html = `<div style="font-weight:600;margin-bottom:4px;">${escapeXml(file.name)} — ${n} page${n===1?'':'s'}</div>`;
+    pageInfo.buckets.forEach((count,key)=>{
+      const [w,h] = key.split('x').map(Number);
+      html += `<div>${ptToIn(w)}" × ${ptToIn(h)}" — ${count} page${count===1?'':'s'}</div>`;
+    });
+    if(pageInfo.mixed) html += `<div style="color:#C1683A;margin-top:6px;">⚠ Mixed page sizes — Screen mode can make these consistent.</div>`;
+    report.innerHTML = html;
+  }
+
+  const modeSection=document.createElement('div'); modeSection.style.display='none'; body.appendChild(modeSection);
+  const tabRow=document.createElement('div'); tabRow.className='form-card-row';
+  tabRow.innerHTML = `<button type="button" class="active" data-mode="screen">Screen / Normal</button><button type="button" data-mode="print">Print-Ready</button>`;
+  modeSection.appendChild(tabRow);
+  let mode='screen';
+  tabRow.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{ tabRow.querySelectorAll('button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); mode=b.dataset.mode; screenOpts.style.display=mode==='screen'?'block':'none'; printOpts.style.display=mode==='print'?'block':'none'; };
+  });
+
+  const screenOpts=document.createElement('div'); modeSection.appendChild(screenOpts);
+  const targetLabel=document.createElement('div'); targetLabel.className='form-field';
+  targetLabel.innerHTML = `<label>Target page size</label><select id="ps-target"><option value="auto">Auto — most common size in this PDF</option>${Object.keys(STANDARD_PAGE_SIZES).map(k=>`<option value="${escapeXml(k)}">${escapeXml(k)}</option>`).join('')}</select>`;
+  screenOpts.appendChild(targetLabel);
+  const screenNote=document.createElement('div'); screenNote.className='form-note'; screenNote.textContent='Every page is scaled to fit inside the target size and centered — nothing is cropped.'; screenOpts.appendChild(screenNote);
+
+  const printOpts=document.createElement('div'); printOpts.style.display='none'; modeSection.appendChild(printOpts);
+  const bleedField=document.createElement('div'); bleedField.className='form-field';
+  bleedField.innerHTML = `<label>Bleed</label><select id="ps-bleed"><option value="0">None — crop marks only</option><option value="3mm" selected>3mm (standard)</option><option value="9pt">1/8 in (common US print)</option><option value="5mm">5mm</option></select>`;
+  printOpts.appendChild(bleedField);
+  const printSizeField=document.createElement('div'); printSizeField.className='form-field';
+  printSizeField.innerHTML = `<label>Trim size</label><select id="ps-print-size"><option value="keep">Keep each page's original size</option>${Object.keys(STANDARD_PAGE_SIZES).map(k=>`<option value="${escapeXml(k)}">${escapeXml(k)}</option>`).join('')}</select>`;
+  printOpts.appendChild(printSizeField);
+  const printNote=document.createElement('div'); printNote.className='form-note'; printNote.textContent='Bleed is added by slightly extending the page content to fill the bleed margin ("scale to bleed") — not fabricated artwork.'; printOpts.appendChild(printNote);
+
+  const btn=document.createElement('button'); btn.className='big-action-btn'; btn.textContent='Apply & Download'; modeSection.appendChild(btn);
+  const log=document.createElement('div'); log.className='status-log'; modeSection.appendChild(log);
+
+  function targetSizeFor(selectEl){
+    const v = selectEl.value;
+    if(v==='auto') return {width:pageInfo.modeSize.width, height:pageInfo.modeSize.height};
+    if(v==='keep') return null;
+    return {width:STANDARD_PAGE_SIZES[v][0], height:STANDARD_PAGE_SIZES[v][1]};
+  }
+  function parseBleed(v){ if(v==='0') return 0; if(v==='9pt') return 9; return mmToPt(parseFloat(v)); }
+
+  btn.onclick = async ()=>{
+    if(!doc){ log.textContent='Choose a PDF first.'; return; }
+    log.textContent = 'Processing on-device...'; log.className='status-log';
+    try{
+      const { PDFDocument } = PDFLib;
+      const out = await PDFDocument.create();
+      if(mode==='screen'){
+        const target = targetSizeFor(document.getElementById('ps-target'));
+        for(let i=0;i<doc.getPageCount();i++){
+          const src = doc.getPage(i);
+          const {width:sw, height:sh} = src.getSize();
+          const tw = target?target.width:sw, th = target?target.height:sh;
+          const [embedded] = await out.embedPdf(doc, [i]);
+          const newPage = out.addPage([tw, th]);
+          const scale = Math.min(tw/sw, th/sh);
+          const dw=sw*scale, dh=sh*scale;
+          newPage.drawPage(embedded, {x:(tw-dw)/2, y:(th-dh)/2, width:dw, height:dh});
+        }
+      } else {
+        const bleed = parseBleed(document.getElementById('ps-bleed').value);
+        const target = targetSizeFor(document.getElementById('ps-print-size'));
+        const markLen=18, gap=2, marksZone=gap+markLen;
+        const pageMargin = bleed + marksZone;
+        for(let i=0;i<doc.getPageCount();i++){
+          const src = doc.getPage(i);
+          const {width:sw, height:sh} = src.getSize();
+          const trimW = target?target.width:sw, trimH = target?target.height:sh;
+          const [embedded] = await out.embedPdf(doc, [i]);
+          const pageW = trimW+2*pageMargin, pageH = trimH+2*pageMargin;
+          const newPage = out.addPage([pageW, pageH]);
+          const fitScale = Math.min(trimW/sw, trimH/sh);
+          const dw=sw*fitScale, dh=sh*fitScale;
+          const bleedScaleX = bleed>0 ? (trimW+2*bleed)/trimW : 1;
+          const bleedScaleY = bleed>0 ? (trimH+2*bleed)/trimH : 1;
+          const finalDw=dw*bleedScaleX, finalDh=dh*bleedScaleY;
+          const finalX = pageMargin+trimW/2-finalDw/2, finalY = pageMargin+trimH/2-finalDh/2;
+          newPage.drawPage(embedded, {x:finalX, y:finalY, width:finalDw, height:finalDh});
+          const corners=[[pageMargin,pageMargin,-1,-1],[pageMargin+trimW,pageMargin,1,-1],[pageMargin,pageMargin+trimH,-1,1],[pageMargin+trimW,pageMargin+trimH,1,1]];
+          corners.forEach(([cx,cy,dx,dy])=>{
+            newPage.drawLine({start:{x:cx+dx*gap,y:cy}, end:{x:cx+dx*(gap+markLen),y:cy}, thickness:0.75, color:PDFLib.rgb(0,0,0)});
+            newPage.drawLine({start:{x:cx,y:cy+dy*gap}, end:{x:cx,y:cy+dy*(gap+markLen)}, thickness:0.75, color:PDFLib.rgb(0,0,0)});
+          });
+        }
+      }
+      const bytes = await out.save();
+      const blob = new Blob([bytes],{type:'application/pdf'});
+      const suffix = mode==='screen' ? '-normalized' : '-print-ready';
+      download(blob, file.name.replace(/\.pdf$/i,'')+suffix+'.pdf');
+      log.textContent = '✓ Done — processed on-device, nothing uploaded.';
+      log.className = 'status-log ok';
+    }catch(e){
+      log.textContent = 'Could not process this PDF: '+(e.message||String(e));
+      log.className = 'status-log';
+    }
+  };
 }
 
 // Handle dark mode toggle
