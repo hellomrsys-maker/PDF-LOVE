@@ -1946,7 +1946,7 @@ function toolPassportPhoto(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Photo & Download'; btn.style.display='none'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
-  let photo=null, panX=0.5, panY=0.4, zoom=1;
+  let photo=null, panX=0.5, panY=0.4, zoom=1, viewH=0;
   const viewW = 260;
 
   function currentPreset(){
@@ -1971,7 +1971,7 @@ function toolPassportPhoto(){
   function setupCropper(){
     const preset = currentPreset();
     const aspect = preset.w/preset.h;
-    const viewH = Math.round(viewW/aspect);
+    viewH = Math.round(viewW/aspect);
     cropWrap.innerHTML = `<div id="pp-frame" style="position:relative;width:${viewW}px;height:${viewH}px;margin:0 auto;overflow:hidden;border-radius:8px;border:2px solid var(--copper);touch-action:none;"></div>`;
     const frame = document.getElementById('pp-frame');
     const img = document.createElement('img'); img.src=photo.src; img.style.cssText='position:absolute;left:0;top:0;cursor:grab;user-select:none;-webkit-user-drag:none;';
@@ -2820,28 +2820,35 @@ function toolWordToPDF(){
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a .docx first.';return;}
     log.textContent='Rendering document on-device...';
-    const bytes = await file.arrayBuffer();
-    const result = await mammoth.convertToHtml({arrayBuffer: bytes});
-    const holder = document.createElement('div');
-    holder.style.cssText='position:fixed;left:-9999px;top:0;width:700px;padding:20px;font-family:serif;font-size:14px;line-height:1.5;background:#fff;';
-    holder.innerHTML = result.value;
-    document.body.appendChild(holder);
-    const { jsPDF } = window.jspdf;
-    const pdfDoc = new jsPDF('p','pt','a4');
-    log.textContent='Paginating...';
-    await new Promise(resolve=>{
-      pdfDoc.html(holder, {
-        margin:[36,36,36,36],
-        autoPaging:'text',
-        width:523,
-        windowWidth:700,
-        callback: (doc)=>{
-          download(doc.output('blob'), file.name.replace(/\.docx$/i,'')+'.pdf');
-          resolve();
-        }
+    let holder = null;
+    try{
+      const bytes = await file.arrayBuffer();
+      const result = await mammoth.convertToHtml({arrayBuffer: bytes});
+      holder = document.createElement('div');
+      holder.style.cssText='position:fixed;left:-9999px;top:0;width:700px;padding:20px;font-family:serif;font-size:14px;line-height:1.5;background:#fff;';
+      holder.innerHTML = result.value;
+      document.body.appendChild(holder);
+      const { jsPDF } = window.jspdf;
+      const pdfDoc = new jsPDF('p','pt','a4');
+      log.textContent='Paginating...';
+      await new Promise(resolve=>{
+        pdfDoc.html(holder, {
+          margin:[36,36,36,36],
+          autoPaging:'text',
+          width:523,
+          windowWidth:700,
+          callback: (doc)=>{
+            download(doc.output('blob'), file.name.replace(/\.docx$/i,'')+'.pdf');
+            resolve();
+          }
+        });
       });
-    });
-    document.body.removeChild(holder);
+    }catch(e){
+      log.textContent = 'Could not convert this file — make sure it\'s a real .docx (not a renamed .doc, .pdf, or corrupted file): '+e.message;
+      return;
+    }finally{
+      if(holder) document.body.removeChild(holder);
+    }
     log.innerHTML='<span class="ok">✓ Done — converted locally, 0 bytes uploaded.</span>';
   };
 }
