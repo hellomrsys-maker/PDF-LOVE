@@ -5028,6 +5028,43 @@ function computeATSScore(resumeText, jdText){
   return {score: Math.round(found.length/kws.length*100), found, missing};
 }
 
+/* Tiny cross-tool memory — not a full CRM, just localStorage — so filling
+   in your own info or a recipient once carries into the other AI Kit
+   tools. "My info" auto-fills only into empty fields (never overwrites
+   something the user already typed) and is re-saved on every successful
+   export. Notice Generator's "from" field is read-only here deliberately:
+   its value can be "Name, Title" depending on the template, and writing
+   that back into the clean Resume/Cover-Letter name field would corrupt
+   it — precision here matters more than saving one extra click. */
+function loadMyInfo(){
+  try{ return JSON.parse(localStorage.getItem('pdflove.myInfo')||'null') || {}; }catch(e){ return {}; }
+}
+function saveMyInfo(patch){
+  const info = {...loadMyInfo(), ...patch};
+  try{ localStorage.setItem('pdflove.myInfo', JSON.stringify(info)); }catch(e){}
+}
+function loadContacts(){
+  try{ return JSON.parse(localStorage.getItem('pdflove.contacts')||'[]'); }catch(e){ return []; }
+}
+function saveContact(name, extra={}){
+  name = String(name||'').trim();
+  if(!name) return;
+  const list = loadContacts();
+  const idx = list.findIndex(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(idx>=0) list[idx] = {...list[idx], name, ...extra};
+  else list.push({name, ...extra});
+  try{ localStorage.setItem('pdflove.contacts', JSON.stringify(list.slice(-50))); }catch(e){}
+}
+function fillIfEmpty(id, value){
+  const el = document.getElementById(id);
+  if(el && !el.value.trim() && value) el.value = value;
+}
+function contactsDatalist(id){
+  const dl = document.createElement('datalist'); dl.id = id;
+  loadContacts().forEach(c=>{ const opt=document.createElement('option'); opt.value=c.name; dl.appendChild(opt); });
+  return dl;
+}
+
 function toolAIResumeATS(){
   const body = panelShell({title:'AI Resume Builder (ATS)', desc:'Build a clean, single-column resume that parses correctly in Applicant Tracking Systems — with a live keyword-match score against a job description.'});
   const note=document.createElement('div'); note.className='note';
@@ -5053,6 +5090,11 @@ function toolAIResumeATS(){
     <div class="field"><label>LinkedIn / portfolio URL (optional)</label><input type="text" id="res-link" placeholder="linkedin.com/in/jordanrivera"></div>
   `;
   body.appendChild(row3);
+  {
+    const mine = loadMyInfo();
+    fillIfEmpty('res-name', mine.name); fillIfEmpty('res-email', mine.email);
+    fillIfEmpty('res-phone', mine.phone); fillIfEmpty('res-location', mine.location); fillIfEmpty('res-link', mine.link);
+  }
 
   const s2=document.createElement('div'); s2.className='helper-line'; s2.style.cssText='font-weight:600;margin-top:14px;'; s2.textContent='2 · Target job description (for ATS scoring, optional)'; body.appendChild(s2);
   const jdField=document.createElement('div'); jdField.className='field';
@@ -5247,6 +5289,7 @@ function toolAIResumeATS(){
       download(blob, name.replace(/[^\w\-]+/g,'_')+'-resume.pdf');
       log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded — single-column layout, no tables or graphics, so ATS software parses it correctly.'
         + (warn.hit ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
+      saveMyInfo({name, email: document.getElementById('res-email').value.trim(), phone: document.getElementById('res-phone').value.trim(), location: document.getElementById('res-location').value.trim(), link: document.getElementById('res-link').value.trim()});
       offerChain(blob, 'resume.pdf', log);
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
@@ -5306,10 +5349,11 @@ function toolAICoverLetter(){
   body.appendChild(row2);
   const row3=document.createElement('div'); row3.className='row';
   row3.innerHTML = `
-    <div class="field"><label>Hiring manager (optional)</label><input type="text" id="cov-manager" placeholder="Hiring Manager"></div>
+    <div class="field"><label>Hiring manager (optional)</label><input type="text" id="cov-manager" placeholder="Hiring Manager" list="cov-contacts-list"></div>
     <div class="field"><label>Company</label><input type="text" id="cov-company" placeholder="Acme Inc."></div>
   `;
   body.appendChild(row3);
+  body.appendChild(contactsDatalist('cov-contacts-list'));
   const titleField=document.createElement('div'); titleField.className='field';
   titleField.innerHTML = `<label>Job title you're applying for</label><input type="text" id="cov-title" placeholder="Senior Product Designer">`;
   body.appendChild(titleField);
@@ -5320,6 +5364,10 @@ function toolAICoverLetter(){
   hlField.innerHTML = `<label>Key highlights (one per line)</label><textarea id="cov-highlights" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="Led a redesign that increased conversion by 18%"></textarea>`;
   body.appendChild(hlField);
   document.getElementById('cov-date').value = new Date().toISOString().slice(0,10);
+  {
+    const mine = loadMyInfo();
+    fillIfEmpty('cov-name', mine.name); fillIfEmpty('cov-email', mine.email); fillIfEmpty('cov-phone', mine.phone);
+  }
 
   const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
   const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.cssText='font-weight:600;margin-top:12px;'; previewLabel.textContent='Review & edit before exporting'; body.appendChild(previewLabel);
@@ -5353,6 +5401,9 @@ function toolAICoverLetter(){
       download(blob, name.replace(/[^\w\-]+/g,'_')+'-cover-letter.pdf');
       log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.'
         + (warn ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
+      saveMyInfo({name, email: document.getElementById('cov-email').value.trim(), phone: document.getElementById('cov-phone').value.trim()});
+      const managerName = document.getElementById('cov-manager').value.trim();
+      if(managerName) saveContact(managerName, {company: document.getElementById('cov-company').value.trim()});
       offerChain(blob, 'cover-letter.pdf', log);
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
@@ -5400,14 +5451,24 @@ function toolAINoticeGenerator(){
 
   const fieldsLabel=document.createElement('div'); fieldsLabel.className='helper-line'; fieldsLabel.style.cssText='font-weight:600;margin-top:6px;'; fieldsLabel.textContent='2 · Details'; body.appendChild(fieldsLabel);
   const fieldsWrap=document.createElement('div'); body.appendChild(fieldsWrap);
+  body.appendChild(contactsDatalist('ntc-contacts-list'));
+  /* "from" here can read as "Name, Title" depending on the template, so it
+     only ever reads from My Info (convenience autofill) and never writes
+     back — writing it would corrupt the clean name Resume/Cover Letter
+     share. "to" is always a plain recipient name, so it gets the contacts
+     autocomplete and is saved as a contact on export. */
   function renderFields(){
     const tpl = NOTICE_TEMPLATES[select.value];
     fieldsWrap.innerHTML='';
     tpl.fields.forEach(([id,label,ph])=>{
       const field=document.createElement('div'); field.className='field';
-      field.innerHTML = `<label>${label}</label><input type="text" class="ntc-field" data-id="${id}" placeholder="${ph||''}">`;
+      const listAttr = id==='to' ? ' list="ntc-contacts-list"' : '';
+      field.innerHTML = `<label>${label}</label><input type="text" class="ntc-field" data-id="${id}" placeholder="${ph||''}"${listAttr}>`;
       fieldsWrap.appendChild(field);
     });
+    const fromField = fieldsWrap.querySelector('.ntc-field[data-id="from"]');
+    const mineName = loadMyInfo().name;
+    if(fromField && !fromField.value.trim() && mineName) fromField.value = mineName;
   }
   const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
   const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.cssText='font-weight:600;margin-top:12px;'; previewLabel.textContent='3 · Review & edit'; body.appendChild(previewLabel);
@@ -5447,6 +5508,8 @@ function toolAINoticeGenerator(){
       download(blob, NOTICE_TEMPLATES[select.value].label.toLowerCase().replace(/[^\w]+/g,'-')+'.pdf');
       log.innerHTML = '<span class="ok">✓ Done! Made on your device, nothing uploaded.'
         + (warn ? ' Some characters this font doesn\'t support (e.g. emoji or non-Latin scripts) were simplified to "?".' : '') + '</span>';
+      const toName = readValues().to;
+      if(toName) saveContact(toName);
       offerChain(blob, 'notice.pdf', log);
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e))+'. Try removing any unusual symbols or emoji and download again.';
