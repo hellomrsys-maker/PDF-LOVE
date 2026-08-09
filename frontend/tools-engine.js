@@ -1112,7 +1112,7 @@ function toolSplitByBookmark(){
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Reading outline on-device...';
     const bytes = await file.arrayBuffer();
-    const pdf = await getPdfDoc(bytes);
+    const pdf = await getPdfDoc(bytes.slice(0));
     const outline = await pdf.getOutline();
     if(!outline || outline.length===0){ log.textContent='No bookmarks found in this PDF.'; return; }
     const marks=[];
@@ -1221,7 +1221,7 @@ function toolBookmarkEditor(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
-    pdfjsDoc = await getPdfDoc(bytes);
+    pdfjsDoc = await getPdfDoc(bytes.slice(0));
     doc = await loadPdf(bytes);
     await renderOutline();
   }});
