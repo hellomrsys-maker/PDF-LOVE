@@ -6176,14 +6176,14 @@ function serverNote(body, engineLabel){
 
 /* Generic single-file server tool: upload -> endpoint -> download. */
 function toolServerFile({title, desc, engine, accept, endpoint, fields={}, outName, outType, extraUI}){
-  const body = panelShell({title, desc});
-  serverNote(body, engine);
+  const { main, sidebar } = panelShellSplit({title, desc});
+  serverNote(main, engine);
   let file=null;
-  buildDropzone(body, {multiple:false, accept, onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const getExtra = extraUI ? extraUI(body) : null;
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Process on my server'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept, onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const getExtra = extraUI ? extraUI(sidebar) : null;
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Process on my server'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a file first.';return;}
     btn.disabled = true;
@@ -6205,11 +6205,11 @@ function toolServerFile({title, desc, engine, accept, endpoint, fields={}, outNa
 }
 
 function toolServerOCR(){
-  const body = panelShell({title:'OCR (scanned PDF or image)', desc:'Turn a scan into selectable text — or into a searchable PDF, where the page still looks identical but the text underneath is real.'});
-  serverNote(body, 'Tesseract OCR + this project\'s native C scan-cleanup kernel');
+  const { main, sidebar } = panelShellSplit({title:'OCR (scanned PDF or image)', desc:'Turn a scan into selectable text — or into a searchable PDF, where the page still looks identical but the text underneath is real.'});
+  serverNote(main, 'Tesseract OCR + this project\'s native C scan-cleanup kernel');
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  buildDropzone(main, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Output</label>
@@ -6223,13 +6223,13 @@ function toolServerOCR(){
         <option value="spa">Spanish</option><option value="por">Portuguese</option><option value="hin">Hindi</option>
         <option value="ara">Arabic</option><option value="chi_sim">Chinese (simplified)</option>
       </select></div>`;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const helper=document.createElement('div'); helper.className='helper-line';
   helper.textContent = 'Languages beyond English need the matching tesseract-ocr language pack installed in the backend image (one line in backend/Dockerfile).';
-  body.appendChild(helper);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Recognize text'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  const resultBox=document.createElement('textarea'); resultBox.rows=10; resultBox.style.cssText='display:none;width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);margin-top:10px;'; body.appendChild(resultBox);
+  sidebar.appendChild(helper);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Recognize text'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
+  const resultBox=document.createElement('textarea'); resultBox.rows=10; resultBox.style.cssText='display:none;width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);margin-top:10px;'; sidebar.appendChild(resultBox);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a scanned PDF or an image first.';return;}
     btn.disabled = true;
@@ -6304,10 +6304,10 @@ function toolServerPDFA(){
 }
 
 function toolServerChatPDF(){
-  const body = panelShell({title:'Chat with PDF', desc:'Ask questions about a document. The text is extracted on-device; only your question plus the most relevant excerpts are sent to your own local AI model — never the file itself.'});
-  serverNote(body, 'your local Ollama model');
+  const { main, sidebar } = panelShellSplit({title:'Chat with PDF', desc:'Ask questions about a document. The text is extracted on-device; only your question plus the most relevant excerpts are sent to your own local AI model — never the file itself.'});
+  serverNote(main, 'your local Ollama model');
   let file=null, pagesText=[];
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     log.textContent='Extracting text on-device...';
     try{
@@ -6315,12 +6315,12 @@ function toolServerChatPDF(){
       log.textContent = `Loaded ${pagesText.length} page(s) — ask away.`;
     }catch(e){ log.textContent = 'Could not read that PDF: '+e.message; }
   }});
-  const chatBox=document.createElement('div'); chatBox.style.cssText='max-height:300px;overflow-y:auto;margin:10px 0;display:flex;flex-direction:column;gap:8px;'; body.appendChild(chatBox);
+  const chatBox=document.createElement('div'); chatBox.style.cssText='max-height:300px;overflow-y:auto;margin:10px 0;display:flex;flex-direction:column;gap:8px;'; main.appendChild(chatBox);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`<div class="field" style="flex:1;"><input type="text" id="chat-q" placeholder="e.g. What is the total amount due?"></div>`;
-  body.appendChild(row);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Ask'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(row);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Ask'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function bubble(text, mine){
     const b=document.createElement('div');
@@ -6359,7 +6359,7 @@ function toolServerChatPDF(){
     }finally{ btn.disabled=false; }
   };
   btn.onclick = ask;
-  body.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.id==='chat-q') ask(); });
+  sidebar.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.id==='chat-q') ask(); });
 }
 
 /* ================= DOCUMENT CONVERSION ================= */
@@ -6509,7 +6509,7 @@ async function renderPdfPageToCanvas(pdf, pageNum, scale){
 }
 
 function toolPDFEditor(){
-  const body = panelShell({title:'PDF Editor', desc:'Click anywhere on a page to drop a text box, then save. Good for filling forms, adding notes, or labeling scans.'});
+  const { main, sidebar } = panelShellSplit({title:'PDF Editor', desc:'Click anywhere on a page to drop a text box, then save. Good for filling forms, adding notes, or labeling scans.'});
   let file=null, pdfjsDoc=null, pageNum=1, scale=1.3;
   let annotations = []; // {page, xRatio, yRatio, text, size}
   let undoStack = [];
@@ -6518,7 +6518,7 @@ function toolPDFEditor(){
   function pushUndo(){ undoStack.push(JSON.stringify(annotations)); if(undoStack.length>50) undoStack.shift(); }
   function undo(){ if(undoStack.length===0) return; annotations = JSON.parse(undoStack.pop()); renderList(); renderPage(); }
 
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
@@ -6527,12 +6527,12 @@ function toolPDFEditor(){
     renderPage();
   }});
 
-  const controls=document.createElement('div'); controls.className='pill-row'; body.appendChild(controls);
-  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
-  const addRow=document.createElement('div'); addRow.className='pill-row'; body.appendChild(addRow);
-  const list=document.createElement('div'); list.className='anno-list'; body.appendChild(list);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const controls=document.createElement('div'); controls.className='pill-row'; main.appendChild(controls);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
+  const addRow=document.createElement('div'); addRow.className='pill-row'; sidebar.appendChild(addRow);
+  const list=document.createElement('div'); list.className='anno-list'; sidebar.appendChild(list);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function buildControls(){
     controls.innerHTML = `
@@ -7301,7 +7301,7 @@ function applyScanFilter(canvas, filter){
 }
 
 function toolScanToPDF(){
-  const body = panelShell({title:'Scan Document', desc:'Take a photo of a document, drag the corners to match its edges, and it gets flattened like a real scan — no angle, no shadow, no background.'});
+  const { main, sidebar } = panelShellSplit({title:'Scan Document', desc:'Take a photo of a document, drag the corners to match its edges, and it gets flattened like a real scan — no angle, no shadow, no background.'});
   let pages = []; // array of {canvas, thumbUrl}
   let currentPhoto = null; // Image element for the photo being adjusted
   let corners = null; // 4 points on the displayed (scaled) image
@@ -7312,12 +7312,13 @@ function toolScanToPDF(){
   input.type='file'; input.accept='image/*'; input.capture='environment'; input.style.display='none';
   dz.appendChild(input);
   dz.addEventListener('click', ()=>input.click());
-  body.appendChild(dz);
+  main.appendChild(dz);
+  addWorkspaceFab(main, dz);
 
-  const editWrap=document.createElement('div'); editWrap.style.cssText='position:relative;display:none;margin:14px 0;touch-action:none;user-select:none;'; body.appendChild(editWrap);
-  const editHint=document.createElement('div'); editHint.className='helper-line'; editHint.style.display='none'; editHint.textContent='Drag the 4 corner dots so they sit exactly on the document\'s edges.'; body.appendChild(editHint);
+  const editWrap=document.createElement('div'); editWrap.style.cssText='position:relative;display:none;margin:14px 0;touch-action:none;user-select:none;'; main.appendChild(editWrap);
+  const editHint=document.createElement('div'); editHint.className='helper-line'; editHint.style.display='none'; editHint.textContent='Drag the 4 corner dots so they sit exactly on the document\'s edges.'; main.appendChild(editHint);
 
-  const filterRow=document.createElement('div'); filterRow.className='tools'; filterRow.style.cssText='grid-template-columns:repeat(4,1fr);display:none;'; body.appendChild(filterRow);
+  const filterRow=document.createElement('div'); filterRow.className='tools'; filterRow.style.cssText='grid-template-columns:repeat(2,1fr);display:none;'; sidebar.appendChild(filterRow);
   let selectedFilter = 'auto';
   [['auto','Auto'],['gray','Grayscale'],['bw','Black & White'],['original','Original']].forEach(([val,label],i)=>{
     const b=document.createElement('button'); b.type='button'; b.className='tool-card'+(i===0?' active':''); b.style.cssText='padding:12px 6px;text-align:center;border-color:'+(i===0?'var(--copper)':'var(--line)');
@@ -7326,11 +7327,11 @@ function toolScanToPDF(){
     filterRow.appendChild(b);
   });
 
-  const addPageBtn=document.createElement('button'); addPageBtn.className='primary-btn'; addPageBtn.textContent='Flatten & Add This Page'; addPageBtn.style.display='none'; body.appendChild(addPageBtn);
+  const addPageBtn=document.createElement('button'); addPageBtn.className='primary-btn'; addPageBtn.textContent='Flatten & Add This Page'; addPageBtn.style.display='none'; sidebar.appendChild(addPageBtn);
 
-  const pageGrid=document.createElement('div'); pageGrid.className='thumb-grid'; body.appendChild(pageGrid);
-  const buildBtn=document.createElement('button'); buildBtn.className='primary-btn'; buildBtn.textContent='Build PDF & Download'; buildBtn.disabled=true; body.appendChild(buildBtn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const pageGrid=document.createElement('div'); pageGrid.className='thumb-grid'; main.appendChild(pageGrid);
+  const buildBtn=document.createElement('button'); buildBtn.className='primary-btn'; buildBtn.textContent='Build PDF & Download'; buildBtn.disabled=true; sidebar.appendChild(buildBtn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   input.addEventListener('change', ()=>{
     const f = input.files[0];
@@ -7446,18 +7447,18 @@ function toolScanToPDF(){
 
 
 function toolPDFForms(){
-  const body = panelShell({title:'PDF Forms', desc:'Detects existing form fields in a PDF and lets you fill them in, right in the browser.'});
+  const { main, sidebar } = panelShellSplit({title:'PDF Forms', desc:'Detects existing form fields in a PDF and lets you fill them in, right in the browser.'});
   let file=null, doc=null, form=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     doc = await loadPdf(bytes);
     try{ form = doc.getForm(); }catch(e){ form=null; }
     renderFields();
   }});
-  const fieldsWrap=document.createElement('div'); body.appendChild(fieldsWrap);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save filled PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const fieldsWrap=document.createElement('div'); sidebar.appendChild(fieldsWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save filled PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function renderFields(){
     fieldsWrap.innerHTML='';
@@ -7499,20 +7500,20 @@ function toolPDFForms(){
 }
 
 function toolComparePDF(){
-  const body = panelShell({title:'Compare PDF', desc:'Renders the same page from two PDFs side by side and highlights pixel differences in red.'});
+  const { main, sidebar } = panelShellSplit({title:'Compare PDF', desc:'Renders the same page from two PDFs side by side and highlights pixel differences in red.'});
   let fileA=null, fileB=null, pdfA=null, pdfB=null;
   const row=document.createElement('div'); row.className='row';
   const zoneA=document.createElement('div'); const zoneB=document.createElement('div');
   row.appendChild(zoneA); row.appendChild(zoneB);
-  body.appendChild(row);
+  main.appendChild(row);
   buildDropzone(zoneA, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileA=f[0]; pdfA = await getPdfDoc(await fileA.arrayBuffer()); }});
   buildDropzone(zoneB, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{ fileB=f[0]; pdfB = await getPdfDoc(await fileB.arrayBuffer()); }});
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Page to compare</label><input type="number" id="cmp-page" value="1" min="1">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Compare page'; body.appendChild(btn);
-  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Compare page'; sidebar.appendChild(btn);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!pdfA || !pdfB){log.textContent='Choose two PDFs first.';return;}
     const p = parseInt(document.getElementById('cmp-page').value)||1;
@@ -7697,13 +7698,13 @@ async function getTesseractWorker(){
 }
 
 function toolLocalOCR(){
-  const body = panelShell({title:'OCR — Make Scans Searchable', desc:'Reads the text in scanned PDFs and photos — entirely on this device. Output a searchable PDF (looks identical, text selectable underneath) or plain text.'});
+  const { main, sidebar } = panelShellSplit({title:'OCR — Make Scans Searchable', desc:'Reads the text in scanned PDFs and photos — entirely on this device. Output a searchable PDF (looks identical, text selectable underneath) or plain text.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent = 'Runs Tesseract (the industry-standard OCR engine) compiled to WebAssembly, right here in your browser. The engine ships with the app — nothing is uploaded, and it works offline once the page has loaded.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  buildDropzone(main, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Output</label>
@@ -7715,13 +7716,13 @@ function toolLocalOCR(){
       <select id="locr-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="eng">English</option>
       </select></div>`;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const helper=document.createElement('div'); helper.className='helper-line';
   helper.textContent='More languages: drop the matching {lang}.traineddata.gz into vendor/tesseract/lang/ and add an option here — see the README.';
-  body.appendChild(helper);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Recognize text (on this device)'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  const resultBox=document.createElement('textarea'); resultBox.rows=10; resultBox.style.cssText='display:none;width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);margin-top:10px;'; body.appendChild(resultBox);
+  sidebar.appendChild(helper);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Recognize text (on this device)'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
+  const resultBox=document.createElement('textarea'); resultBox.rows=10; resultBox.style.cssText='display:none;width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--paper);margin-top:10px;'; sidebar.appendChild(resultBox);
 
   async function pagesAsCanvases(){
     // Yields {canvas, widthPt, heightPt} per page at ~200 DPI equivalent.
