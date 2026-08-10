@@ -4320,10 +4320,10 @@ function toolImageCaptioner(){
 }
 
 function toolPassportPhoto(){
-  const body = panelShell({title:'Passport & ID Photo Maker', desc:'Upload a photo, pick your country, and it\'s cropped to the exact official size — ready to print or upload.'});
+  const { main, sidebar } = panelShellSplit({title:'Passport & ID Photo Maker', desc:'Upload a photo, pick your country, and it\'s cropped to the exact official size — ready to print or upload.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='This handles sizing and cropping only — it doesn\'t change lighting, background color, or expression, and it can\'t guarantee official acceptance (only the issuing authority decides that). Check your country\'s current rules before submitting.';
-  body.appendChild(note);
+  main.appendChild(note);
 
   // width x height in mm, at 300 DPI (the standard print resolution)
   const presets = {
@@ -4345,28 +4345,29 @@ function toolPassportPhoto(){
     <select id="pp-preset" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       ${Object.keys(presets).map(k=>`<option>${k}</option>`).join('')}
     </select>`;
-  body.appendChild(field);
+  sidebar.appendChild(field);
   const customRow=document.createElement('div'); customRow.className='row'; customRow.style.display='none';
   customRow.innerHTML = `
     <div class="field"><label>Width (mm)</label><input type="number" id="pp-cw" value="35"></div>
     <div class="field"><label>Height (mm)</label><input type="number" id="pp-ch" value="45"></div>
   `;
-  body.appendChild(customRow);
+  sidebar.appendChild(customRow);
 
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{
     const img = new Image();
     img.onload = ()=>{ photo = img; setupCropper(); };
     img.src = URL.createObjectURL(f[0]);
   }});
+  addWorkspaceFab(main, dz);
 
-  const cropWrap=document.createElement('div'); cropWrap.style.cssText='margin:14px 0;text-align:center;'; body.appendChild(cropWrap);
+  const cropWrap=document.createElement('div'); cropWrap.style.cssText='margin:14px 0;text-align:center;'; main.appendChild(cropWrap);
   const zoomField=document.createElement('div'); zoomField.className='field'; zoomField.style.display='none';
   zoomField.innerHTML = `<label>Zoom</label><input type="range" id="pp-zoom" min="100" max="300" value="100">`;
-  body.appendChild(zoomField);
-  const dragHint=document.createElement('div'); dragHint.className='helper-line'; dragHint.style.display='none'; dragHint.textContent='Drag the photo to center your face, use Zoom to adjust framing.'; body.appendChild(dragHint);
+  sidebar.appendChild(zoomField);
+  const dragHint=document.createElement('div'); dragHint.className='helper-line'; dragHint.style.display='none'; dragHint.textContent='Drag the photo to center your face, use Zoom to adjust framing.'; main.appendChild(dragHint);
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Photo & Download'; btn.style.display='none'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Photo & Download'; btn.style.display='none'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   let photo=null, panX=0.5, panY=0.4, zoom=1, viewH=0;
   const viewW = 260;
@@ -4379,13 +4380,13 @@ function toolPassportPhoto(){
     return presets[key];
   }
 
-  body.addEventListener('change', e=>{
+  sidebar.addEventListener('change', e=>{
     if(e.target.id==='pp-preset'){
       customRow.style.display = presets[e.target.value].custom ? 'flex' : 'none';
       if(photo) setupCropper();
     }
   });
-  body.addEventListener('input', e=>{
+  sidebar.addEventListener('input', e=>{
     if(e.target.id==='pp-zoom'){ zoom = parseInt(e.target.value)/100; renderCrop(); }
     if((e.target.id==='pp-cw'||e.target.id==='pp-ch') && photo) setupCropper();
   });
@@ -4871,32 +4872,32 @@ function toolBatchIDCards(){
 }
 
 function toolCertificateGenerator(){
-  const body = panelShell({title:'Certificate / Award Maker', desc:'Pick a style, fill in the details — a print-ready certificate for a course, event, or recognition.'});
+  const { main, sidebar } = panelShellSplit({title:'Certificate / Award Maker', desc:'Pick a style, fill in the details — a print-ready certificate for a course, event, or recognition.'});
   let certStyle = 'classic', logoImg = null;
 
-  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a style'; body.appendChild(tplLabel);
+  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a style'; sidebar.appendChild(tplLabel);
   const tplRow=document.createElement('div'); tplRow.className='tab-row';
   tplRow.innerHTML = `
     <button type="button" class="tab-btn active" data-tpl="classic"><span class="tab-title">Classic</span><span class="tab-sub">double border</span></button>
     <button type="button" class="tab-btn" data-tpl="modern"><span class="tab-title">Modern</span><span class="tab-sub">bold side band</span></button>
     <button type="button" class="tab-btn" data-tpl="elegant"><span class="tab-title">Elegant</span><span class="tab-sub">corner flourishes</span></button>
   `;
-  body.appendChild(tplRow);
+  sidebar.appendChild(tplRow);
   tplRow.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick=()=>{ tplRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); certStyle=b.dataset.tpl; renderPreview(); };
   });
 
-  const dtLabel=document.createElement('div'); dtLabel.className='helper-line'; dtLabel.style.cssText='font-weight:600;margin-top:14px;'; dtLabel.textContent='2 · Details'; body.appendChild(dtLabel);
+  const dtLabel=document.createElement('div'); dtLabel.className='helper-line'; dtLabel.style.cssText='font-weight:600;margin-top:14px;'; dtLabel.textContent='2 · Details'; sidebar.appendChild(dtLabel);
   const fields = [['recipient','Recipient\'s name','Jordan Rivera'],['reason','For completing / achieving','the Advanced Web Development Course'],['org','Issued by','Acme Learning Academy'],['signer','Signature line (name & title, optional)','Dr. A. Director — Program Lead'],['date','Date','']];
   fields.forEach(([id,label,ph])=>{
     const field=document.createElement('div'); field.className='field';
     field.innerHTML = id==='date'
       ? `<label>${label}</label><input type="date" id="cert-${id}">`
       : `<label>${label}</label><input type="text" id="cert-${id}" placeholder="${ph}">`;
-    body.appendChild(field);
+    sidebar.appendChild(field);
   });
 
-  const styleLabel=document.createElement('div'); styleLabel.className='helper-line'; styleLabel.style.cssText='font-weight:600;margin-top:14px;'; styleLabel.textContent='3 · Style'; body.appendChild(styleLabel);
+  const styleLabel=document.createElement('div'); styleLabel.className='helper-line'; styleLabel.style.cssText='font-weight:600;margin-top:14px;'; styleLabel.textContent='3 · Style'; sidebar.appendChild(styleLabel);
   const PRESETS = ['#C1683A','#2E5A38','#1E4B6E','#6E2E5A','#8A6D1F','#1F2420'];
   const colorRow=document.createElement('div'); colorRow.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;';
   PRESETS.forEach((c,i)=>{
@@ -4908,7 +4909,7 @@ function toolCertificateGenerator(){
   const customColor=document.createElement('input'); customColor.type='color'; customColor.id='cert-color'; customColor.value=PRESETS[0];
   customColor.style.cssText='width:44px;height:34px;border:1px solid var(--line);border-radius:8px;cursor:pointer;';
   colorRow.appendChild(customColor);
-  body.appendChild(colorRow);
+  sidebar.appendChild(colorRow);
 
   const logoWrap=document.createElement('div'); logoWrap.className='field';
   const logoBtn=document.createElement('button'); logoBtn.type='button'; logoBtn.className='small-btn'; logoBtn.textContent='Add a logo / seal image (optional)…';
@@ -4920,14 +4921,14 @@ function toolCertificateGenerator(){
     img.onload=()=>{ logoImg=img; logoBtn.textContent='✓ '+logoInput.files[0].name.slice(0,22); renderPreview(); };
     img.src=URL.createObjectURL(logoInput.files[0]);
   };
-  logoWrap.appendChild(logoBtn); logoWrap.appendChild(logoInput); body.appendChild(logoWrap);
+  logoWrap.appendChild(logoBtn); logoWrap.appendChild(logoInput); sidebar.appendChild(logoWrap);
 
-  const previewWrap=document.createElement('div'); previewWrap.style.cssText='margin:16px 0;text-align:center;'; body.appendChild(previewWrap);
+  const previewWrap=document.createElement('div'); previewWrap.style.cssText='text-align:center;'; main.appendChild(previewWrap);
   const btnRow=document.createElement('div'); btnRow.style.cssText='display:flex;gap:10px;flex-wrap:wrap;';
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Download PDF'; btn.style.flex='1';
   const btnPng=document.createElement('button'); btnPng.className='primary-btn'; btnPng.textContent='Download PNG'; btnPng.style.cssText='flex:1;background:var(--ink);';
-  btnRow.appendChild(btn); btnRow.appendChild(btnPng); body.appendChild(btnRow);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btnRow.appendChild(btn); btnRow.appendChild(btnPng); sidebar.appendChild(btnRow);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function buildCanvas(scale){
     const w=1600*scale, h=1131*scale;
@@ -5005,7 +5006,7 @@ function toolCertificateGenerator(){
     canvas.style.cssText = 'max-width:100%;border-radius:4px;box-shadow:0 8px 20px -10px rgba(0,0,0,0.3);';
     previewWrap.innerHTML=''; previewWrap.appendChild(canvas);
   }
-  body.addEventListener('input', renderPreview);
+  sidebar.addEventListener('input', renderPreview);
   renderPreview();
 
   btn.onclick = async ()=>{
@@ -5031,23 +5032,24 @@ function toolCertificateGenerator(){
 }
 
 function toolInvoiceGenerator(){
-  const body = panelShell({title:'Invoice Generator', desc:'Create a professional invoice with line items, totals, and your business details.'});
+  const { main, sidebar } = panelShellSplit({title:'Invoice Generator', desc:'Create a professional invoice with line items, totals, and your business details.'});
+  const previewHint=document.createElement('div'); previewHint.className='note'; previewHint.textContent='Fill in the details on the right, then download — the finished invoice is built as a PDF on your device.'; main.appendChild(previewHint);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Your business name</label><input type="text" id="inv-from" placeholder="Acme Co."></div>
     <div class="field"><label>Invoice number</label><input type="text" id="inv-num" placeholder="INV-2026-0042"></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML = `
     <div class="field"><label>Bill to</label><input type="text" id="inv-to" placeholder="Client name / company"></div>
     <div class="field"><label>Date</label><input type="date" id="inv-date"></div>
   `;
-  body.appendChild(row2);
-  const note=document.createElement('div'); note.className='helper-line'; note.style.fontWeight='600'; note.textContent='Line items'; body.appendChild(note);
-  const itemsWrap=document.createElement('div'); itemsWrap.id='inv-items-wrap'; body.appendChild(itemsWrap);
-  const addBtn=document.createElement('button'); addBtn.type='button'; addBtn.className='small-btn'; addBtn.textContent='+ Add another item'; body.appendChild(addBtn);
-  const totalsLine=document.createElement('div'); totalsLine.className='helper-line'; totalsLine.style.cssText='text-align:right;font-weight:600;margin-top:8px;'; body.appendChild(totalsLine);
+  sidebar.appendChild(row2);
+  const note=document.createElement('div'); note.className='helper-line'; note.style.fontWeight='600'; note.textContent='Line items'; sidebar.appendChild(note);
+  const itemsWrap=document.createElement('div'); itemsWrap.id='inv-items-wrap'; sidebar.appendChild(itemsWrap);
+  const addBtn=document.createElement('button'); addBtn.type='button'; addBtn.className='small-btn'; addBtn.textContent='+ Add another item'; sidebar.appendChild(addBtn);
+  const totalsLine=document.createElement('div'); totalsLine.className='helper-line'; totalsLine.style.cssText='text-align:right;font-weight:600;margin-top:8px;'; sidebar.appendChild(totalsLine);
   function addItemRow(desc='', qty='1', price=''){
     const row=document.createElement('div'); row.className='row'; row.dataset.invItem='1'; row.style.cssText='margin-bottom:6px;align-items:flex-end;';
     row.innerHTML = `
@@ -5074,15 +5076,15 @@ function toolInvoiceGenerator(){
   }
   addBtn.onclick=()=>addItemRow();
   addItemRow();
-  body.addEventListener('input', updateTotals);
+  sidebar.addEventListener('input', updateTotals);
   const row3=document.createElement('div'); row3.className='row';
   row3.innerHTML = `
     <div class="field"><label>Tax rate (%, optional)</label><input type="number" id="inv-tax" value="0"></div>
     <div class="field"><label>Currency symbol</label><input type="text" id="inv-currency" value="$"></div>
   `;
-  body.appendChild(row3);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Invoice & Download PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(row3);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create Invoice & Download PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   btn.onclick = async ()=>{
     log.textContent = 'Building your invoice...';
