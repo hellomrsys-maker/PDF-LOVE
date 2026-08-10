@@ -2463,6 +2463,7 @@ function toolSplitPDF(){
       document.getElementById('sp-to').value = pageCount;
       document.getElementById('sp-to').max = pageCount;
       document.getElementById('sp-from').max = pageCount;
+      updateEveryPreview();
     }catch(e){ file=null; pageCount=0; list.textContent=''; log.textContent = e.message; }
   }});
   addWorkspaceFab(main, dz);
@@ -2470,6 +2471,7 @@ function toolSplitPDF(){
   const tabRow=document.createElement('div'); tabRow.className='tab-row';
   tabRow.innerHTML = `
     <button type="button" class="tab-btn active" data-mode="range"><span class="tab-title">Extract a page range</span><span class="tab-sub">e.g. pages 3–7 into one PDF</span></button>
+    <button type="button" class="tab-btn" data-mode="every"><span class="tab-title">Split every N pages</span><span class="tab-sub">e.g. 10 pages → two 5-page files</span></button>
     <button type="button" class="tab-btn" data-mode="each"><span class="tab-title">One file per page</span><span class="tab-sub">every page as its own PDF, in a .zip</span></button>
   `;
   sidebar.appendChild(tabRow);
@@ -2479,11 +2481,26 @@ function toolSplitPDF(){
     <div class="field"><label>To page</label><input type="number" id="sp-to" min="1" value="1"></div>
   `;
   sidebar.appendChild(row);
+  const everyRow=document.createElement('div'); everyRow.style.display='none';
+  everyRow.innerHTML = `<div class="field"><label>Pages per file</label><input type="number" id="sp-every" min="1" value="5"></div>
+    <div class="helper-line" id="sp-every-preview"></div>`;
+  sidebar.appendChild(everyRow);
+  function updateEveryPreview(){
+    const n = Math.max(1, parseInt(document.getElementById('sp-every')?.value)||1);
+    const prev = document.getElementById('sp-every-preview');
+    if(!prev) return;
+    prev.textContent = pageCount ? `→ ${Math.ceil(pageCount/n)} file(s): ${Array.from({length:Math.ceil(pageCount/n)},(_,i)=>{
+      const s=i*n+1, e=Math.min((i+1)*n,pageCount); return s===e?`${s}`:`${s}–${e}`;
+    }).join(', ')}` : '';
+  }
+  sidebar.addEventListener('input', e=>{ if(e.target.id==='sp-every') updateEveryPreview(); });
   tabRow.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick = ()=>{
       tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
       b.classList.add('active');
-      row.style.display = b.dataset.mode==='each' ? 'none' : 'flex';
+      row.style.display = b.dataset.mode==='range' ? 'flex' : 'none';
+      everyRow.style.display = b.dataset.mode==='every' ? 'block' : 'none';
+      if(b.dataset.mode==='every') updateEveryPreview();
     };
   });
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download'; sidebar.appendChild(btn);
@@ -2494,6 +2511,25 @@ function toolSplitPDF(){
     const bytes = await file.arrayBuffer();
     const src = await loadPdf(bytes);
     const total = src.getPageCount();
+    if(mode==='every'){
+      const n = Math.max(1, parseInt(document.getElementById('sp-every').value)||1);
+      log.textContent='Splitting on-device...';
+      const zip = new JSZip();
+      let part=1;
+      for(let start=0; start<total; start+=n){
+        const end = Math.min(start+n, total);
+        const out = await PDFDocument.create();
+        const idx=[]; for(let p=start;p<end;p++) idx.push(p);
+        const pages = await out.copyPages(src, idx);
+        pages.forEach(p=>out.addPage(p));
+        zip.file(`part-${part}-p${start+1}-${end}.pdf`, await out.save());
+        log.textContent = `Built part ${part} (pages ${start+1}-${end})...`;
+        part++;
+      }
+      download(await zip.generateAsync({type:'blob'}), file.name.replace(/\.pdf$/i,'')+'-split.zip');
+      log.innerHTML = `<span class="ok">✓ Done — ${part-1} file(s) of up to ${n} page(s) each, split locally, 0 bytes uploaded.</span>`;
+      return;
+    }
     if(mode==='each'){
       log.textContent='Splitting into one file per page on-device...';
       const zip = new JSZip();
@@ -3478,10 +3514,25 @@ function toolSplitByBookmark(){
 
 function toolSplitBySize(){
   const { main, sidebar } = panelShellSplit({title:'Split by File Size', desc:'Break a large PDF into chunks under a target size — useful for email attachment limits.'});
-  let file=null;
-  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — ${fmtBytes(file.size)}`;}});
+  let file=null, totalPages=0;
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+    file=f[0]; info.textContent=`${file.name} — ${fmtBytes(file.size)}`;
+    try{ const src = await loadPdf(await file.arrayBuffer()); totalPages = src.getPageCount(); }catch(e){ totalPages=0; }
+    updateSizePreview();
+  }});
   addWorkspaceFab(main, dz);
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+
+  const presetLabel=document.createElement('div'); presetLabel.className='helper-line'; presetLabel.style.fontWeight='600'; presetLabel.textContent='Common attachment limits'; sidebar.appendChild(presetLabel);
+  const presetRow=document.createElement('div'); presetRow.className='tab-row';
+  const PRESETS = [
+    {label:'Gmail', sub:'25 MB', val:25, unit:'MB'},
+    {label:'Outlook', sub:'20 MB', val:20, unit:'MB'},
+    {label:'WhatsApp', sub:'16 MB', val:16, unit:'MB'},
+  ];
+  presetRow.innerHTML = PRESETS.map(p=>`<button type="button" class="tab-btn" data-val="${p.val}" data-unit="${p.unit}"><span class="tab-title">${p.label}</span><span class="tab-sub">under ${p.sub}</span></button>`).join('');
+  sidebar.appendChild(presetRow);
+
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Target size per chunk</label>
     <div class="big-input-row">
@@ -3493,14 +3544,37 @@ function toolSplitBySize(){
       </select>
     </div>`;
   sidebar.appendChild(field);
+  const preview=document.createElement('div'); preview.className='helper-line'; sidebar.appendChild(preview);
+  function currentTargetBytes(){
+    const val = parseFloat(document.getElementById('sbs-val').value)||10;
+    const unit = document.getElementById('sbs-unit').value;
+    const mult = unit==='GB' ? 1024*1024*1024 : unit==='KB' ? 1024 : 1024*1024;
+    return val*mult;
+  }
+  function updateSizePreview(){
+    if(!file || !totalPages){ preview.textContent=''; return; }
+    const targetBytes = currentTargetBytes();
+    const avgPageSize = file.size / totalPages;
+    const pagesPerChunk = Math.max(1, Math.floor(targetBytes / avgPageSize));
+    const parts = Math.ceil(totalPages / pagesPerChunk);
+    preview.textContent = `→ about ${parts} part(s), ~${pagesPerChunk} page(s) each (estimated from average page size)`;
+  }
+  sidebar.addEventListener('input', e=>{ if(e.target.id==='sbs-val'||e.target.id==='sbs-unit') updateSizePreview(); });
+  presetRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick = ()=>{
+      presetRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('sbs-val').value = b.dataset.val;
+      document.getElementById('sbs-unit').value = b.dataset.unit;
+      updateSizePreview();
+    };
+  });
+
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; sidebar.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
-    const val = parseFloat(document.getElementById('sbs-val').value)||10;
-    const unit = document.getElementById('sbs-unit').value;
-    const mult = unit==='GB' ? 1024*1024*1024 : unit==='KB' ? 1024 : 1024*1024;
-    const targetBytes = val*mult;
+    const targetBytes = currentTargetBytes();
     log.textContent='Analyzing on-device...';
     const bytes = await file.arrayBuffer();
     const src = await loadPdf(bytes);
