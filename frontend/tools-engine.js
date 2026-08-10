@@ -116,6 +116,108 @@ function fileRowList(container, files, onRemove){
     container.appendChild(row);
   });
 }
+
+/* Full-size preview on tap — used by imageThumbGrid/pdfFileThumbGrid so
+   "which page is this" is answerable by looking, not guessing from a
+   filename. Same component as desktop's. */
+function openImageLightbox(url, name){
+  const overlay=document.createElement('div'); overlay.className='lightbox-overlay';
+  overlay.innerHTML = `<div class="lightbox-inner"><img src="${url}" alt=""><div class="lightbox-caption">${escapeXml(name||'')}</div><button type="button" class="lightbox-close" aria-label="Close">✕</button></div>`;
+  overlay.addEventListener('click', e=>{ if(e.target===overlay || e.target.classList.contains('lightbox-close')) overlay.remove(); });
+  document.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ overlay.remove(); document.removeEventListener('keydown', esc); } });
+  document.body.appendChild(overlay);
+}
+
+/* Per-image thumbnail cards (actual preview, not just a filename row) —
+   numbered in upload/page order, draggable to reorder when order
+   matters, tap to preview full-size. Same visual language as the
+   page-thumbnail grids elsewhere (Organize PDF, Scan Document). */
+function imageThumbGrid(container, files, {onRemove, onReorder}={}){
+  container.innerHTML=''; container.classList.add('workspace-grid');
+  let dragFrom=null;
+  files.forEach((f,i)=>{
+    const t=document.createElement('div'); t.className='workspace-thumb';
+    if(onReorder){ t.draggable=true; t.style.cursor='grab'; }
+    const img=document.createElement('img');
+    img.src=URL.createObjectURL(f); img.alt=f.name;
+    img.style.cssText='width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block;cursor:zoom-in;';
+    img.onclick=()=>openImageLightbox(img.src, f.name);
+    t.appendChild(img);
+    const badge=document.createElement('div'); badge.className='workspace-thumb-badge'; badge.textContent=i+1;
+    t.appendChild(badge);
+    const name=document.createElement('div'); name.className='workspace-thumb-name'; name.textContent=f.name;
+    t.appendChild(name);
+    if(onRemove){
+      const rm=document.createElement('button'); rm.type='button'; rm.className='small-btn'; rm.textContent='Remove';
+      rm.style.cssText='width:100%;margin-top:6px;';
+      rm.onclick=(e)=>{ e.stopPropagation(); onRemove(i); };
+      t.appendChild(rm);
+    }
+    if(onReorder){
+      t.addEventListener('dragstart', ()=>{ dragFrom=i; t.style.opacity='0.4'; });
+      t.addEventListener('dragend', ()=>{ t.style.opacity='1'; });
+      t.addEventListener('dragover', e=>{ e.preventDefault(); t.classList.add('drag-over'); });
+      t.addEventListener('dragleave', ()=>t.classList.remove('drag-over'));
+      t.addEventListener('drop', e=>{
+        e.preventDefault(); t.classList.remove('drag-over');
+        if(dragFrom===null || dragFrom===i) return;
+        onReorder(dragFrom, i); dragFrom=null;
+      });
+    }
+    container.appendChild(t);
+  });
+}
+
+/* Same card grid, but for PDFs: previews each file's actual first page
+   (rendered via pdf.js) instead of an <img>. Renders progressively and
+   guards against a stale render finishing after a newer one started. */
+async function pdfFileThumbGrid(container, files, {onRemove, onReorder}={}){
+  const token = (container._pftgToken = (container._pftgToken||0) + 1);
+  container.innerHTML=''; container.classList.add('workspace-grid');
+  let dragFrom=null;
+  const cards = files.map((f,i)=>{
+    const t=document.createElement('div'); t.className='workspace-thumb';
+    if(onReorder){ t.draggable=true; t.style.cursor='grab'; }
+    const ph=document.createElement('div');
+    ph.style.cssText='width:100%;aspect-ratio:0.77;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:0.72rem;';
+    ph.textContent='Loading…';
+    t.appendChild(ph);
+    const badge=document.createElement('div'); badge.className='workspace-thumb-badge'; badge.textContent=i+1;
+    t.appendChild(badge);
+    const name=document.createElement('div'); name.className='workspace-thumb-name'; name.textContent=f.name;
+    t.appendChild(name);
+    if(onRemove){
+      const rm=document.createElement('button'); rm.type='button'; rm.className='small-btn'; rm.textContent='Remove';
+      rm.style.cssText='width:100%;margin-top:6px;';
+      rm.onclick=(e)=>{ e.stopPropagation(); onRemove(i); };
+      t.appendChild(rm);
+    }
+    if(onReorder){
+      t.addEventListener('dragstart', ()=>{ dragFrom=i; t.style.opacity='0.4'; });
+      t.addEventListener('dragend', ()=>{ t.style.opacity='1'; });
+      t.addEventListener('dragover', e=>{ e.preventDefault(); t.classList.add('drag-over'); });
+      t.addEventListener('dragleave', ()=>t.classList.remove('drag-over'));
+      t.addEventListener('drop', e=>{
+        e.preventDefault(); t.classList.remove('drag-over');
+        if(dragFrom===null || dragFrom===i) return;
+        onReorder(dragFrom, i); dragFrom=null;
+      });
+    }
+    container.appendChild(t);
+    return {placeholder:ph, file:f};
+  });
+  for(const {placeholder, file} of cards){
+    if(container._pftgToken !== token) return;
+    try{
+      const pdf = await getPdfDoc(await file.arrayBuffer());
+      const {canvas} = await renderPdfPageToCanvas(pdf, 1, 0.6);
+      if(container._pftgToken !== token) return;
+      canvas.style.cssText='width:100%;border-radius:6px;display:block;cursor:zoom-in;';
+      canvas.onclick=()=>openImageLightbox(canvas.toDataURL('image/png'), file.name);
+      placeholder.replaceWith(canvas);
+    }catch(e){ placeholder.textContent='Preview unavailable'; }
+  }
+}
 /* No-op: the "also want to run X next?" suggestion sidebar is desktop-shell
    UX tied to state (toolIndex, URL history) this engine deliberately
    doesn't carry. Every tool that calls this as its last step still
@@ -129,10 +231,20 @@ function toolMergePDF(){
   const body = panelShell({title:'Merge PDF', desc:'Combine multiple PDFs into one, in the order you add them.'});
   let files=[];
   buildDropzone(body, {multiple:true, accept:'application/pdf', onFiles:(f)=>{files=files.concat(f.filter(x=>x.type==='application/pdf'||x.name.endsWith('.pdf')));renderList();}});
-  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  const hint=document.createElement('div'); hint.className='helper-line'; hint.style.display='none';
+  hint.textContent='This is the merge order — drag a thumbnail to reorder, or tap one to preview its first page.';
+  body.appendChild(hint);
+  const list=document.createElement('div'); body.appendChild(list);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Merge & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<2; }
+  function renderList(){
+    hint.style.display = files.length ? 'block' : 'none';
+    pdfFileThumbGrid(list, files, {
+      onRemove: i=>{ files.splice(i,1); renderList(); },
+      onReorder: (from,to)=>{ const [moved]=files.splice(from,1); files.splice(to,0,moved); renderList(); },
+    });
+    btn.disabled = files.length<2;
+  }
   renderList();
   btn.onclick = async ()=>{
     if(!(await memoryGuard(files, 4, log))) return;
@@ -243,26 +355,41 @@ async function embedImageSmart(doc, fileOrBlob){
 }
 
 function toolImageToPDF(){
-  const body = panelShell({title:'Images to PDF', desc:'Combine images (JPG, PNG, WebP, GIF, BMP...) into a single PDF, one page each.'});
+  const body = panelShell({title:'Images to PDF', desc:'Combine images (JPG, PNG, WebP, GIF, BMP...) into a single PDF, one page each — in the order shown.'});
   let files=[];
   buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
-  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
-  const sizeField=document.createElement('div'); sizeField.className='field';
-  sizeField.innerHTML=`<label>Page size</label>
-    <select id="i2p-size" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
-      <option value="image">Match each image (no borders)</option>
-      <option value="a4">A4 portrait, image fitted</option>
-      <option value="letter">US Letter portrait, image fitted</option>
-    </select>`;
-  body.appendChild(sizeField);
+  const hint=document.createElement('div'); hint.className='helper-line'; hint.style.display='none';
+  hint.textContent='Each image becomes one page, in this order — drag a thumbnail to reorder, or tap one to preview it full-size.';
+  body.appendChild(hint);
+  const list=document.createElement('div'); body.appendChild(list);
+
+  const sizeLabel=document.createElement('div'); sizeLabel.className='helper-line'; sizeLabel.style.fontWeight='600'; sizeLabel.textContent='Page size'; body.appendChild(sizeLabel);
+  const tabRow=document.createElement('div'); tabRow.className='tab-row'; tabRow.style.flexDirection='column';
+  tabRow.innerHTML = `
+    <button type="button" class="tab-btn active" data-size="image"><span class="tab-title">Match each image</span><span class="tab-sub">No borders — exact image size</span></button>
+    <button type="button" class="tab-btn" data-size="a4"><span class="tab-title">A4</span><span class="tab-sub">Portrait, image fitted to page</span></button>
+    <button type="button" class="tab-btn" data-size="letter"><span class="tab-title">US Letter</span><span class="tab-sub">Portrait, image fitted to page</span></button>
+  `;
+  body.appendChild(tabRow);
+  let sizeMode='image';
+  tabRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick=()=>{ tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); sizeMode=b.dataset.size; };
+  });
+
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
+  function renderList(){
+    hint.style.display = files.length ? 'block' : 'none';
+    imageThumbGrid(list, files, {
+      onRemove: i=>{ files.splice(i,1); renderList(); },
+      onReorder: (from,to)=>{ const [moved]=files.splice(from,1); files.splice(to,0,moved); renderList(); },
+    });
+    btn.disabled = files.length<1;
+  }
   renderList();
   btn.onclick = async ()=>{
     log.textContent='Building PDF on-device...';
     const pageSizes = { a4:[595.28,841.89], letter:[612,792] };
-    const sizeMode = document.getElementById('i2p-size').value;
     const doc = await PDFDocument.create();
     let done=0;
     for(const f of files){
@@ -1648,7 +1775,7 @@ function toolBatchImageProcessor(){
   const body = panelShell({title:'Batch Resize / Shrink Many Photos at Once', desc:'Add as many photos as you want, set it up once, and get them all done together — no "2 files per day" limit like the paid tools have.'});
   let files=[];
   buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
-  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  const list=document.createElement('div'); body.appendChild(list);
 
   const tabRow=document.createElement('div'); tabRow.className='tab-row';
   tabRow.innerHTML = `
@@ -1683,7 +1810,7 @@ function toolBatchImageProcessor(){
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Process All & Download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
-  function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
+  function renderList(){ imageThumbGrid(list, files, {onRemove:i=>{files.splice(i,1);renderList();}}); btn.disabled = files.length<1; }
   renderList();
 
   btn.onclick = async ()=>{
@@ -4120,7 +4247,10 @@ function toolSlideshowVideo(){
   if(!mime){ body.innerHTML += '<div class="note">This browser cannot record video (MediaRecorder unsupported). Try Chrome, Edge, or Firefox.</div>'; return; }
   let files=[];
   buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
-  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  const hint=document.createElement('div'); hint.className='helper-line'; hint.style.display='none';
+  hint.textContent='This is the slide order — drag a thumbnail to reorder, or tap one to preview it full-size.';
+  body.appendChild(hint);
+  const list=document.createElement('div'); body.appendChild(list);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Seconds per picture</label><input type="number" id="ss-secs" value="3" min="1" max="30" step="0.5"></div>
@@ -4136,7 +4266,14 @@ function toolSlideshowVideo(){
   body.appendChild(fadeOpt);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create video ('+mimeExt(mime).toUpperCase()+')'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
+  function renderList(){
+    hint.style.display = files.length ? 'block' : 'none';
+    imageThumbGrid(list, files, {
+      onRemove: i=>{ files.splice(i,1); renderList(); },
+      onReorder: (from,to)=>{ const [moved]=files.splice(from,1); files.splice(to,0,moved); renderList(); },
+    });
+    btn.disabled = files.length<1;
+  }
   renderList();
 
   btn.onclick = async ()=>{
