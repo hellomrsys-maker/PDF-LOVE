@@ -3812,7 +3812,7 @@ function toolSearchRedact(){
 }
 
 function toolDigitalStamp(){
-  const body = panelShell({title:'Digital Stamp', desc:'Stamp a design like APPROVED or PAID onto a page — like a rubber stamp, but digital.'});
+  const { main, sidebar } = panelShellSplit({title:'Digital Stamp', desc:'Stamp a design like APPROVED or PAID onto a page — like a rubber stamp, but digital.'});
   let file=null, pdfjsDoc=null, pageNum=1, placed=null;
 
   const presets = [
@@ -3832,25 +3832,26 @@ function toolDigitalStamp(){
     b.onclick=()=>{ [...tabRow.children].forEach(x=>x.style.borderColor='var(--line)'); b.style.borderColor='var(--copper)'; selected=p; document.getElementById('stamp-custom').value=''; };
     tabRow.appendChild(b);
   });
-  body.appendChild(tabRow);
+  sidebar.appendChild(tabRow);
   let selected = presets[0];
 
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Or type your own stamp text</label><input type="text" id="stamp-custom" placeholder="e.g. RECEIVED">`;
-  body.appendChild(field);
+  sidebar.appendChild(field);
 
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     pageNum=1; placed=null;
     renderPage();
   }});
-  const controls=document.createElement('div'); controls.className='pill-row'; body.appendChild(controls);
-  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
-  const helper=document.createElement('div'); helper.className='helper-line'; helper.textContent='Open a PDF above, then tap where you want the stamp to go.'; body.appendChild(helper);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add Stamp & Download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  addWorkspaceFab(main, dz);
+  const controls=document.createElement('div'); controls.className='pill-row'; main.appendChild(controls);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
+  const helper=document.createElement('div'); helper.className='helper-line'; helper.textContent='Open a PDF above, then tap where you want the stamp to go.'; main.appendChild(helper);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add Stamp & Download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function buildControls(){
     controls.innerHTML = `<button class="small-btn" id="st-prev">‹ prev</button>
@@ -3913,14 +3914,14 @@ function toolDigitalStamp(){
 /* ================= NEW CATEGORY: Everyday Utilities ================= */
 
 function toolQRGenerate(){
-  const body = panelShell({title:'QR Code Generator', desc:'Turn a link or text into a scannable QR code.'});
+  const { main, sidebar } = panelShellSplit({title:'QR Code Generator', desc:'Turn a link or text into a scannable QR code.'});
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Text or link</label><input type="text" id="qr-input" placeholder="https://example.com">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; body.appendChild(btn);
-  const canvasWrap=document.createElement('div'); canvasWrap.style.cssText='text-align:center;margin:16px 0;'; body.appendChild(canvasWrap);
-  const dlBtn=document.createElement('button'); dlBtn.className='small-btn'; dlBtn.textContent='Download as PNG'; dlBtn.style.display='none'; body.appendChild(dlBtn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; sidebar.appendChild(btn);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='workspace-single'; canvasWrap.style.cssText='text-align:center;padding:16px;'; main.appendChild(canvasWrap);
+  const dlBtn=document.createElement('button'); dlBtn.className='small-btn'; dlBtn.textContent='Download as PNG'; dlBtn.style.display='none'; sidebar.appendChild(dlBtn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   let lastCanvas=null;
   btn.onclick = async ()=>{
     const text = document.getElementById('qr-input').value.trim();
@@ -3946,12 +3947,13 @@ function toolQRGenerate(){
 }
 
 function toolQRRead(){
-  const body = panelShell({title:'QR Code Reader', desc:'Upload a photo of a QR code and read what it says.'});
+  const { main, sidebar } = panelShellSplit({title:'QR Code Reader', desc:'Upload a photo of a QR code and read what it says.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; go();}});
-  const preview=document.createElement('div'); preview.style.margin='10px 0'; body.appendChild(preview);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  const resultBox=document.createElement('div'); body.appendChild(resultBox);
+  const dz = buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; go();}});
+  addWorkspaceFab(main, dz);
+  const preview=document.createElement('div'); preview.style.margin='10px 0'; main.appendChild(preview);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
+  const resultBox=document.createElement('div'); sidebar.appendChild(resultBox);
   async function go(){
     log.textContent = 'Reading...';
     try{
@@ -3976,12 +3978,12 @@ function toolQRRead(){
 }
 
 function toolPasswordGenerator(){
-  const body = panelShell({title:'Password Generator', desc:'Make a strong, random password — created on your device, never sent anywhere.'});
+  const { main, sidebar } = panelShellSplit({title:'Password Generator', desc:'Make a strong, random password — created on your device, never sent anywhere.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Length</label><input type="number" id="pw-len" value="16" min="4" max="64"></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const opts = [
     {id:'pw-upper', label:'Include CAPITAL letters', checked:true},
     {id:'pw-lower', label:'Include lowercase letters', checked:true},
@@ -3991,11 +3993,11 @@ function toolPasswordGenerator(){
   opts.forEach(o=>{
     const lbl=document.createElement('label'); lbl.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:6px 0;';
     lbl.innerHTML = `<input type="checkbox" id="${o.id}" ${o.checked?'checked':''}> ${o.label}`;
-    body.appendChild(lbl);
+    sidebar.appendChild(lbl);
   });
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; body.appendChild(btn);
-  const out=document.createElement('div'); out.style.cssText='font-family:IBM Plex Mono,monospace;font-size:1.1rem;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px;margin-top:12px;word-break:break-all;text-align:center;'; body.appendChild(out);
-  const copyBtn=document.createElement('button'); copyBtn.className='small-btn'; copyBtn.textContent='Copy'; copyBtn.style.marginTop='8px'; body.appendChild(copyBtn);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; sidebar.appendChild(btn);
+  const out=document.createElement('div'); out.className='workspace-single'; out.style.cssText='font-family:IBM Plex Mono,monospace;font-size:1.3rem;padding:24px;word-break:break-all;text-align:center;max-width:480px;'; main.appendChild(out);
+  const copyBtn=document.createElement('button'); copyBtn.className='small-btn'; copyBtn.textContent='Copy'; copyBtn.style.marginTop='8px'; sidebar.appendChild(copyBtn);
   btn.onclick = ()=>{
     const len = parseInt(document.getElementById('pw-len').value)||16;
     let chars = '';
@@ -4458,14 +4460,14 @@ function toolPassportPhoto(){
 }
 
 function toolBarcodeGenerator(){
-  const body = panelShell({title:'Barcode Generator', desc:'Turn a product code or number into a scannable barcode.'});
+  const { main, sidebar } = panelShellSplit({title:'Barcode Generator', desc:'Turn a product code or number into a scannable barcode.'});
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Code or number</label><input type="text" id="bc-input" placeholder="e.g. 123456789012">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; body.appendChild(btn);
-  const canvasWrap=document.createElement('div'); canvasWrap.style.cssText='text-align:center;margin:16px 0;background:#fff;padding:12px;border-radius:8px;'; body.appendChild(canvasWrap);
-  const dlBtn=document.createElement('button'); dlBtn.className='small-btn'; dlBtn.textContent='Download as PNG'; dlBtn.style.display='none'; body.appendChild(dlBtn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate'; sidebar.appendChild(btn);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='workspace-single'; canvasWrap.style.cssText='text-align:center;padding:12px;'; main.appendChild(canvasWrap);
+  const dlBtn=document.createElement('button'); dlBtn.className='small-btn'; dlBtn.textContent='Download as PNG'; dlBtn.style.display='none'; sidebar.appendChild(dlBtn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   let lastCanvas=null;
   btn.onclick = async ()=>{
     const text = document.getElementById('bc-input').value.trim();
