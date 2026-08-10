@@ -6022,9 +6022,9 @@ function summarizePageSizes(doc){
 }
 
 function toolPDFPrintScreenMode(){
-  const body = panelShell({title:'PDF Edit — Print & Screen Mode', desc:'Prepare a PDF for exactly where it\'s going: a uniform layout for on-screen reading, or bleed and crop marks ready for a print shop.'});
+  const { main, sidebar } = panelShellSplit({title:'PDF Edit — Print & Screen Mode', desc:'Prepare a PDF for exactly where it\'s going: a uniform layout for on-screen reading, or bleed and crop marks ready for a print shop.'});
   let file=null, doc=null, pageInfo=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     try{
       const bytes = await file.arrayBuffer();
@@ -6039,7 +6039,7 @@ function toolPDFPrintScreenMode(){
       log.textContent = e.message;
     }
   }});
-  const report=document.createElement('div'); report.style.cssText='margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:0.88rem;'; body.appendChild(report);
+  const report=document.createElement('div'); report.style.cssText='margin:10px 0;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:0.88rem;'; main.appendChild(report);
   function renderReport(){
     const n = doc.getPageCount();
     let html = `<div style="font-weight:600;margin-bottom:4px;">${escapeXml(file.name)} — ${n} page${n===1?'':'s'}</div>`;
@@ -6051,7 +6051,7 @@ function toolPDFPrintScreenMode(){
     report.innerHTML = html;
   }
 
-  const modeSection = document.createElement('div'); modeSection.style.display='none'; body.appendChild(modeSection);
+  const modeSection = document.createElement('div'); modeSection.style.display='none'; sidebar.appendChild(modeSection);
   const tabRow=document.createElement('div'); tabRow.className='tab-row';
   tabRow.innerHTML = `
     <button type="button" class="tab-btn active" data-mode="screen"><span class="tab-title">Screen / Normal</span><span class="tab-sub">uniform size for reading</span></button>
@@ -6417,13 +6417,13 @@ async function extractPdfPagesText(file){
 }
 
 function toolPDFToWord(){
-  const body = panelShell({title:'PDF to Word', desc:'Extracts text and builds a .docx file. Best for text-based PDFs — complex layouts, tables, and images are not preserved.'});
+  const { main, sidebar } = panelShellSplit({title:'PDF to Word', desc:'Extracts text and builds a .docx file. Best for text-based PDFs — complex layouts, tables, and images are not preserved.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const note=document.createElement('div'); note.className='note'; note.textContent='Text-only conversion, built and zipped entirely in your browser as a valid .docx package.'; body.appendChild(note);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .docx'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const note=document.createElement('div'); note.className='note'; note.textContent='Text-only conversion, built and zipped entirely in your browser as a valid .docx package.'; main.appendChild(note);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .docx'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Extracting text on-device...';
@@ -6436,12 +6436,12 @@ function toolPDFToWord(){
 }
 
 function toolPDFToMarkdown(){
-  const body = panelShell({title:'PDF to Markdown', desc:'Extracts text into a clean .md file, with page breaks marked as headings.'});
+  const { main, sidebar } = panelShellSplit({title:'PDF to Markdown', desc:'Extracts text into a clean .md file, with page breaks marked as headings.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .md'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .md'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Extracting text on-device...';
@@ -6453,13 +6453,13 @@ function toolPDFToMarkdown(){
 }
 
 function toolWordToPDF(){
-  const body = panelShell({title:'Word to PDF', desc:'Converts a .docx file to PDF, preserving basic text formatting and headings.'});
+  const { main, sidebar } = panelShellSplit({title:'Word to PDF', desc:'Converts a .docx file to PDF, preserving basic text formatting and headings.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'.docx', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const note=document.createElement('div'); note.className='note'; note.textContent='Advanced layout (multi-column, embedded objects) may not be pixel-perfect — this renders the document HTML to PDF in your browser.'; body.appendChild(note);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'.docx', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const note=document.createElement('div'); note.className='note'; note.textContent='Advanced layout (multi-column, embedded objects) may not be pixel-perfect — this renders the document HTML to PDF in your browser.'; main.appendChild(note);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a .docx first.';return;}
     log.textContent='Rendering document on-device...';
@@ -6620,21 +6620,21 @@ function toolPDFEditor(){
 }
 
 function toolAddWatermark(){
-  const body = panelShell({title:'Add Watermark', desc:'Stamp diagonal text across every page.'});
+  const { main, sidebar } = panelShellSplit({title:'Add Watermark', desc:'Stamp diagonal text across every page.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Watermark text</label><input type="text" id="wm-text" value="CONFIDENTIAL">`;
-  body.appendChild(field);
+  sidebar.appendChild(field);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
     <div class="field"><label>Font size</label><input type="number" id="wm-size" value="48"></div>
     <div class="field"><label>Opacity (0-1)</label><input type="number" id="wm-op" value="0.25" step="0.05"></div>
   `;
-  body.appendChild(row);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add watermark & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(row);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add watermark & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Stamping on-device...';
@@ -6663,22 +6663,22 @@ function toolAddWatermark(){
 }
 
 function toolRedact(){
-  const body = panelShell({title:'Redact / Remove Watermark', desc:'Draw a box over the area to permanently blank it out (covers stamped watermarks, stray marks, or sensitive text).'});
+  const { main, sidebar } = panelShellSplit({title:'Redact / Remove Watermark', desc:'Draw a box over the area to permanently blank it out (covers stamped watermarks, stray marks, or sensitive text).'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='This rasterizes each page (converts it to an image) so the covered area cannot be recovered by copy-paste — but the whole page becomes an image, so existing selectable text is lost. Use for visual redaction, not for pages you need to keep as searchable text.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null, pdfjsDoc=null, box=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     box=null;
     renderPreview();
   }});
-  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
-  const hint=document.createElement('div'); hint.className='runlog'; hint.textContent='Drag on the page below to mark the area to blank out (applied to every page, same position).'; body.appendChild(hint);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Redact & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
+  const hint=document.createElement('div'); hint.className='runlog'; hint.textContent='Drag on the page below to mark the area to blank out (applied to every page, same position).'; sidebar.appendChild(hint);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Redact & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   async function renderPreview(){
     const { canvas } = await renderPdfPageToCanvas(pdfjsDoc, 1, 1.3);
@@ -6731,19 +6731,19 @@ function toolRedact(){
 
 
 function toolOrganizePDF(){
-  const body = panelShell({title:'Organize PDF', desc:'Drag thumbnails to reorder. Uncheck any page to remove it.'});
+  const { main, sidebar } = panelShellSplit({title:'Organize PDF', desc:'Drag thumbnails to reorder. Uncheck any page to remove it.'});
   let file=null, pdfjsDoc=null, order=[];
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     order = Array.from({length:pdfjsDoc.numPages},(_,i)=>i+1);
     await renderThumbs();
   }});
-  const note=document.createElement('div'); note.className='note'; note.textContent='Drag any thumbnail to a new position to reorder the pages.'; body.appendChild(note);
-  const grid=document.createElement('div'); grid.className='thumb-grid'; body.appendChild(grid);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const note=document.createElement('div'); note.className='note'; note.textContent='Drag any thumbnail to a new position to reorder the pages.'; main.appendChild(note);
+  const grid=document.createElement('div'); grid.className='thumb-grid'; main.appendChild(grid);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   let dragSrcIdx = null;
 
@@ -6885,14 +6885,14 @@ function toolSignPDF(){
 }
 
 function toolCropPDF(){
-  const body = panelShell({title:'Crop PDF', desc:'Drag to select the area to keep, or resize using the handles.'});
+  const { main, sidebar } = panelShellSplit({title:'Crop PDF', desc:'Drag to select the area to keep, or resize using the handles.'});
   let file=null, pdfjsDoc=null, pageNum=1;
   // Fractional box relative to the rendered page — the same fraction is
   // reapplied to every page's own dimensions at export time, so it still
   // makes sense even if pages differ in size.
   let box = {x:0.08, y:0.08, w:0.84, h:0.84};
 
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
@@ -6901,18 +6901,18 @@ function toolCropPDF(){
     await renderStage();
   }});
 
-  const pageNav=document.createElement('div'); pageNav.className='pill-row'; pageNav.style.display='none'; body.appendChild(pageNav);
-  const stageWrap=document.createElement('div'); stageWrap.style.cssText='position:relative;display:inline-block;margin:10px 0;max-width:100%;touch-action:none;padding:10px;overflow:hidden;'; body.appendChild(stageWrap);
+  const pageNav=document.createElement('div'); pageNav.className='pill-row'; pageNav.style.display='none'; main.appendChild(pageNav);
+  const stageWrap=document.createElement('div'); stageWrap.style.cssText='position:relative;display:inline-block;margin:10px 0;max-width:100%;touch-action:none;padding:10px;overflow:hidden;'; main.appendChild(stageWrap);
   const hint=document.createElement('div'); hint.className='note'; hint.style.display='none';
   hint.textContent = 'Drag inside the box to move it, or drag a corner/edge handle to resize. The same crop area applies to every page.';
-  body.appendChild(hint);
+  main.appendChild(hint);
 
   const resetBtn=document.createElement('button'); resetBtn.type='button'; resetBtn.className='small-btn'; resetBtn.style.cssText='display:none;margin-bottom:10px;'; resetBtn.textContent='Reset selection';
-  body.appendChild(resetBtn);
+  sidebar.appendChild(resetBtn);
   resetBtn.onclick = ()=>{ box = {x:0.08, y:0.08, w:0.84, h:0.84}; layoutSelection(); };
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Crop & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Crop & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   const DISPLAY_W = 560;
   let selDiv=null, handles={};
@@ -7162,15 +7162,15 @@ function toolCompressPDF(){
 }
 
 function toolHtmlToPDF(){
-  const body = panelShell({title:'HTML / Text to PDF', desc:'Paste HTML or plain text and convert it to a formatted PDF.'});
+  const { main, sidebar } = panelShellSplit({title:'HTML / Text to PDF', desc:'Paste HTML or plain text and convert it to a formatted PDF.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Converting a live URL requires fetching that page\'s content, which browsers block cross-origin for security — paste the HTML source or text instead (view-source, or copy from the page) and this converts it locally.';
-  body.appendChild(note);
+  main.appendChild(note);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>HTML or plain text</label><textarea id="html-input" rows="8" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-family:inherit;font-size:0.88rem;background:var(--paper);" placeholder="<h1>Title</h1><p>Your content here...</p>"></textarea>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  main.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     const raw = document.getElementById('html-input').value;
     if(!raw.trim()){log.textContent='Paste some HTML or text first.';return;}
@@ -7193,15 +7193,15 @@ function toolHtmlToPDF(){
 }
 
 function toolRepairPDF(){
-  const body = panelShell({title:'Repair PDF', desc:'Attempts to fix a damaged or malformed PDF by fully re-parsing and re-saving it.'});
+  const { main, sidebar } = panelShellSplit({title:'Repair PDF', desc:'Attempts to fix a damaged or malformed PDF by fully re-parsing and re-saving it.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='This fixes broken cross-reference tables and structural issues that a fresh re-save resolves. It cannot recover data from a truly corrupted/truncated file — for that, server-side recovery tools are needed.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Repair & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Repair & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Repairing on-device...';
@@ -7542,15 +7542,15 @@ function toolComparePDF(){
 /* ================= ON-DEVICE OFFICE CONVERSIONS (approximate, honest) ================= */
 
 function toolExcelToPDFLocal(){
-  const body = panelShell({title:'Excel to PDF', desc:'Convert a spreadsheet (.xlsx/.xls/.csv) to PDF — entirely on this device.'});
+  const { main, sidebar } = panelShellSplit({title:'Excel to PDF', desc:'Convert a spreadsheet (.xlsx/.xls/.csv) to PDF — entirely on this device.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Reads the cell values and lays them out as clean tables, one section per sheet. Great for data sheets and reports; heavy custom formatting (charts, merged-cell art) is simplified.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'.xlsx,.xls,.csv,.ods', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'.xlsx,.xls,.csv,.ods', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a spreadsheet first.';return;}
     btn.disabled=true;
@@ -7584,15 +7584,15 @@ function toolExcelToPDFLocal(){
 }
 
 function toolPptxToPDFLocal(){
-  const body = panelShell({title:'PowerPoint to PDF', desc:'Convert slides (.pptx) to PDF — entirely on this device.'});
+  const { main, sidebar } = panelShellSplit({title:'PowerPoint to PDF', desc:'Convert slides (.pptx) to PDF — entirely on this device.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Extracts each slide\'s text and images and lays them out one page per slide. Faithful for typical decks; intricate animations/SmartArt are simplified. For pixel-perfect output use PowerPoint\'s own "Save as PDF".';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'.pptx', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'.pptx', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a .pptx first.';return;}
     btn.disabled=true;
@@ -7808,16 +7808,16 @@ function toolLocalOCR(){
 }
 
 function toolLocalRemoveBG(){
-  const body = panelShell({title:'Remove Background', desc:'AI background removal running entirely on this device — returns a transparent PNG.'});
+  const { main, sidebar } = panelShellSplit({title:'Remove Background', desc:'AI background removal running entirely on this device — returns a transparent PNG.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Uses the open RMBG model through Transformers.js, right in your browser (GPU-accelerated where available). First use downloads the model (~44 MB) once; after that it is cached and works offline. Your photo never leaves this device.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const previewWrap=document.createElement('div'); previewWrap.style.cssText='text-align:center;margin:10px 0;'; body.appendChild(previewWrap);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Remove background (on this device)'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const previewWrap=document.createElement('div'); previewWrap.style.cssText='text-align:center;margin:10px 0;'; main.appendChild(previewWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Remove background (on this device)'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a photo first.';return;}
     btn.disabled=true;
@@ -7876,12 +7876,12 @@ function seekVideo(v, t){
 }
 
 function toolSlideshowVideo(){
-  const body = panelShell({title:'Images to Slideshow Video', desc:'Turn photos into a video slideshow — pick how long each picture shows, add a smooth crossfade, download a real video file.'});
+  const { main, sidebar } = panelShellSplit({title:'Images to Slideshow Video', desc:'Turn photos into a video slideshow — pick how long each picture shows, add a smooth crossfade, download a real video file.'});
   const mime = bestVideoMime();
-  if(!mime){ body.innerHTML += '<div class="note">This browser cannot record video (MediaRecorder unsupported). Try Chrome, Edge, or Firefox.</div>'; return; }
+  if(!mime){ main.innerHTML += '<div class="note">This browser cannot record video (MediaRecorder unsupported). Try Chrome, Edge, or Firefox.</div>'; return; }
   let files=[];
-  buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
-  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  buildDropzone(main, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
+  const list=document.createElement('div'); list.className='filelist'; main.appendChild(list);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Seconds per picture</label><input type="number" id="ss-secs" value="3" min="1" max="30" step="0.5"></div>
@@ -7891,12 +7891,12 @@ function toolSlideshowVideo(){
         <option value="1920x1080">1080p (1920×1080)</option>
         <option value="640x360">Small (640×360)</option>
       </select></div>`;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const fadeOpt=document.createElement('label'); fadeOpt.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
   fadeOpt.innerHTML=`<input type="checkbox" id="ss-fade" checked> Crossfade between pictures`;
-  body.appendChild(fadeOpt);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create video ('+mimeExt(mime).toUpperCase()+')'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(fadeOpt);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create video ('+mimeExt(mime).toUpperCase()+')'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
   renderList();
 
@@ -7956,9 +7956,9 @@ function toolSlideshowVideo(){
 }
 
 function toolVideoToGIF(){
-  const body = panelShell({title:'Video to GIF', desc:'Turn a clip from any video into a shareable GIF — pick the moment, size, and smoothness.'});
+  const { main, sidebar } = panelShellSplit({title:'Video to GIF', desc:'Turn a clip from any video into a shareable GIF — pick the moment, size, and smoothness.'});
   let file=null, video=null;
-  buildDropzone(body, {multiple:false, accept:'video/*', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'video/*', onFiles: async (f)=>{
     file=f[0];
     try{
       video = await loadVideoFile(file);
@@ -7968,12 +7968,12 @@ function toolVideoToGIF(){
       document.getElementById('vg-start').max = video.duration;
     }catch(e){ file=null; log.textContent=e.message; }
   }});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Start at (seconds)</label><input type="number" id="vg-start" value="0" min="0" step="0.1"></div>
     <div class="field"><label>End at (seconds)</label><input type="number" id="vg-end" value="3" min="0.1" step="0.1"></div>`;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML = `
     <div class="field"><label>Width (px)</label><input type="number" id="vg-width" value="480" min="64" max="1280"></div>
@@ -7981,9 +7981,9 @@ function toolVideoToGIF(){
       <select id="vg-fps" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
         <option value="10" selected>10 (small file)</option><option value="15">15 (smoother)</option><option value="20">20 (smoothest)</option>
       </select></div>`;
-  body.appendChild(row2);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create GIF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(row2);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create GIF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   btn.onclick = async ()=>{
     if(!video){log.textContent='Choose a video first.';return;}
@@ -8023,14 +8023,14 @@ function toolVideoToGIF(){
 }
 
 function toolTrimVideo(){
-  const body = panelShell({title:'Trim Video', desc:'Cut a clip out of a longer video — keeps the sound, nothing uploaded.'});
+  const { main, sidebar } = panelShellSplit({title:'Trim Video', desc:'Cut a clip out of a longer video — keeps the sound, nothing uploaded.'});
   const mime = bestVideoMime();
-  if(!mime){ body.innerHTML += '<div class="note">This browser cannot re-encode video (MediaRecorder unsupported). Try Chrome, Edge, or Firefox.</div>'; return; }
+  if(!mime){ main.innerHTML += '<div class="note">This browser cannot re-encode video (MediaRecorder unsupported). Try Chrome, Edge, or Firefox.</div>'; return; }
   const note=document.createElement('div'); note.className='note';
   note.textContent='The clip is re-recorded in real time on your device, so trimming a 20-second clip takes about 20 seconds. Output is '+mimeExt(mime).toUpperCase()+'.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null, video=null;
-  buildDropzone(body, {multiple:false, accept:'video/*', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'video/*', onFiles: async (f)=>{
     file=f[0];
     try{
       video = await loadVideoFile(file);
@@ -8041,15 +8041,15 @@ function toolTrimVideo(){
       info.textContent = `${file.name} — ${video.duration.toFixed(1)}s`;
     }catch(e){ file=null; log.textContent=e.message; }
   }});
-  const info=document.createElement('div'); info.style.margin='8px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const previewWrap=document.createElement('div'); body.appendChild(previewWrap);
+  const info=document.createElement('div'); info.style.margin='8px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const previewWrap=document.createElement('div'); main.appendChild(previewWrap);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Keep from (seconds)</label><input type="number" id="tv-start" value="0" min="0" step="0.1"></div>
     <div class="field"><label>Keep until (seconds)</label><input type="number" id="tv-end" value="10" min="0.1" step="0.1"></div>`;
-  body.appendChild(row);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Trim & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(row);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Trim & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   btn.onclick = async ()=>{
     if(!video){log.textContent='Choose a video first.';return;}
@@ -8088,15 +8088,18 @@ function toolTrimVideo(){
 }
 
 function toolScreenRecorder(){
-  const body = panelShell({title:'Screen Recorder', desc:'Record your screen (a tab, a window, or everything) straight from the browser — no install, no upload, no time limit.'});
+  const { main, sidebar } = panelShellSplit({title:'Screen Recorder', desc:'Record your screen (a tab, a window, or everything) straight from the browser — no install, no upload, no time limit.'});
   const mime = bestVideoMime();
-  if(!mime || !navigator.mediaDevices?.getDisplayMedia){ body.innerHTML += '<div class="note">This browser cannot record the screen. Try Chrome, Edge, or Firefox on a computer.</div>'; return; }
+  if(!mime || !navigator.mediaDevices?.getDisplayMedia){ main.innerHTML += '<div class="note">This browser cannot record the screen. Try Chrome, Edge, or Firefox on a computer.</div>'; return; }
+  const note=document.createElement('div'); note.className='note';
+  note.textContent='Click "Start recording" and your browser will ask which screen, window, or tab to share. Recording happens entirely on this device — nothing is uploaded.';
+  main.appendChild(note);
   const micOpt=document.createElement('label'); micOpt.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
   micOpt.innerHTML=`<input type="checkbox" id="sr-mic"> Also record my microphone (narration)`;
-  body.appendChild(micOpt);
-  const btnStart=document.createElement('button'); btnStart.className='primary-btn'; btnStart.textContent='● Start recording'; body.appendChild(btnStart);
-  const btnStop=document.createElement('button'); btnStop.className='primary-btn'; btnStop.textContent='■ Stop & download'; btnStop.style.cssText='display:none;background:#A6342A;'; body.appendChild(btnStop);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(micOpt);
+  const btnStart=document.createElement('button'); btnStart.className='primary-btn'; btnStart.textContent='● Start recording'; sidebar.appendChild(btnStart);
+  const btnStop=document.createElement('button'); btnStop.className='primary-btn'; btnStop.textContent='■ Stop & download'; btnStop.style.cssText='display:none;background:#A6342A;'; sidebar.appendChild(btnStop);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   let rec=null, chunks=[], streams=[], timer=null, t0=0;
 
   btnStart.onclick = async ()=>{
@@ -8136,12 +8139,12 @@ function toolScreenRecorder(){
 }
 
 function toolExtractAudio(){
-  const body = panelShell({title:'Extract Audio from Video', desc:'Pull the soundtrack out of a video as a standard WAV audio file.'});
+  const { main, sidebar } = panelShellSplit({title:'Extract Audio from Video', desc:'Pull the soundtrack out of a video as a standard WAV audio file.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'video/*,audio/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .wav'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'video/*,audio/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .wav'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function encodeWav(audioBuffer){
     const ch = Math.min(2, audioBuffer.numberOfChannels), rate = audioBuffer.sampleRate, len = audioBuffer.length;
@@ -8181,12 +8184,12 @@ function toolExtractAudio(){
 /* ================= NEW: flatten, sanitize, privacy & image utilities ================= */
 
 function toolFlattenPDF(){
-  const body = panelShell({title:'Flatten PDF', desc:'Bake form fields into the page so they can no longer be edited — what you see becomes permanent ink.'});
+  const { main, sidebar } = panelShellSplit({title:'Flatten PDF', desc:'Bake form fields into the page so they can no longer be edited — what you see becomes permanent ink.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Flatten & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Flatten & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Flattening on-device...';
@@ -8205,22 +8208,22 @@ function toolFlattenPDF(){
 }
 
 function toolSanitizePDF(){
-  const body = panelShell({title:'Sanitize PDF', desc:'Strip the risky, invisible parts of a PDF before sharing it: embedded JavaScript, auto-run open actions, attached files, and identifying metadata.'});
+  const { main, sidebar } = panelShellSplit({title:'Sanitize PDF', desc:'Strip the risky, invisible parts of a PDF before sharing it: embedded JavaScript, auto-run open actions, attached files, and identifying metadata.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='PDFs can carry scripts that run on open, hidden file attachments, and metadata naming the author and editing software. This removes all of it while leaving the visible pages untouched.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const optWrap=document.createElement('div');
   [['sz-js','Remove JavaScript & auto-run actions',true],['sz-files','Remove embedded file attachments',true],['sz-meta','Blank out metadata (author, software, dates)',true]].forEach(([id,label,on])=>{
     const l=document.createElement('label'); l.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.88rem;margin:6px 0;';
     l.innerHTML=`<input type="checkbox" id="${id}" ${on?'checked':''}> ${label}`;
     optWrap.appendChild(l);
   });
-  body.appendChild(optWrap);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Sanitize & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(optWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Sanitize & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Sanitizing on-device...';
@@ -8256,15 +8259,15 @@ function toolSanitizePDF(){
 }
 
 function toolGrayscalePDF(){
-  const body = panelShell({title:'Grayscale PDF', desc:'Convert every page to black & white — smaller files, cheaper printing, and a classic look.'});
+  const { main, sidebar } = panelShellSplit({title:'Grayscale PDF', desc:'Convert every page to black & white — smaller files, cheaper printing, and a classic look.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Pages are re-rendered as grayscale images, so selectable text becomes part of the picture. Run OCR afterwards if you need the text layer back.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     if(!(await memoryGuard(file, 6, log))) return;
@@ -8331,9 +8334,9 @@ function readExifSummary(buffer){
 }
 
 function toolExifStrip(){
-  const body = panelShell({title:'Remove Photo Metadata (EXIF)', desc:'Photos silently carry the camera model, the exact time, editing software — and often the GPS location where they were taken. See it, then strip it before sharing.'});
+  const { main, sidebar } = panelShellSplit({title:'Remove Photo Metadata (EXIF)', desc:'Photos silently carry the camera model, the exact time, editing software — and often the GPS location where they were taken. See it, then strip it before sharing.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'image/*', onFiles: async (f)=>{
     file=f[0];
     report.innerHTML='';
     try{
@@ -8352,9 +8355,9 @@ function toolExifStrip(){
       }
     }catch(e){ report.innerHTML=`<div class="note">${escapeXml(file.name)} — could not parse metadata (${escapeXml(e.message)}); stripping still works.</div>`; }
   }});
-  const report=document.createElement('div'); report.style.margin='10px 0'; body.appendChild(report);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Strip metadata & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const report=document.createElement('div'); report.style.margin='10px 0'; main.appendChild(report);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Strip metadata & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a photo first.';return;}
     log.textContent='Re-encoding without metadata on-device...';
@@ -8371,10 +8374,10 @@ function toolExifStrip(){
 }
 
 function toolImageConvert(){
-  const body = panelShell({title:'Convert Image Format', desc:'JPG ↔ PNG ↔ WebP, converted instantly on your device.'});
+  const { main, sidebar } = panelShellSplit({title:'Convert Image Format', desc:'JPG ↔ PNG ↔ WebP, converted instantly on your device.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)}, ${file.type||'unknown type'})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)}, ${file.type||'unknown type'})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
     <div class="field"><label>Convert to</label>
@@ -8384,10 +8387,10 @@ function toolImageConvert(){
         <option value="image/webp">WebP — smallest, modern browsers/sites</option>
       </select></div>
     <div class="field"><label>Quality (JPG/WebP) <span id="ic-qval">90</span>%</label><input type="range" id="ic-q" min="30" max="100" value="90"></div>`;
-  body.appendChild(row);
-  body.addEventListener('input', e=>{ if(e.target.id==='ic-q') document.getElementById('ic-qval').textContent=e.target.value; });
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(row);
+  sidebar.addEventListener('input', e=>{ if(e.target.id==='ic-q') document.getElementById('ic-qval').textContent=e.target.value; });
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose an image first.';return;}
     const format = document.getElementById('ic-format').value;
@@ -8408,19 +8411,19 @@ function toolImageConvert(){
 }
 
 function toolRotateFlipImage(){
-  const body = panelShell({title:'Rotate / Flip Image', desc:'Rotate in 90° steps or mirror an image — with live preview.'});
+  const { main, sidebar } = panelShellSplit({title:'Rotate / Flip Image', desc:'Rotate in 90° steps or mirror an image — with live preview.'});
   let file=null, rotation=0, flipH=false, flipV=false;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; rotation=0; flipH=flipV=false; render();}});
+  buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; rotation=0; flipH=flipV=false; render();}});
   const controls=document.createElement('div'); controls.className='pill-row';
   controls.innerHTML=`
     <button class="small-btn" id="rf-left">⟲ 90° left</button>
     <button class="small-btn" id="rf-right">⟳ 90° right</button>
     <button class="small-btn" id="rf-h">⇋ Flip horizontal</button>
     <button class="small-btn" id="rf-v">⇵ Flip vertical</button>`;
-  body.appendChild(controls);
-  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  main.appendChild(controls);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   async function buildCanvas(){
     const bitmap = await createImageBitmap(file);
     const rot90 = rotation%180!==0;
@@ -8455,12 +8458,12 @@ function toolRotateFlipImage(){
 }
 
 function toolFaviconGenerator(){
-  const body = panelShell({title:'Favicon Generator', desc:'Turn a logo into a complete favicon set: every standard size as PNG, a classic favicon.ico, and the HTML tags to paste — all in one .zip.'});
+  const { main, sidebar } = panelShellSplit({title:'Favicon Generator', desc:'Turn a logo into a complete favicon set: every standard size as PNG, a classic favicon.ico, and the HTML tags to paste — all in one .zip.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)}) — square images work best`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate & download .zip'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)}) — square images work best`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Generate & download .zip'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   // favicon.ico container: PNG entries are valid inside .ico (all modern
   // browsers and Windows Vista+ decode them).
@@ -8517,12 +8520,12 @@ function toolFaviconGenerator(){
 }
 
 function toolMarkdownToPDF(){
-  const body = panelShell({title:'Markdown to PDF', desc:'Write or paste Markdown, get a clean formatted PDF — headings, lists, bold, links, code.'});
+  const { main, sidebar } = panelShellSplit({title:'Markdown to PDF', desc:'Write or paste Markdown, get a clean formatted PDF — headings, lists, bold, links, code.'});
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Markdown</label><textarea id="md-input" rows="10" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;background:var(--paper);" placeholder="# Title&#10;&#10;Some **bold** text, a [link](https://example.com), and:&#10;&#10;- a list&#10;- of items"></textarea>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  main.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .pdf'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   // A compact CommonMark subset — headings, emphasis, inline code, links,
   // code fences, lists, quotes, rules. Input is escaped first, so the
