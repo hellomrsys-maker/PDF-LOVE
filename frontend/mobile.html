@@ -33,7 +33,6 @@
   --gray-dark: #666666;
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 255, 255, 0.3);
-  --premium-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --blue: #0066ff;
 
   /* Aliases matching the desktop app's CSS variable names (--paper, --ink,
@@ -195,55 +194,11 @@ body {
   background: var(--gray-light);
 }
 
-.recent-files {
-  margin: 20px 0;
-}
-
 .section-title {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
   color: var(--primary-dark);
-}
-
-.file-item {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.file-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, rgba(230, 50, 45, 0.2), rgba(230, 50, 45, 0.1));
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-.file-info {
-  flex: 1;
-}
-
-.file-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--primary-dark);
-}
-
-.file-size {
-  font-size: 12px;
-  color: var(--gray-dark);
-  margin-top: 4px;
 }
 
 /* ===== TOOLS GRID ===== */
@@ -275,14 +230,6 @@ body {
   background: rgba(255, 255, 255, 0.8);
 }
 
-.tool-card.premium::after {
-  content: '👑';
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 16px;
-}
-
 .tool-icon {
   width: 48px;
   height: 48px;
@@ -299,65 +246,6 @@ body {
   font-weight: 500;
   color: var(--primary-dark);
   line-height: 1.3;
-}
-
-/* ===== FILES PAGE ===== */
-.files-container {
-  margin: 16px 0;
-}
-
-.storage-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.storage-card:active {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.storage-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, rgba(230, 50, 45, 0.2), rgba(230, 50, 45, 0.1));
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.storage-info {
-  flex: 1;
-}
-
-.storage-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--primary-dark);
-}
-
-.storage-count {
-  font-size: 12px;
-  color: var(--gray-dark);
-  margin-top: 4px;
-}
-
-.storage-action {
-  color: var(--primary-red);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 /* ===== SCANNER PAGE ===== */
@@ -400,125 +288,6 @@ body {
 .scanner-btn:active {
   transform: scale(0.98);
   opacity: 0.9;
-}
-
-/* ===== PRICING TABLE ===== */
-.pricing-section {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.pricing-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.pricing-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.pricing-header p {
-  font-size: 13px;
-  color: var(--gray-dark);
-}
-
-.pricing-table {
-  margin-bottom: 20px;
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 12px;
-}
-
-.pricing-row {
-  display: grid;
-  grid-template-columns: 1fr 0.7fr 0.7fr;
-  border-bottom: 1px solid var(--gray-medium);
-  padding: 12px 0;
-  gap: 12px;
-}
-
-.pricing-row.header {
-  font-weight: 600;
-  background: rgba(229, 50, 45, 0.05);
-  padding: 12px;
-  border-radius: 8px;
-  border-bottom: 2px solid var(--gray-medium);
-}
-
-.feature-col {
-  text-align: left;
-  font-weight: 500;
-}
-
-.tier-col {
-  text-align: center;
-  color: var(--gray-dark);
-}
-
-.tier-col.premium {
-  color: var(--primary-red);
-  font-weight: 600;
-}
-
-.pricing-row .tier-col {
-  color: var(--primary-red);
-  font-weight: 600;
-}
-
-.pricing-options {
-  margin: 20px 0;
-}
-
-.price-option {
-  background: rgba(230, 50, 45, 0.05);
-  border: 2px solid var(--gray-medium);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-  display: flex;
-  gap: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.price-option.selected {
-  border-color: var(--primary-red);
-  background: rgba(230, 50, 45, 0.1);
-}
-
-.price-circle {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--gray-medium);
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.price-option.selected .price-circle {
-  border-color: var(--primary-red);
-  background: var(--primary-red);
-}
-
-.price-text {
-  flex: 1;
-}
-
-.price-amount {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--primary-dark);
-}
-
-.price-note {
-  font-size: 11px;
-  color: var(--gray-dark);
-  margin-top: 2px;
 }
 
 /* ===== SETTINGS ===== */
@@ -577,45 +346,6 @@ body {
 
 .toggle-switch.active .toggle-dot {
   left: 22px;
-}
-
-/* ===== PREMIUM BANNER ===== */
-.premium-banner {
-  background: var(--premium-gradient);
-  border-radius: 16px;
-  padding: 20px 16px;
-  margin: 20px 0;
-  color: var(--white);
-  text-align: center;
-}
-
-.premium-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.premium-subtitle {
-  font-size: 13px;
-  opacity: 0.9;
-  margin-bottom: 16px;
-}
-
-.premium-btn {
-  background: var(--primary-red);
-  color: var(--white);
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.premium-btn:active {
-  transform: scale(0.98);
-  opacity: 0.9;
 }
 
 /* ===== BOTTOM NAVIGATION ===== */
@@ -926,7 +656,7 @@ body {
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --primary-dark: #ffffff;
     --white: #1a1a1a;
     --gray-light: #2a2a2a;
@@ -936,9 +666,23 @@ body {
     --glass-border: rgba(255, 255, 255, 0.1);
   }
 
-  body {
+  body:not([data-theme="light"]) {
     background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
   }
+}
+/* Manual override from the Settings toggle — wins over system preference
+   in both directions, same convention as the desktop artifact theming. */
+:root[data-theme="dark"] {
+  --primary-dark: #ffffff;
+  --white: #1a1a1a;
+  --gray-light: #2a2a2a;
+  --gray-medium: #444444;
+  --gray-dark: #999999;
+  --glass-bg: rgba(30, 30, 30, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+body[data-theme="dark"] {
+  background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
 }
 </style>
 </head>
@@ -946,10 +690,9 @@ body {
 
 <!-- HEADER -->
 <div class="app-header">
-  <div class="app-logo">I<span class="logo-heart">❤️</span>PDF</div>
+  <div class="app-logo">PDF<span class="logo-heart">❤️</span>Love</div>
   <div class="header-actions">
     <button class="icon-btn">🔍</button>
-    <button class="icon-btn">👤</button>
   </div>
 </div>
 
@@ -959,27 +702,8 @@ body {
   <!-- HOME PAGE -->
   <div class="content-section active" data-page="home">
     <div class="home-banner">
-      <div class="banner-title">Do wonders with Premium</div>
-      <div class="banner-subtitle">Unlimited tools & features</div>
-      <button class="banner-btn">Start free trial</button>
-    </div>
-
-    <div class="recent-files">
-      <div class="section-title">Recent files</div>
-      <div class="file-item">
-        <div class="file-icon">📄</div>
-        <div class="file-info">
-          <div class="file-name">User Guide.pdf</div>
-          <div class="file-size">2.4 MB</div>
-        </div>
-      </div>
-      <div class="file-item">
-        <div class="file-icon">🖼️</div>
-        <div class="file-info">
-          <div class="file-name">thumb.png</div>
-          <div class="file-size">856 KB</div>
-        </div>
-      </div>
+      <div class="banner-title">89 tools. 100% free.</div>
+      <div class="banner-subtitle">Everything runs on this device — nothing is ever uploaded.</div>
     </div>
 
     <div class="section-title">Popular tools</div>
@@ -996,13 +720,9 @@ body {
         <div class="tool-icon">📦</div>
         <div class="tool-name">Compress PDF</div>
       </div>
-      <div class="tool-card premium" onclick="toolAISummarizeLocal()">
+      <div class="tool-card" onclick="toolAISummarizeLocal()">
         <div class="tool-icon">✨</div>
         <div class="tool-name">AI Summary</div>
-      </div>
-      <div class="tool-card premium" onclick="alert('Ask AI chat is coming soon.')">
-        <div class="tool-icon">🤖</div>
-        <div class="tool-name">Ask AI</div>
       </div>
       <div class="tool-card" onclick="toolSignPDF()">
         <div class="tool-icon">✍️</div>
@@ -1013,68 +733,12 @@ body {
 
   <!-- FILES PAGE -->
   <div class="content-section" data-page="files">
-    <div class="section-title" style="margin-top: 16px;">My storage</div>
-
-    <div class="storage-card">
-      <div class="storage-icon">💾</div>
-      <div class="storage-info">
-        <div class="storage-name">Internal Storage</div>
-        <div class="storage-count">18 files</div>
+    <div class="note" style="margin-top: 16px;">PDFLove doesn't store or list your files — everything happens right in this tab. Open a tool, pick a file, and the result downloads straight to your device. Nothing is kept here, and nothing is ever uploaded to a cloud service.</div>
+    <div class="section-title" style="margin-top: 20px;">Your activity</div>
+    <div class="settings-list">
+      <div class="settings-item" onclick="switchPage('tools'); openToolDetail('My Activity', renderMyActivity);">
+        <div class="settings-label">📊 See what you've generated (local stats)</div>
       </div>
-    </div>
-
-    <div class="storage-card">
-      <div class="storage-icon">⬇️</div>
-      <div class="storage-info">
-        <div class="storage-name">Downloads</div>
-        <div class="storage-count">26 files</div>
-      </div>
-    </div>
-
-    <div class="storage-card">
-      <div class="storage-icon">📁</div>
-      <div class="storage-info">
-        <div class="storage-name">Processed files</div>
-        <div class="storage-count">0 files</div>
-      </div>
-    </div>
-
-    <div class="section-title" style="margin-top: 20px;">Cloud storage</div>
-
-    <div class="storage-card">
-      <div class="storage-icon">☁️</div>
-      <div class="storage-info">
-        <div class="storage-name">Google Drive</div>
-        <div class="storage-count">Connect your account</div>
-      </div>
-      <div class="storage-action">+</div>
-    </div>
-
-    <div class="storage-card">
-      <div class="storage-icon">📦</div>
-      <div class="storage-info">
-        <div class="storage-name">Dropbox</div>
-        <div class="storage-count">Connect your account</div>
-      </div>
-      <div class="storage-action">+</div>
-    </div>
-
-    <div class="storage-card">
-      <div class="storage-icon">☁️</div>
-      <div class="storage-info">
-        <div class="storage-name">OneDrive</div>
-        <div class="storage-count">Connect your account</div>
-      </div>
-      <div class="storage-action">+</div>
-    </div>
-
-    <div class="storage-card">
-      <div class="storage-icon">👥</div>
-      <div class="storage-info">
-        <div class="storage-name">PDF Spaces (Collaborate)</div>
-        <div class="storage-count">Share & collaborate with team</div>
-      </div>
-      <div class="storage-action">+</div>
     </div>
   </div>
 
@@ -1199,7 +863,7 @@ body {
       <div class="tool-card"><div class="tool-icon">💬</div><div class="tool-name">Comment</div></div>
       <div class="tool-card"><div class="tool-icon">🎨</div><div class="tool-name">Draw</div></div>
       <div class="tool-card"><div class="tool-icon">📝</div><div class="tool-name">Fill & Sign</div></div>
-      <div class="tool-card premium"><div class="tool-icon">🤖</div><div class="tool-name">Ask AI</div></div>
+      <div class="tool-card"><div class="tool-icon">🤖</div><div class="tool-name">Ask AI</div></div>
     </div>
   </div>
 
@@ -1209,167 +873,44 @@ body {
       <div class="scanner-icon-large">📱</div>
       <div class="scanner-title">Scan Documents</div>
       <div class="scanner-subtitle">Turn photos into searchable PDFs</div>
-      <button class="scanner-btn">📸 Open Camera</button>
+      <button class="scanner-btn" onclick="toolScanToPDF()">📸 Open Camera</button>
       <div style="margin-top: 20px;">
-        <button class="scanner-btn" style="background: transparent; color: var(--primary-red); border: 2px solid var(--primary-red);">🔊 Read Aloud</button>
+        <button class="scanner-btn" style="background: transparent; color: var(--primary-red); border: 2px solid var(--primary-red);" onclick="toolPDFToSpeech()">🔊 Read Aloud</button>
       </div>
     </div>
   </div>
 
   <!-- SETTINGS PAGE -->
   <div class="content-section" data-page="settings">
-    <!-- PREMIUM TIER COMPARISON -->
-    <div class="pricing-section">
-      <div class="pricing-header">
-        <h3>Upgrade to Premium 👑</h3>
-        <p>Get unlimited access to all tools</p>
-      </div>
-
-      <div class="pricing-table">
-        <div class="pricing-row header">
-          <div class="feature-col"></div>
-          <div class="tier-col">Free</div>
-          <div class="tier-col premium">Premium</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">Read, edit & sign PDFs</div>
-          <div class="tier-col">✓</div>
-          <div class="tier-col">✓</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">Merge & split</div>
-          <div class="tier-col">✓</div>
-          <div class="tier-col">✓</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">AI Generative summary</div>
-          <div class="tier-col"></div>
-          <div class="tier-col">✓</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">Ask AI Assistant</div>
-          <div class="tier-col"></div>
-          <div class="tier-col">✓</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">PDF Spaces (Collaborate)</div>
-          <div class="tier-col"></div>
-          <div class="tier-col">✓</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">Comment, Highlight, Draw</div>
-          <div class="tier-col"></div>
-          <div class="tier-col">✓</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">Read aloud & Voice chat</div>
-          <div class="tier-col"></div>
-          <div class="tier-col">✓</div>
-        </div>
-
-        <div class="pricing-row">
-          <div class="feature-col">Ad-free experience</div>
-          <div class="tier-col"></div>
-          <div class="tier-col">✓</div>
-        </div>
-      </div>
-
-      <div class="pricing-options">
-        <div class="price-option selected">
-          <div class="price-circle"></div>
-          <div class="price-text">
-            <div class="price-amount">₹2,600/year</div>
-            <div class="price-note">With free trial • Save 36%</div>
-          </div>
-        </div>
-
-        <div class="price-option">
-          <div class="price-circle"></div>
-          <div class="price-text">
-            <div class="price-amount">₹340/month</div>
-            <div class="price-note">No free trial</div>
-          </div>
-        </div>
-      </div>
-
-      <button class="banner-btn" style="width: 100%; margin: 16px 0;">Start 7-day free trial</button>
-      <button class="secondary-btn" style="width: 100%;">Not now</button>
+    <div class="home-banner">
+      <div class="banner-title">100% free, on your device</div>
+      <div class="banner-subtitle">No account, no subscription, no daily limit. Every tool above runs right here — nothing is ever uploaded.</div>
     </div>
 
-    <div class="section-title" style="margin-top: 24px;">Preferences</div>
+    <div class="section-title" style="margin-top: 20px;">Appearance</div>
     <div class="settings-list">
       <div class="settings-item">
         <div class="settings-label">🌙 Dark mode</div>
-        <div class="toggle-switch">
-          <div class="toggle-dot"></div>
-        </div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">🔔 Notifications</div>
-        <div class="toggle-switch active">
-          <div class="toggle-dot"></div>
-        </div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">☁️ Cloud sync</div>
-        <div class="toggle-switch">
-          <div class="toggle-dot"></div>
-        </div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">🔊 Read aloud</div>
-        <div class="toggle-switch">
+        <div class="toggle-switch" id="dark-mode-toggle">
           <div class="toggle-dot"></div>
         </div>
       </div>
     </div>
 
-    <div class="section-title" style="margin-top: 20px;">PDF Management</div>
+    <div class="section-title" style="margin-top: 20px;">Your data</div>
     <div class="settings-list">
-      <div class="settings-item">
-        <div class="settings-label">📑 View Pages</div>
+      <div class="settings-item" onclick="switchPage('tools'); openToolDetail('My Activity', renderMyActivity);">
+        <div class="settings-label">📊 My Activity (local usage stats)</div>
       </div>
-      <div class="settings-item">
-        <div class="settings-label">🔖 Bookmarks</div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">💬 Comments List</div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">👥 PDF Spaces (Collaborate)</div>
+      <div class="settings-item" id="clear-data-item">
+        <div class="settings-label">🗑️ Clear saved info & activity history</div>
       </div>
     </div>
 
-    <div class="section-title" style="margin-top: 20px;">Advanced Features</div>
+    <div class="section-title" style="margin-top: 20px;">About</div>
     <div class="settings-list">
       <div class="settings-item">
-        <div class="settings-label">🎤 Voice chat</div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">🗣️ Read aloud (Text-to-speech)</div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">🤖 AI Assistant</div>
-      </div>
-    </div>
-
-    <div class="section-title" style="margin-top: 20px;">Account</div>
-    <div class="settings-list">
-      <div class="settings-item">
-        <div class="settings-label">Current membership: <strong>Free</strong></div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">👤 View settings</div>
-      </div>
-      <div class="settings-item">
-        <div class="settings-label">🚪 Sign out</div>
+        <div class="settings-label">PDFLove — 89 on-device tools</div>
       </div>
     </div>
   </div>
@@ -1378,23 +919,23 @@ body {
 
 <!-- NAVIGATION -->
 <div class="app-nav">
-  <div class="nav-item active" onclick="switchPage('home')">
+  <div class="nav-item active" data-nav="home" onclick="switchPage('home')">
     <div class="nav-icon">🏠</div>
     <div>Home</div>
   </div>
-  <div class="nav-item" onclick="switchPage('files')">
+  <div class="nav-item" data-nav="files" onclick="switchPage('files')">
     <div class="nav-icon">📁</div>
     <div>Files</div>
   </div>
-  <div class="nav-item" onclick="switchPage('tools')">
+  <div class="nav-item" data-nav="tools" onclick="switchPage('tools')">
     <div class="nav-icon">🔧</div>
     <div>Tools</div>
   </div>
-  <div class="nav-item" onclick="switchPage('scanner')">
+  <div class="nav-item" data-nav="scanner" onclick="switchPage('scanner')">
     <div class="nav-icon">📸</div>
     <div>Scanner</div>
   </div>
-  <div class="nav-item" onclick="switchPage('settings')">
+  <div class="nav-item" data-nav="settings" onclick="switchPage('settings')">
     <div class="nav-icon">⚙️</div>
     <div>Settings</div>
   </div>
@@ -1427,8 +968,12 @@ function switchPage(page) {
   // Show selected section
   document.querySelector(`[data-page="${page}"]`).classList.add('active');
 
-  // Add active to nav item
-  event.target.closest('.nav-item').classList.add('active');
+  // Add active to the matching nav item — looked up by page name rather
+  // than the calling event, so this works whether switchPage() was fired
+  // from a nav-item click or from any other in-app link (e.g. a settings
+  // shortcut into the Tools tab).
+  const navItem = document.querySelector(`.nav-item[data-nav="${page}"]`);
+  if(navItem) navItem.classList.add('active');
 }
 
 /* ================= AI KIT + PDF EDIT (mobile) =================
@@ -2372,20 +1917,32 @@ function renderPDFEditPrintScreen(body){
   };
 }
 
-// Handle dark mode toggle
-document.querySelectorAll('.toggle-switch').forEach(toggle => {
-  toggle.addEventListener('click', function(e) {
-    e.stopPropagation();
-    this.classList.toggle('active');
+// Dark mode: defaults to following the system, but the Settings toggle can
+// force it either way — persisted so the choice survives a reload.
+(function(){
+  let current = localStorage.getItem('pdflove.theme'); // 'dark' | 'light' | null (auto)
+  const toggle = document.getElementById('dark-mode-toggle');
+  function systemPrefersDark(){ return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
+  function effectiveIsDark(theme){ return theme ? theme==='dark' : systemPrefersDark(); }
+  function apply(theme){
+    if(theme) document.documentElement.setAttribute('data-theme', theme);
+    else document.documentElement.removeAttribute('data-theme');
+    if(toggle) toggle.classList.toggle('active', effectiveIsDark(theme));
+  }
+  apply(current);
+  if(toggle) toggle.addEventListener('click', ()=>{
+    current = effectiveIsDark(current) ? 'light' : 'dark';
+    localStorage.setItem('pdflove.theme', current);
+    apply(current);
   });
-});
+})();
 
-// Handle price option selection
-document.querySelectorAll('.price-option').forEach(option => {
-  option.addEventListener('click', function() {
-    document.querySelectorAll('.price-option').forEach(o => o.classList.remove('selected'));
-    this.classList.add('selected');
-  });
+const clearDataItem = document.getElementById('clear-data-item');
+if(clearDataItem) clearDataItem.addEventListener('click', ()=>{
+  if(confirm('Clear your saved info, contacts, and activity history from this browser? This cannot be undone.')){
+    ['pdflove.myInfo','pdflove.contacts','pdflove.aiKitStats','pdflove.theme'].forEach(k=>localStorage.removeItem(k));
+    location.reload();
+  }
 });
 </script>
 
