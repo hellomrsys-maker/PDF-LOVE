@@ -4600,7 +4600,7 @@ function toolHighlightPDF(){
 function toolCardDesigner(kind){
   // kind: 'business' or 'id'
   const isID = kind==='id';
-  const body = panelShell({
+  const { main, sidebar } = panelShellSplit({
     title: isID ? 'ID Card Designer' : 'Business Card Designer',
     desc: isID ? 'Pick a template, add photo, name and details — a print-ready ID card at the standard credit-card size.' : 'Pick a template, add your details and logo — plus a QR code people can scan to save your contact straight to their phone.'
   });
@@ -4612,20 +4612,20 @@ function toolCardDesigner(kind){
   let template = 'band';
 
   /* -- step 1: template -- */
-  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a template'; body.appendChild(tplLabel);
+  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a template'; sidebar.appendChild(tplLabel);
   const tplRow=document.createElement('div'); tplRow.className='tab-row';
   tplRow.innerHTML = `
     <button type="button" class="tab-btn active" data-tpl="band"><span class="tab-title">Classic</span><span class="tab-sub">color bands top &amp; bottom</span></button>
     <button type="button" class="tab-btn" data-tpl="siderail"><span class="tab-title">Modern</span><span class="tab-sub">bold side rail</span></button>
     <button type="button" class="tab-btn" data-tpl="minimal"><span class="tab-title">Minimal</span><span class="tab-sub">clean &amp; airy</span></button>
   `;
-  body.appendChild(tplRow);
+  sidebar.appendChild(tplRow);
   tplRow.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick=()=>{ tplRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); template=b.dataset.tpl; renderPreview(); };
   });
 
   /* -- step 2: details -- */
-  const dtLabel=document.createElement('div'); dtLabel.className='helper-line'; dtLabel.style.cssText='font-weight:600;margin-top:14px;'; dtLabel.textContent='2 · Your details'; body.appendChild(dtLabel);
+  const dtLabel=document.createElement('div'); dtLabel.className='helper-line'; dtLabel.style.cssText='font-weight:600;margin-top:14px;'; dtLabel.textContent='2 · Your details'; sidebar.appendChild(dtLabel);
   const fields = isID
     ? [['name','Full Name','Jordan Rivera'],['title','Title / Role','Member'],['org','Organization','Acme Co.'],['idnum','ID Number','ID-00482']]
     : [['name','Full Name','Jordan Rivera'],['title','Job Title','Product Designer'],['org','Company','Acme Co.']];
@@ -4633,7 +4633,7 @@ function toolCardDesigner(kind){
     const row=document.createElement('div'); row.className='row';
     row.innerHTML = fields.slice(i,i+2).map(([id,label,ph])=>
       `<div class="field"><label>${label}</label><input type="text" id="card-${id}" placeholder="${ph}"></div>`).join('');
-    body.appendChild(row);
+    sidebar.appendChild(row);
   }
   if(!isID){
     const row=document.createElement('div'); row.className='row';
@@ -4641,17 +4641,17 @@ function toolCardDesigner(kind){
       <div class="field"><label>Phone</label><input type="text" id="card-phone" placeholder="+1 555 123 4567"></div>
       <div class="field"><label>Email</label><input type="text" id="card-email" placeholder="jordan@acme.com"></div>
     `;
-    body.appendChild(row);
+    sidebar.appendChild(row);
     const row2=document.createElement('div'); row2.className='row';
     row2.innerHTML = `<div class="field"><label>Website (optional)</label><input type="text" id="card-web" placeholder="acme.com"></div>`;
-    body.appendChild(row2);
+    sidebar.appendChild(row2);
     const qrToggle=document.createElement('label'); qrToggle.style.cssText='display:flex;gap:8px;align-items:center;font-size:0.85rem;margin:8px 0;';
     qrToggle.innerHTML = `<input type="checkbox" id="card-qr-on" checked> Add a QR code people can scan to save your contact`;
-    body.appendChild(qrToggle);
+    sidebar.appendChild(qrToggle);
   }
 
   /* -- step 3: style -- */
-  const styleLabel=document.createElement('div'); styleLabel.className='helper-line'; styleLabel.style.cssText='font-weight:600;margin-top:14px;'; styleLabel.textContent='3 · Style'; body.appendChild(styleLabel);
+  const styleLabel=document.createElement('div'); styleLabel.className='helper-line'; styleLabel.style.cssText='font-weight:600;margin-top:14px;'; styleLabel.textContent='3 · Style'; sidebar.appendChild(styleLabel);
   const PRESETS = ['#C1683A','#2E5A38','#1E4B6E','#6E2E5A','#8A6D1F','#1F2420'];
   const colorRow=document.createElement('div'); colorRow.style.cssText='display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;';
   PRESETS.forEach((c,i)=>{
@@ -4664,9 +4664,9 @@ function toolCardDesigner(kind){
   customColor.style.cssText='width:44px;height:34px;border:1px solid var(--line);border-radius:8px;cursor:pointer;';
   customColor.title='Custom color';
   colorRow.appendChild(customColor);
-  body.appendChild(colorRow);
+  sidebar.appendChild(colorRow);
 
-  const imgRow=document.createElement('div'); imgRow.className='row'; body.appendChild(imgRow);
+  const imgRow=document.createElement('div'); imgRow.className='row'; sidebar.appendChild(imgRow);
   function imagePicker(label, onImg){
     const wrap=document.createElement('div'); wrap.className='field';
     wrap.innerHTML=`<label>${label}</label>`;
@@ -4685,12 +4685,12 @@ function toolCardDesigner(kind){
   if(isID) imagePicker('Photo (optional)', img=>photoImg=img);
   imagePicker('Logo (optional)', img=>logoImg=img);
 
-  const previewWrap=document.createElement('div'); previewWrap.style.cssText='margin:16px 0;text-align:center;'; body.appendChild(previewWrap);
+  const previewWrap=document.createElement('div'); previewWrap.className='workspace-single'; previewWrap.style.cssText='text-align:center;'; main.appendChild(previewWrap);
   const btnRow=document.createElement('div'); btnRow.style.cssText='display:flex;gap:10px;flex-wrap:wrap;';
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Download PNG (300 DPI)'; btn.style.flex='1';
   const btnPdf=document.createElement('button'); btnPdf.className='primary-btn'; btnPdf.textContent='Download print-ready PDF'; btnPdf.style.cssText='flex:1;background:var(--ink);';
-  btnRow.appendChild(btn); btnRow.appendChild(btnPdf); body.appendChild(btnRow);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  btnRow.appendChild(btn); btnRow.appendChild(btnPdf); sidebar.appendChild(btnRow);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   async function buildVCardQR(){
     const name = document.getElementById('card-name').value || fields[0][2];
@@ -4790,7 +4790,7 @@ function toolCardDesigner(kind){
       previewWrap.innerHTML=''; previewWrap.appendChild(canvas);
     });
   }
-  body.addEventListener('input', renderPreview);
+  sidebar.addEventListener('input', renderPreview);
   renderPreview();
 
   async function finalCanvas(){
@@ -4816,18 +4816,18 @@ function toolCardDesigner(kind){
 }
 
 function toolBatchIDCards(){
-  const body = panelShell({title:'Batch ID Card Maker', desc:'Upload a spreadsheet list of people and get one ID card per row — great for a whole team or class at once.'});
+  const { main, sidebar } = panelShellSplit({title:'Batch ID Card Maker', desc:'Upload a spreadsheet list of people and get one ID card per row — great for a whole team or class at once.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Your list needs these column headers in the first row: name, title, org, idnum — one row per person. No photos in batch mode; add those one at a time with the single ID Card Designer if you need them.';
-  body.appendChild(note);
+  main.appendChild(note);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Paste your list (CSV — one person per line)</label><textarea id="bic-input" rows="8" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;background:var(--paper);" placeholder="name,title,org,idnum&#10;Jordan Rivera,Manager,Acme Co.,ID-001&#10;Sam Lee,Engineer,Acme Co.,ID-002"></textarea>`;
-  body.appendChild(field);
+  main.appendChild(field);
   const colorField=document.createElement('div'); colorField.className='field';
   colorField.innerHTML = `<label>Accent color</label><input type="color" id="bic-color" value="#C1683A" style="width:100%;height:44px;border:1px solid var(--line);border-radius:8px;">`;
-  body.appendChild(colorField);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create All Cards & Download .zip'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(colorField);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Create All Cards & Download .zip'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function buildOneCard(person, color, outW, outH){
     const canvas = document.createElement('canvas'); canvas.width=outW; canvas.height=outH;
