@@ -441,30 +441,31 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     border-radius: 14px;
     padding: 24px;
     cursor: pointer;
-    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
     display: flex;
     flex-direction: column;
     gap: 12px;
     text-align: left;
     position: relative;
     min-height: 170px;
+    box-shadow: 0 1px 2px rgba(20,20,20,0.02), 0 8px 20px -14px rgba(20,20,20,0.10);
   }
 
   .tool-card:hover {
     border-color: #1A1A1A;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(20,20,20,0.04), 0 14px 32px -12px rgba(20,20,20,0.16);
+    transform: translateY(-3px);
   }
 
   .tool-card .icon {
-    font-size: 20px;
+    font-size: 21px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.6);
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    background: linear-gradient(155deg, rgba(229,57,53,0.14), rgba(229,57,53,0.05));
     line-height: 1;
   }
 
@@ -939,7 +940,6 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   .tool-split {
     display: flex; gap: 0; align-items: stretch;
     max-width: 1200px; margin: 0 auto; padding: 0 20px 30px;
-    min-height: calc(100vh - 190px);
   }
   .tool-main {
     flex: 1; min-width: 0; position: relative;
@@ -947,6 +947,7 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     border: 1px solid var(--sidebar-border); border-radius: 14px 0 0 14px;
     padding: 32px;
     display: flex; flex-direction: column; align-items: stretch; gap: 14px;
+    box-shadow: 0 1px 2px rgba(20,20,20,0.03), 0 12px 32px -16px rgba(20,20,20,0.10);
   }
   /* Single Asset Mode content (one centered preview card, e.g. .workspace-single)
      centers itself within the column via margin:auto on its own rule — the
@@ -994,6 +995,7 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     background: #FFFFFF; border: 1px solid var(--sidebar-border); border-left: none;
     border-radius: 0 14px 14px 0; padding: 24px;
     display: flex; flex-direction: column;
+    box-shadow: 0 1px 2px rgba(20,20,20,0.03), 0 12px 32px -16px rgba(20,20,20,0.10);
   }
   .tool-sidebar h1 { font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; color: var(--workspace-ink); line-height: 1.2; }
   .tool-sidebar-desc { margin: 0 0 18px; color: #666; font-size: 0.88rem; line-height: 1.5; }
@@ -1028,12 +1030,43 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   }
 
   .dropzone {
-    border: 1.5px dashed var(--line); border-radius: 10px; padding: 32px 20px;
-    text-align: center; color: var(--ink-soft); font-size: 0.9rem;
-    cursor: pointer; background: var(--glass-bg);
+    border: 1.5px dashed #C8C8CE; border-radius: 14px; padding: 56px 24px;
+    min-height: 260px; box-sizing: border-box;
+    text-align: center; color: var(--ink-soft); font-size: 0.92rem;
+    cursor: pointer; background: rgba(255,255,255,0.55);
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
   }
-  .dropzone.drag { border-color: var(--copper); color: var(--copper-deep); }
+  .dropzone:hover {
+    border-color: var(--workspace-accent); background: rgba(255,255,255,0.85);
+    box-shadow: 0 8px 24px -12px rgba(229,57,53,0.25);
+  }
+  .dropzone .dz-icon {
+    width: 52px; height: 52px; margin-bottom: 14px; color: var(--workspace-accent);
+    opacity: 0.85;
+  }
+  .dropzone strong { color: var(--workspace-ink); font-size: 1.02rem; font-weight: 600; }
+  .dropzone span { color: var(--ink-soft); font-size: 0.85rem; }
+  .dropzone.drag {
+    border-color: var(--copper); color: var(--copper-deep);
+    background: rgba(229,57,53,0.06); transform: scale(1.005);
+    box-shadow: 0 8px 28px -12px rgba(229,57,53,0.35);
+  }
+  /* A handful of tools (Invoice Generator, etc.) have no visual
+     dropzone/canvas — just a hint note — since their whole job is the
+     sidebar form. Left alone that note sits awkwardly at the top of an
+     otherwise-empty column, so when it's the only thing in .tool-main,
+     center it as a proper empty state instead. */
+  .tool-main > .note:only-child {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; gap: 10px;
+    font-size: 0.95rem; padding: 40px; max-width: 40ch; margin: 0 auto;
+    background: transparent; border: none;
+  }
+  .tool-main > .note:only-child::before {
+    content: '✦'; font-size: 1.6rem; color: var(--workspace-accent); opacity: 0.7;
+  }
   .filelist { margin: 14px 0; display: flex; flex-direction: column; gap: 6px; }
   .filerow {
     display: flex; justify-content: space-between; align-items: center;
@@ -1072,8 +1105,10 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
      behind a blur reads as broken, not stylish. Only the chrome around it
      (dropzone, notes, cards, buttons) picks up the glass treatment. */
   .canvas-wrap { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: auto; max-height: 60vh; margin: 10px 0; background: #eee; }
+  .canvas-wrap:empty { display: none; }
   .canvas-wrap canvas { display: block; cursor: crosshair; max-width: 100%; }
   .pill-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+  .pill-row:empty { display: none; }
   .pill-row select, .pill-row input[type=text], .pill-row input[type=number] {
     padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--white); font-family: inherit; font-size: 0.85rem;
   }
@@ -2101,7 +2136,8 @@ function clampScale(w, h, scale){
 function buildDropzone(container, {multiple, accept, onFiles}){
   const dz = document.createElement('div');
   dz.className = 'dropzone';
-  dz.innerHTML = `<strong>Click to choose ${multiple?'files':'a file'}</strong><br>or drag &amp; drop here — stays on this device`;
+  dz.innerHTML = `<svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+    <strong>Click to choose ${multiple?'files':'a file'}</strong><span>or drag &amp; drop here — stays on this device</span>`;
   const input = document.createElement('input');
   input.type='file'; input.multiple=!!multiple; input.accept=accept||''; input.style.display='none';
   dz.appendChild(input);
