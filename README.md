@@ -70,7 +70,13 @@ the HTML is served without the vendor directory.
   cd frontend
   python3 -m http.server 5500   # visit http://localhost:5500
   ```
-- **Deploy it anywhere that hosts static files** — Netlify, GitHub Pages,
+- **Deploy to Cloudflare Workers** (git integration):
+  1. Create a Workers project at [Cloudflare Dashboard](https://dash.cloudflare.com)
+  2. Connect GitHub repository: `hellomrsys-maker/pdf-love`
+  3. Set production branch to `main`
+  4. Add your domain as a zone + update nameservers
+  5. Cloudflare auto-deploys on each push
+- **Deploy anywhere that hosts static files** — Netlify, GitHub Pages,
   S3, your own nginx. Hosting cost is effectively zero.
 - **Install it as an app** — the service worker precaches everything, so
   after one visit the whole toolbox (including AES-256 encryption) works
@@ -112,6 +118,14 @@ visit. More languages: drop `{lang}.traineddata.gz` into
 
 **On-device AI background removal**: the open RMBG model via Transformers.js
 (one ~44 MB download, then cached/offline; GPU-accelerated where available).
+
+**Mobile app** (glassmorphism design, tab navigation, all 80+ tools): Responsive mobile-first interface with glass-effect UI, works on phones/tablets with the same offline-capable PWA technology. All tools from desktop ported and tested end-to-end.
+
+**AI Kit**: Resume Builder with ATS scoring, Cover Letter Generator, Notice/Letter Generator with shared contact memory across tools.
+
+**Batch Document Generator**: CSV/XLSX-driven personalized letter generator — import data, pick a template, generate a ZIP of customized PDFs.
+
+**My Activity Dashboard**: Local usage tracking, honest analytics of which tools you use most (stored only in your browser, never sent anywhere).
 
 **Big-file safety**: heavy tools estimate their memory need against the
 device before starting and suggest a workaround instead of crashing the
@@ -264,6 +278,14 @@ packaging the existing PWA as a Trusted Web Activity; **`deploy/PLAY_STORE.md`**
 has the full step-by-step (Bubblewrap, signing, Play Console submission,
 draft listing copy) and **`deploy/PRIVACY_POLICY.md`** is a ready-to-host
 policy reflecting what the app actually does and doesn't collect.
+
+## Recent fixes
+
+- **Service worker cache management**: Bumped cache version to v16 to force browser invalidation of stale cached content after deployments
+- **Passport Photo tool**: Fixed ReferenceError in viewH variable initialization
+- **Word to PDF conversion**: Added try/catch error handling for invalid .docx files with user-friendly error messages
+- **Bookmarks/TOC reader**: Fixed ArrayBuffer detachment issue when reading PDF bookmarks
+- **Split by Bookmark**: Fixed buffer reuse issue in bookmark-based PDF splitting
 
 ## Roadmap (not yet built)
 
