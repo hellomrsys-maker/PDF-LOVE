@@ -4065,17 +4065,18 @@ function md5(str){
 /* ================= NEW CATEGORY: Finance Tools ================= */
 
 function toolBatchImageProcessor(){
-  const body = panelShell({title:'Batch Resize / Shrink Many Photos at Once', desc:'Add as many photos as you want, set it up once, and get them all done together — no "2 files per day" limit like the paid tools have.'});
+  const { main, sidebar } = panelShellSplit({title:'Batch Resize / Shrink Many Photos at Once', desc:'Add as many photos as you want, set it up once, and get them all done together — no "2 files per day" limit like the paid tools have.'});
   let files=[];
-  buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
-  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  const dz = buildDropzone(main, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
+  addWorkspaceFab(main, dz);
+  const list=document.createElement('div'); list.className='filelist'; main.appendChild(list);
 
   const tabRow=document.createElement('div'); tabRow.className='tab-row';
   tabRow.innerHTML = `
     <button type="button" class="tab-btn active" data-mode="resize"><span class="tab-title">Resize all of them</span><span class="tab-sub">Same width/height for every photo</span></button>
     <button type="button" class="tab-btn" data-mode="compress"><span class="tab-title">Shrink all of them</span><span class="tab-sub">Same quality for every photo</span></button>
   `;
-  body.appendChild(tabRow);
+  sidebar.appendChild(tabRow);
 
   const resizeField=document.createElement('div'); resizeField.id='batch-resize-field';
   resizeField.innerHTML = `<div class="row">
@@ -4083,11 +4084,11 @@ function toolBatchImageProcessor(){
     <div class="field"><label>Height (px)</label><input type="number" id="batch-h" value="1200"></div>
   </div>
   <div class="helper-line">Each photo is resized to fit inside this box, keeping its own shape (no stretching).</div>`;
-  body.appendChild(resizeField);
+  sidebar.appendChild(resizeField);
 
   const compressField=document.createElement('div'); compressField.id='batch-compress-field'; compressField.style.display='none';
   compressField.innerHTML = `<div class="field"><label>How much smaller? <span id="batch-qval">75</span>%</label><input type="range" id="batch-q" min="20" max="100" value="75"></div>`;
-  body.appendChild(compressField);
+  sidebar.appendChild(compressField);
 
   tabRow.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick = ()=>{
@@ -4098,10 +4099,10 @@ function toolBatchImageProcessor(){
       compressField.style.display = isCompress?'block':'none';
     };
   });
-  body.addEventListener('input', e=>{ if(e.target.id==='batch-q') document.getElementById('batch-qval').textContent = e.target.value; });
+  sidebar.addEventListener('input', e=>{ if(e.target.id==='batch-q') document.getElementById('batch-qval').textContent = e.target.value; });
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Process All & Download .zip'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Process All & Download .zip'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
   renderList();
@@ -4164,18 +4165,18 @@ async function getPipeline(task, model, opts){
 }
 
 function toolAISummarizeLocal(){
-  const body = panelShell({title:'AI Summarize (Runs on Your Device)', desc:'A real AI model that downloads once and then works completely offline — your text is never sent anywhere, ever, not even to us.'});
+  const { main, sidebar } = panelShellSplit({title:'AI Summarize (Runs on Your Device)', desc:'A real AI model that downloads once and then works completely offline — your text is never sent anywhere, ever, not even to us.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='First use downloads a small AI model (about 60–150MB, one time only, then cached by your browser). After that it works instantly, even with no internet.';
-  body.appendChild(note);
+  main.appendChild(note);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Text to summarize</label><textarea id="ais-input" rows="10" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="Paste an article, essay, or long text..."></textarea>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Summarize'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  main.appendChild(field);
   const outField=document.createElement('div'); outField.className='field'; outField.style.display='none';
   outField.innerHTML = `<label>Summary</label><textarea id="ais-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
-  body.appendChild(outField);
+  main.appendChild(outField);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Summarize'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     const text = document.getElementById('ais-input').value.trim();
     if(!text){ log.textContent='Paste some text first.'; return; }
@@ -4197,25 +4198,25 @@ function toolAISummarizeLocal(){
 }
 
 function toolAITranslateLocal(){
-  const body = panelShell({title:'Translate Text (Runs on Your Device)', desc:'Real machine translation, running as an AI model in your browser — private, and free with no per-word limit.'});
+  const { main, sidebar } = panelShellSplit({title:'Translate Text (Runs on Your Device)', desc:'Real machine translation, running as an AI model in your browser — private, and free with no per-word limit.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='First use downloads a translation model (roughly 300MB, one time only, then cached). Quality is good for everyday text; for legal or medical documents, still have a human review it.';
-  body.appendChild(note);
+  main.appendChild(note);
   const langs = {English:'eng_Latn', Spanish:'spa_Latn', French:'fra_Latn', German:'deu_Latn', Hindi:'hin_Deva', Chinese:'zho_Hans', Arabic:'arb_Arab', Portuguese:'por_Latn', Russian:'rus_Cyrl', Japanese:'jpn_Jpan'};
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>From</label><select id="ait-from" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${Object.keys(langs).map(l=>`<option ${l==='English'?'selected':''}>${l}</option>`).join('')}</select></div>
     <div class="field"><label>To</label><select id="ait-to" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);">${Object.keys(langs).map(l=>`<option ${l==='Spanish'?'selected':''}>${l}</option>`).join('')}</select></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML = `<label>Text</label><textarea id="ait-input" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);"></textarea>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Translate'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  main.appendChild(field);
   const outField=document.createElement('div'); outField.className='field'; outField.style.display='none';
   outField.innerHTML = `<label>Translation</label><textarea id="ait-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
-  body.appendChild(outField);
+  main.appendChild(outField);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Translate'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     const text = document.getElementById('ait-input').value.trim();
     if(!text){ log.textContent='Type some text first.'; return; }
@@ -4238,16 +4239,16 @@ function toolAITranslateLocal(){
 }
 
 function toolVoiceToText(){
-  const body = panelShell({title:'Voice to Text (Runs on Your Device)', desc:'Record your voice and get it typed out — a real AI speech model, running privately in your browser.'});
+  const { main, sidebar } = panelShellSplit({title:'Voice to Text (Runs on Your Device)', desc:'Record your voice and get it typed out — a real AI speech model, running privately in your browser.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='First use downloads a small speech-recognition model (about 40MB, one time only). Your recording is processed on this device and is never uploaded.';
-  body.appendChild(note);
+  main.appendChild(note);
   let mediaRecorder=null, chunks=[], recording=false;
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='● Start Recording'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='● Start Recording'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   const outField=document.createElement('div'); outField.className='field'; outField.style.display='none';
   outField.innerHTML = `<label>What you said</label><textarea id="vtt-output" rows="5" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" readonly></textarea>`;
-  body.appendChild(outField);
+  main.appendChild(outField);
 
   btn.onclick = async ()=>{
     if(!recording){
@@ -4288,16 +4289,17 @@ function toolVoiceToText(){
 }
 
 function toolImageCaptioner(){
-  const body = panelShell({title:'Describe a Photo / Alt-Text Generator (Runs on Your Device)', desc:'A real AI vision model looks at your photo and writes a description — great for adding alt-text so screen readers can describe images to blind and low-vision users.'});
+  const { main, sidebar } = panelShellSplit({title:'Describe a Photo / Alt-Text Generator (Runs on Your Device)', desc:'A real AI vision model looks at your photo and writes a description — great for adding alt-text so screen readers can describe images to blind and low-vision users.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='First use downloads a small vision AI model (about 200MB, one time only). Your photo is never uploaded — the AI runs right here on this device.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{ file=f[0]; preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width:100%;border-radius:8px;margin:10px 0;">`; }});
-  const preview=document.createElement('div'); body.appendChild(preview);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Describe This Photo'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
-  const result=document.createElement('div'); result.className='note'; result.style.display='none'; body.appendChild(result);
+  const dz = buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{ file=f[0]; preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="max-width:100%;border-radius:8px;margin:10px 0;">`; }});
+  addWorkspaceFab(main, dz);
+  const preview=document.createElement('div'); main.appendChild(preview);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Describe This Photo'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
+  const result=document.createElement('div'); result.className='note'; result.style.display='none'; sidebar.appendChild(result);
   btn.onclick = async ()=>{
     if(!file){ log.textContent='Choose a photo first.'; return; }
     btn.disabled = true;
@@ -4492,18 +4494,19 @@ function toolBarcodeGenerator(){
 /* ================= Highlight, Business Card, ID Card ================= */
 
 function toolHighlightPDF(){
-  const body = panelShell({title:'Highlight Important Text', desc:'Drag over any part of a page to mark it — like using a highlighter pen on paper. Great for flagging the important parts of a contract or report.'});
+  const { main, sidebar } = panelShellSplit({title:'Highlight Important Text', desc:'Drag over any part of a page to mark it — like using a highlighter pen on paper. Great for flagging the important parts of a contract or report.'});
   let file=null, pdfjsDoc=null, pageNum=1;
   let highlights = []; // {page, xRatio, yRatio, wRatio, hRatio, color}
   let selectedColor = '#FFF176';
 
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     pageNum=1; highlights=[];
     renderPage();
   }});
+  addWorkspaceFab(main, dz);
 
   const colorRow=document.createElement('div'); colorRow.className='pill-row';
   [['#FFF176','Yellow'],['#A5D6A7','Green'],['#F48FB1','Pink'],['#90CAF9','Blue']].forEach(([hex,label],i)=>{
@@ -4513,13 +4516,13 @@ function toolHighlightPDF(){
     b.onclick = ()=>{ selectedColor=hex; [...colorRow.children].forEach(c=>c.style.borderColor='transparent'); b.style.borderColor='var(--ink)'; };
     colorRow.appendChild(b);
   });
-  body.appendChild(colorRow);
+  sidebar.appendChild(colorRow);
 
-  const controls=document.createElement('div'); controls.className='pill-row'; body.appendChild(controls);
-  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
-  const hint=document.createElement('div'); hint.className='helper-line'; hint.textContent='Drag over text on the page below to highlight it.'; body.appendChild(hint);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save Highlighted PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const controls=document.createElement('div'); controls.className='pill-row'; main.appendChild(controls);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
+  const hint=document.createElement('div'); hint.className='helper-line'; hint.textContent='Drag over text on the page below to highlight it.'; sidebar.appendChild(hint);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save Highlighted PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function buildControls(){
     controls.innerHTML = `<button class="small-btn" id="hl-prev">‹ prev</button>
