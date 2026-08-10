@@ -1,6 +1,6 @@
-const CACHE_NAME = 'pdflove-v16';
+const CACHE_NAME = 'pdflove-v17';
 const APP_SHELL = [
-  './', './index.html', './manifest.json',
+  './', './index.html', './mobile.html', './manifest.json',
   // Static pages, precached so an installed offline copy can still show its
   // own terms, privacy policy and help.
   './pages.css',

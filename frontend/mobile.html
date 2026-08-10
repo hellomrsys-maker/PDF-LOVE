@@ -984,27 +984,27 @@ body {
 
     <div class="section-title">Popular tools</div>
     <div class="tools-grid">
-      <div class="tool-card" onclick="openTool('merge')">
+      <div class="tool-card" onclick="toolMergePDF()">
         <div class="tool-icon">🔗</div>
         <div class="tool-name">Merge PDF</div>
       </div>
-      <div class="tool-card" onclick="openTool('split')">
+      <div class="tool-card" onclick="toolSplitPDF()">
         <div class="tool-icon">✂️</div>
         <div class="tool-name">Split PDF</div>
       </div>
-      <div class="tool-card" onclick="openTool('compress')">
+      <div class="tool-card" onclick="toolCompressPDF()">
         <div class="tool-icon">📦</div>
         <div class="tool-name">Compress PDF</div>
       </div>
-      <div class="tool-card premium" onclick="openTool('ai-summary')">
+      <div class="tool-card premium" onclick="toolAISummarizeLocal()">
         <div class="tool-icon">✨</div>
         <div class="tool-name">AI Summary</div>
       </div>
-      <div class="tool-card premium" onclick="openTool('ai-chat')">
+      <div class="tool-card premium" onclick="alert('Ask AI chat is coming soon.')">
         <div class="tool-icon">🤖</div>
         <div class="tool-name">Ask AI</div>
       </div>
-      <div class="tool-card" onclick="openTool('sign')">
+      <div class="tool-card" onclick="toolSignPDF()">
         <div class="tool-icon">✍️</div>
         <div class="tool-name">Sign PDF</div>
       </div>
@@ -1398,9 +1398,10 @@ body {
   </div>
 </div>
 
-<!-- TOOL DETAIL OVERLAY — used by the AI Kit and PDF Edit tools, the only
-     functional tools in this mobile app today. Every other card above is
-     still a design mockup (see openTool() below). -->
+<!-- TOOL DETAIL OVERLAY — shared by every functional tool card above,
+     both the ~76 shared tools-engine.js tools and the AI Kit/PDF Edit
+     tools defined further down in this file. -->
+
 <div class="tool-detail" id="tool-detail">
   <div class="tool-detail-header">
     <button class="tool-detail-back" onclick="closeToolDetail()">←</button>
@@ -1428,17 +1429,11 @@ function switchPage(page) {
   event.target.closest('.nav-item').classList.add('active');
 }
 
-function openTool(tool) {
-  alert(`Opening ${tool} tool...`);
-}
-
 /* ================= AI KIT + PDF EDIT (mobile) =================
-   The only functional tools in this app today. Logic ported verbatim from
-   the desktop app's already-tested implementation (frontend/index.html) —
-   same pdfSafe encoding guard, same word-boundary ATS matching, same
-   bleed/crop-mark geometry — only the DOM/CSS is adapted to this app's
-   card-based mobile layout. Everything else on this screen (Merge PDF,
-   Split PDF, etc.) is still a design mockup; see openTool() above. */
+   Logic ported verbatim from the desktop app's already-tested
+   implementation (frontend/index.html) — same pdfSafe encoding guard,
+   same word-boundary ATS matching, same bleed/crop-mark geometry — only
+   the DOM/CSS is adapted to this app's card-based mobile layout. */
 
 function escapeXml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function download(blob, filename){
