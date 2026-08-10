@@ -3623,16 +3623,17 @@ function assistOpenNext(){
 }
 
 function toolAskDockbench(prefill){
-  const body = panelShell({title:'✨ Ask PDFLove', desc:'Say what you want in your own words — no technical terms needed. I\'ll pick the right tools and walk you through, step by step.'});
-  buildDropzone(body, {multiple:false, accept:'', onFiles:(f)=>{ assistSourceFile=f[0]; fileInfo.textContent = `Working with: ${assistSourceFile.name} (${fmtBytes(assistSourceFile.size)})`; }});
-  const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:10px 0;font-size:0.85rem;'; body.appendChild(fileInfo);
+  const { main, sidebar } = panelShellSplit({title:'✨ Ask PDFLove', desc:'Say what you want in your own words — no technical terms needed. I\'ll pick the right tools and walk you through, step by step.'});
+  const dz = buildDropzone(main, {multiple:false, accept:'', onFiles:(f)=>{ assistSourceFile=f[0]; fileInfo.textContent = `Working with: ${assistSourceFile.name} (${fmtBytes(assistSourceFile.size)})`; }});
+  addWorkspaceFab(main, dz);
+  const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:10px 0;font-size:0.85rem;'; main.appendChild(fileInfo);
   assistSourceFile = null; assistQueue = []; assistStepNum = 0; assistTotal = 0;
 
-  const askRow=document.createElement('div'); askRow.className='assist-hero'; askRow.style.margin='10px 0';
+  const askRow=document.createElement('div'); askRow.className='assist-hero'; askRow.style.cssText='margin:10px 0;flex-direction:column;max-width:none;';
   const input=document.createElement('input'); input.type='text';
   input.placeholder='e.g. compress this and give me a markdown copy';
-  const goBtn=document.createElement('button'); goBtn.className='primary-btn'; goBtn.textContent='Plan it';
-  askRow.appendChild(input); askRow.appendChild(goBtn); body.appendChild(askRow);
+  const goBtn=document.createElement('button'); goBtn.className='primary-btn'; goBtn.style.cssText='width:100%;margin-top:8px;'; goBtn.textContent='Plan it';
+  askRow.appendChild(input); askRow.appendChild(goBtn); sidebar.appendChild(askRow);
 
   const chips=document.createElement('div'); chips.className='assist-chips';
   ['make this small enough to email','turn my photos into one PDF','compress and make a markdown copy','black out private details','make this scan searchable'].forEach(ex=>{
@@ -3640,10 +3641,10 @@ function toolAskDockbench(prefill){
     c.onclick=()=>{ input.value=ex; plan(); };
     chips.appendChild(c);
   });
-  body.appendChild(chips);
+  sidebar.appendChild(chips);
 
-  const planBox=document.createElement('div'); body.appendChild(planBox);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const planBox=document.createElement('div'); main.appendChild(planBox);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function plan(){
     planBox.innerHTML=''; log.textContent='';
@@ -5299,55 +5300,54 @@ function loadActivityStats(){
 }
 
 function toolAIResumeATS(){
-  const body = panelShell({title:'AI Resume Builder (ATS)', desc:'Build a clean, single-column resume that parses correctly in Applicant Tracking Systems — with a live keyword-match score against a job description.'});
+  const { main, sidebar } = panelShellSplit({title:'AI Resume Builder (ATS)', desc:'Build a clean, single-column resume that parses correctly in Applicant Tracking Systems — with a live keyword-match score against a job description.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent = 'Date of birth is intentionally left off — most ATS-safe resume guidance recommends against including it. Everything here runs on-device; nothing is uploaded, even the job description you paste in for scoring. Note: the PDF font supports Latin/Western European text well; names or text in scripts like Chinese, Arabic, or Devanagari may show as "?" placeholders.';
-  body.appendChild(note);
+  main.appendChild(note);
+  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.fontWeight='600'; s2.textContent='Target job description (for ATS scoring, optional)'; main.appendChild(s2);
+  const jdField=document.createElement('div'); jdField.className='field';
+  jdField.innerHTML = `<textarea id="res-jd" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="Paste the job posting here to see which keywords your resume is missing..."></textarea>`;
+  main.appendChild(jdField);
+  const atsPanel=document.createElement('div'); atsPanel.id='res-ats-panel'; atsPanel.style.cssText='margin:10px 0 4px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);display:none;'; main.appendChild(atsPanel);
 
-  const s1=document.createElement('div'); s1.className='helper-line'; s1.style.fontWeight='600'; s1.textContent='1 · Contact details'; body.appendChild(s1);
+  const s1=document.createElement('div'); s1.className='helper-line'; s1.style.fontWeight='600'; s1.textContent='1 · Contact details'; sidebar.appendChild(s1);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Full name</label><input type="text" id="res-name" placeholder="Jordan Rivera"></div>
     <div class="field"><label>Target job title</label><input type="text" id="res-title" placeholder="Senior Product Designer"></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML = `
     <div class="field"><label>Email</label><input type="email" id="res-email" placeholder="jordan@email.com"></div>
     <div class="field"><label>Phone</label><input type="text" id="res-phone" placeholder="+1 555 010 1234"></div>
   `;
-  body.appendChild(row2);
+  sidebar.appendChild(row2);
   const row3=document.createElement('div'); row3.className='row';
   row3.innerHTML = `
     <div class="field"><label>Location</label><input type="text" id="res-location" placeholder="Austin, TX"></div>
     <div class="field"><label>LinkedIn / portfolio URL (optional)</label><input type="text" id="res-link" placeholder="linkedin.com/in/jordanrivera"></div>
   `;
-  body.appendChild(row3);
+  sidebar.appendChild(row3);
   {
     const mine = loadMyInfo();
     fillIfEmpty('res-name', mine.name); fillIfEmpty('res-email', mine.email);
     fillIfEmpty('res-phone', mine.phone); fillIfEmpty('res-location', mine.location); fillIfEmpty('res-link', mine.link);
   }
 
-  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.cssText='font-weight:600;margin-top:14px;'; s2.textContent='2 · Target job description (for ATS scoring, optional)'; body.appendChild(s2);
-  const jdField=document.createElement('div'); jdField.className='field';
-  jdField.innerHTML = `<textarea id="res-jd" rows="5" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="Paste the job posting here to see which keywords your resume is missing..."></textarea>`;
-  body.appendChild(jdField);
-  const atsPanel=document.createElement('div'); atsPanel.id='res-ats-panel'; atsPanel.style.cssText='margin:10px 0 4px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);display:none;'; body.appendChild(atsPanel);
-
-  const s3=document.createElement('div'); s3.className='helper-line'; s3.style.cssText='font-weight:600;margin-top:14px;'; s3.textContent='3 · Summary'; body.appendChild(s3);
+  const s3=document.createElement('div'); s3.className='helper-line'; s3.style.cssText='font-weight:600;margin-top:14px;'; s3.textContent='3 · Summary'; sidebar.appendChild(s3);
   const sumField=document.createElement('div'); sumField.className='field';
   sumField.innerHTML = `<textarea id="res-summary" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="A 2-3 sentence professional summary..."></textarea>`;
-  body.appendChild(sumField);
-  const draftBtn=document.createElement('button'); draftBtn.type='button'; draftBtn.className='small-btn'; draftBtn.textContent='✨ Draft a starting summary'; body.appendChild(draftBtn);
+  sidebar.appendChild(sumField);
+  const draftBtn=document.createElement('button'); draftBtn.type='button'; draftBtn.className='small-btn'; draftBtn.textContent='✨ Draft a starting summary'; sidebar.appendChild(draftBtn);
 
-  const s4=document.createElement('div'); s4.className='helper-line'; s4.style.cssText='font-weight:600;margin-top:14px;'; s4.textContent='4 · Skills (comma-separated)'; body.appendChild(s4);
+  const s4=document.createElement('div'); s4.className='helper-line'; s4.style.cssText='font-weight:600;margin-top:14px;'; s4.textContent='4 · Skills (comma-separated)'; sidebar.appendChild(s4);
   const skillsField=document.createElement('div'); skillsField.className='field';
   skillsField.innerHTML = `<input type="text" id="res-skills" placeholder="Figma, User Research, Design Systems, A/B Testing">`;
-  body.appendChild(skillsField);
+  sidebar.appendChild(skillsField);
 
-  const s5=document.createElement('div'); s5.className='helper-line'; s5.style.cssText='font-weight:600;margin-top:14px;'; s5.textContent='5 · Work experience'; body.appendChild(s5);
-  const expWrap=document.createElement('div'); expWrap.id='res-exp-wrap'; body.appendChild(expWrap);
+  const s5=document.createElement('div'); s5.className='helper-line'; s5.style.cssText='font-weight:600;margin-top:14px;'; s5.textContent='5 · Work experience'; sidebar.appendChild(s5);
+  const expWrap=document.createElement('div'); expWrap.id='res-exp-wrap'; sidebar.appendChild(expWrap);
   function addExpRow(title='',company='',dates='',bullets=''){
     const row=document.createElement('div'); row.dataset.resExp='1'; row.style.cssText='border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;';
     row.innerHTML = `
@@ -5362,12 +5362,12 @@ function toolAIResumeATS(){
     row.querySelector('button').onclick=()=>{ row.remove(); updateATS(); };
     expWrap.appendChild(row);
   }
-  const addExpBtn=document.createElement('button'); addExpBtn.type='button'; addExpBtn.className='small-btn'; addExpBtn.textContent='+ Add another role'; body.appendChild(addExpBtn);
+  const addExpBtn=document.createElement('button'); addExpBtn.type='button'; addExpBtn.className='small-btn'; addExpBtn.textContent='+ Add another role'; sidebar.appendChild(addExpBtn);
   addExpBtn.onclick=()=>addExpRow();
   addExpRow();
 
-  const s6=document.createElement('div'); s6.className='helper-line'; s6.style.cssText='font-weight:600;margin-top:14px;'; s6.textContent='6 · Education'; body.appendChild(s6);
-  const eduWrap=document.createElement('div'); eduWrap.id='res-edu-wrap'; body.appendChild(eduWrap);
+  const s6=document.createElement('div'); s6.className='helper-line'; s6.style.cssText='font-weight:600;margin-top:14px;'; s6.textContent='6 · Education'; sidebar.appendChild(s6);
+  const eduWrap=document.createElement('div'); eduWrap.id='res-edu-wrap'; sidebar.appendChild(eduWrap);
   function addEduRow(degree='',school='',year=''){
     const row=document.createElement('div'); row.dataset.resEdu='1'; row.className='row'; row.style.cssText='margin-bottom:6px;align-items:flex-end;';
     row.innerHTML = `
@@ -5378,12 +5378,12 @@ function toolAIResumeATS(){
     row.querySelector('button').onclick=()=>{ row.remove(); updateATS(); };
     eduWrap.appendChild(row);
   }
-  const addEduBtn=document.createElement('button'); addEduBtn.type='button'; addEduBtn.className='small-btn'; addEduBtn.textContent='+ Add another'; body.appendChild(addEduBtn);
+  const addEduBtn=document.createElement('button'); addEduBtn.type='button'; addEduBtn.className='small-btn'; addEduBtn.textContent='+ Add another'; sidebar.appendChild(addEduBtn);
   addEduBtn.onclick=()=>addEduRow();
   addEduRow();
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='16px'; btn.textContent='Download PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='16px'; btn.textContent='Download PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function currentResumeText(){
     const bits = [document.getElementById('res-title').value, document.getElementById('res-summary').value, document.getElementById('res-skills').value];
@@ -5425,7 +5425,8 @@ function toolAIResumeATS(){
       });
     }
   }
-  body.addEventListener('input', updateATS);
+  main.addEventListener('input', updateATS);
+  sidebar.addEventListener('input', updateATS);
 
   draftBtn.onclick = ()=>{
     const title = document.getElementById('res-title').value.trim() || 'professional';
@@ -5568,44 +5569,44 @@ function buildFullCoverLetterText(){
   return lines.join('\n');
 }
 function toolAICoverLetter(){
-  const body = panelShell({title:'AI Cover Letter Generator', desc:'Turn a few details into a polished, ready-to-send cover letter — tailored in tone, editable before you export.'});
+  const { main, sidebar } = panelShellSplit({title:'AI Cover Letter Generator', desc:'Turn a few details into a polished, ready-to-send cover letter — tailored in tone, editable before you export.'});
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Your name</label><input type="text" id="cov-name" placeholder="Jordan Rivera"></div>
     <div class="field"><label>Your email</label><input type="email" id="cov-email" placeholder="jordan@email.com"></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const row2=document.createElement('div'); row2.className='row';
   row2.innerHTML = `
     <div class="field"><label>Your phone (optional)</label><input type="text" id="cov-phone" placeholder="+1 555 010 1234"></div>
     <div class="field"><label>Date</label><input type="date" id="cov-date"></div>
   `;
-  body.appendChild(row2);
+  sidebar.appendChild(row2);
   const row3=document.createElement('div'); row3.className='row';
   row3.innerHTML = `
     <div class="field"><label>Hiring manager (optional)</label><input type="text" id="cov-manager" placeholder="Hiring Manager" list="cov-contacts-list"></div>
     <div class="field"><label>Company</label><input type="text" id="cov-company" placeholder="Acme Inc."></div>
   `;
-  body.appendChild(row3);
-  body.appendChild(contactsDatalist('cov-contacts-list'));
+  sidebar.appendChild(row3);
+  sidebar.appendChild(contactsDatalist('cov-contacts-list'));
   const titleField=document.createElement('div'); titleField.className='field';
   titleField.innerHTML = `<label>Job title you're applying for</label><input type="text" id="cov-title" placeholder="Senior Product Designer">`;
-  body.appendChild(titleField);
+  sidebar.appendChild(titleField);
   const toneField=document.createElement('div'); toneField.className='field';
   toneField.innerHTML = `<label>Tone</label><select id="cov-tone" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);"><option value="professional" selected>Professional</option><option value="enthusiastic">Enthusiastic</option><option value="concise">Concise</option></select>`;
-  body.appendChild(toneField);
+  sidebar.appendChild(toneField);
   const hlField=document.createElement('div'); hlField.className='field';
   hlField.innerHTML = `<label>Key highlights (one per line)</label><textarea id="cov-highlights" rows="3" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);" placeholder="Led a redesign that increased conversion by 18%"></textarea>`;
-  body.appendChild(hlField);
+  sidebar.appendChild(hlField);
   document.getElementById('cov-date').value = new Date().toISOString().slice(0,10);
   {
     const mine = loadMyInfo();
     fillIfEmpty('cov-name', mine.name); fillIfEmpty('cov-email', mine.email); fillIfEmpty('cov-phone', mine.phone);
   }
 
-  const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
-  const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.cssText='font-weight:600;margin-top:12px;'; previewLabel.textContent='Review & edit before exporting'; body.appendChild(previewLabel);
-  const bodyTextarea=document.createElement('textarea'); bodyTextarea.id='cov-body'; bodyTextarea.rows=10; bodyTextarea.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);'; body.appendChild(bodyTextarea);
+  const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; sidebar.appendChild(genBtn);
+  const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.cssText='font-weight:600;'; previewLabel.textContent='Review & edit before exporting'; main.appendChild(previewLabel);
+  const bodyTextarea=document.createElement('textarea'); bodyTextarea.id='cov-body'; bodyTextarea.rows=18; bodyTextarea.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);'; main.appendChild(bodyTextarea);
 
   /* Auto-refresh the draft as name/company/title/tone/highlights change, so
      the letter body can't silently go stale relative to the form — but
@@ -5618,13 +5619,14 @@ function toolAICoverLetter(){
   }
   genBtn.onclick = ()=>{ coverDirty=false; refreshCoverDraft(true); };
   refreshCoverDraft(true);
-  body.addEventListener('input', (e)=>{
+  main.addEventListener('input', (e)=>{
     if(e.target === bodyTextarea){ coverDirty = true; return; }
     refreshCoverDraft(false);
   });
+  sidebar.addEventListener('input', ()=>refreshCoverDraft(false));
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='10px'; btn.textContent='Download PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='10px'; btn.textContent='Download PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!bodyTextarea.value.trim()){ log.textContent='Generate or write the letter body first.'; return; }
     log.textContent = 'Building your cover letter...';
@@ -5677,19 +5679,19 @@ function buildNoticeFullText(tpl, values){
 }
 
 function toolAINoticeGenerator(){
-  const body = panelShell({title:'Notice & Letter Generator', desc:'Pick a notice type, fill in the details, get a formatted PDF letter — leave applications, warnings, terminations, payment reminders and general notices.'});
+  const { main, sidebar } = panelShellSplit({title:'Notice & Letter Generator', desc:'Pick a notice type, fill in the details, get a formatted PDF letter — leave applications, warnings, terminations, payment reminders and general notices.'});
   const disclaimer=document.createElement('div'); disclaimer.className='note';
   disclaimer.textContent = 'These are plain-language starting drafts, not legal advice. For anything with legal weight (termination, formal disputes), have the final letter reviewed by qualified counsel or HR.';
-  body.appendChild(disclaimer);
+  sidebar.appendChild(disclaimer);
 
-  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a notice type'; body.appendChild(tplLabel);
+  const tplLabel=document.createElement('div'); tplLabel.className='helper-line'; tplLabel.style.fontWeight='600'; tplLabel.textContent='1 · Choose a notice type'; sidebar.appendChild(tplLabel);
   const select=document.createElement('select'); select.id='ntc-type'; select.style.cssText='width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);margin-bottom:12px;';
   Object.entries(NOTICE_TEMPLATES).forEach(([key,t])=>{ const opt=document.createElement('option'); opt.value=key; opt.textContent=t.label; select.appendChild(opt); });
-  body.appendChild(select);
+  sidebar.appendChild(select);
 
-  const fieldsLabel=document.createElement('div'); fieldsLabel.className='helper-line'; fieldsLabel.style.cssText='font-weight:600;margin-top:6px;'; fieldsLabel.textContent='2 · Details'; body.appendChild(fieldsLabel);
-  const fieldsWrap=document.createElement('div'); body.appendChild(fieldsWrap);
-  body.appendChild(contactsDatalist('ntc-contacts-list'));
+  const fieldsLabel=document.createElement('div'); fieldsLabel.className='helper-line'; fieldsLabel.style.cssText='font-weight:600;margin-top:6px;'; fieldsLabel.textContent='2 · Details'; sidebar.appendChild(fieldsLabel);
+  const fieldsWrap=document.createElement('div'); sidebar.appendChild(fieldsWrap);
+  sidebar.appendChild(contactsDatalist('ntc-contacts-list'));
   /* "from" here can read as "Name, Title" depending on the template, so it
      only ever reads from My Info (convenience autofill) and never writes
      back — writing it would corrupt the clean name Resume/Cover Letter
@@ -5708,9 +5710,9 @@ function toolAINoticeGenerator(){
     const mineName = loadMyInfo().name;
     if(fromField && !fromField.value.trim() && mineName) fromField.value = mineName;
   }
-  const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; body.appendChild(genBtn);
-  const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.cssText='font-weight:600;margin-top:12px;'; previewLabel.textContent='3 · Review & edit'; body.appendChild(previewLabel);
-  const preview=document.createElement('textarea'); preview.id='ntc-preview'; preview.rows=14; preview.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);'; body.appendChild(preview);
+  const genBtn=document.createElement('button'); genBtn.type='button'; genBtn.className='small-btn'; genBtn.textContent='✨ Generate draft'; sidebar.appendChild(genBtn);
+  const previewLabel=document.createElement('div'); previewLabel.className='helper-line'; previewLabel.style.fontWeight='600'; previewLabel.textContent='Review & edit before exporting'; main.appendChild(previewLabel);
+  const preview=document.createElement('textarea'); preview.id='ntc-preview'; preview.rows=20; preview.style.cssText='width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:inherit;background:var(--paper);'; main.appendChild(preview);
 
   function readValues(){
     const values={};
@@ -5734,8 +5736,8 @@ function toolAINoticeGenerator(){
   fieldsWrap.addEventListener('input', ()=>generateDraft(false));
   preview.addEventListener('input', ()=>{ noticeDirty = true; });
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='10px'; btn.textContent='Download PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='10px'; btn.textContent='Download PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     const text = preview.value.trim();
     if(!text){ log.textContent='Fill in the details and generate a draft first.'; return; }
@@ -5817,22 +5819,15 @@ function guessColumn(headers, fieldId, fieldLabel){
 }
 
 function toolBatchDocGenerator(){
-  const body = panelShell({title:'Batch Document Generator', desc:'Upload a spreadsheet of recipients, map the columns once, and generate a personalized notice or letter for every row — all zipped into one download.'});
+  const { main, sidebar } = panelShellSplit({title:'Batch Document Generator', desc:'Upload a spreadsheet of recipients, map the columns once, and generate a personalized notice or letter for every row — all zipped into one download.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent = 'Uses the same templates as Notice & Letter Generator. Your file is parsed and every PDF built entirely on-device — nothing is uploaded. First row of your file must be column headers.';
-  body.appendChild(note);
+  main.appendChild(note);
   const disclaimer=document.createElement('div'); disclaimer.className='note';
   disclaimer.textContent = 'These are plain-language starting drafts, not legal advice. For anything with legal weight (termination, formal disputes), have the letters reviewed by qualified counsel or HR before sending.';
-  body.appendChild(disclaimer);
-
-  const s1=document.createElement('div'); s1.className='helper-line'; s1.style.fontWeight='600'; s1.textContent='1 · Choose a notice type'; body.appendChild(s1);
-  const select=document.createElement('select'); select.id='batch-type'; select.style.cssText='width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);margin-bottom:12px;';
-  Object.entries(NOTICE_TEMPLATES).forEach(([key,t])=>{ const opt=document.createElement('option'); opt.value=key; opt.textContent=t.label; select.appendChild(opt); });
-  body.appendChild(select);
-
-  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.cssText='font-weight:600;margin-top:6px;'; s2.textContent='2 · Upload recipients (.csv or .xlsx)'; body.appendChild(s2);
+  main.appendChild(disclaimer);
   let table = null; // {headers, rows}
-  buildDropzone(body, {multiple:false, accept:'.csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'.csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', onFiles: async (f)=>{
     const file = f[0];
     try{
       log.textContent = 'Reading file...';
@@ -5847,9 +5842,16 @@ function toolBatchDocGenerator(){
       log.textContent = e.message;
     }
   }});
-  const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:8px 0;font-size:0.85rem;color:var(--muted-ink,#666);'; body.appendChild(fileInfo);
+  const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:8px 0;font-size:0.85rem;color:var(--muted-ink,#666);'; main.appendChild(fileInfo);
 
-  const mappingSection=document.createElement('div'); mappingSection.style.display='none'; body.appendChild(mappingSection);
+  const s1=document.createElement('div'); s1.className='helper-line'; s1.style.fontWeight='600'; s1.textContent='1 · Choose a notice type'; sidebar.appendChild(s1);
+  const select=document.createElement('select'); select.id='batch-type'; select.style.cssText='width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);margin-bottom:12px;';
+  Object.entries(NOTICE_TEMPLATES).forEach(([key,t])=>{ const opt=document.createElement('option'); opt.value=key; opt.textContent=t.label; select.appendChild(opt); });
+  sidebar.appendChild(select);
+
+  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.cssText='font-weight:600;margin-top:6px;'; s2.textContent='2 · Upload recipients (.csv or .xlsx) above, then match columns'; sidebar.appendChild(s2);
+
+  const mappingSection=document.createElement('div'); mappingSection.style.display='none'; sidebar.appendChild(mappingSection);
   const s3=document.createElement('div'); s3.className='helper-line'; s3.style.cssText='font-weight:600;margin-top:6px;'; s3.textContent='3 · Match columns to fields'; mappingSection.appendChild(s3);
   const mapWrap=document.createElement('div'); mappingSection.appendChild(mapWrap);
   function renderMapping(){
@@ -5892,7 +5894,7 @@ function toolBatchDocGenerator(){
 
   const BATCH_ROW_LIMIT = 500;
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.style.marginTop='14px'; btn.textContent='Generate All & Download ZIP'; mappingSection.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   btn.onclick = async ()=>{
     if(!table || !table.rows.length){ log.textContent='Upload a spreadsheet first.'; return; }
@@ -5945,10 +5947,10 @@ const ACTIVITY_ROWS = [
   ['pdfEditPrint','🖨️','PDFs made print-ready (bleed + crop marks)'],
 ];
 function toolAIKitActivity(){
-  const body = panelShell({title:'My Activity', desc:'A private, on-device summary of what you\'ve generated with the AI Kit.'});
+  const { main, sidebar } = panelShellSplit({title:'My Activity', desc:'A private, on-device summary of what you\'ve generated with the AI Kit.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent = 'This is real counted usage, local to this browser only — nothing estimated, nothing synced. Clearing your browser data, or opening PDFLove in a different browser or device, resets it.';
-  body.appendChild(note);
+  main.appendChild(note);
 
   const stats = loadActivityStats();
   const docCountKeys = ['resume','coverLetter','notice','batch'];
@@ -5956,7 +5958,7 @@ function toolAIKitActivity(){
 
   const summary=document.createElement('div'); summary.style.cssText='text-align:center;margin:14px 0 20px;';
   summary.innerHTML = `<div style="font-size:2.6rem;font-weight:800;color:var(--primary-red,#E5322D);">${totalDocs}</div><div style="font-size:0.9rem;opacity:0.7;">total documents generated</div>`;
-  body.appendChild(summary);
+  main.appendChild(summary);
 
   ACTIVITY_ROWS.forEach(([key,icon,label])=>{
     const entry = stats[key];
@@ -5964,22 +5966,22 @@ function toolAIKitActivity(){
     const row=document.createElement('div');
     row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;';
     row.innerHTML = `<span style="font-size:1.4rem;">${icon}</span><div style="flex:1;"><div style="font-weight:600;">${escapeXml(label)}</div><div style="font-size:0.8rem;opacity:0.65;">Last used: ${lastUsed}</div></div><div style="font-size:1.3rem;font-weight:700;">${entry?.count||0}</div>`;
-    body.appendChild(row);
+    main.appendChild(row);
   });
 
-  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.cssText='font-weight:600;margin-top:18px;'; s2.textContent='Saved for reuse across tools'; body.appendChild(s2);
+  if(totalDocs===0){
+    const empty=document.createElement('div'); empty.className='note'; empty.style.marginTop='14px';
+    empty.textContent = 'Nothing generated yet — this fills in as you use the Resume Builder, Cover Letter Generator, Notice Generator, Batch Generator, or PDF Edit.';
+    main.appendChild(empty);
+  }
+
+  const s2=document.createElement('div'); s2.className='helper-line'; s2.style.fontWeight='600'; s2.textContent='Saved for reuse across tools'; sidebar.appendChild(s2);
   const mine = loadMyInfo();
   const filledFields = ['name','email','phone','location','link'].filter(f=>mine[f]).length;
   const contacts = loadContacts();
   const reuseRow=document.createElement('div'); reuseRow.style.cssText='padding:12px;border:1px solid var(--line);border-radius:10px;';
   reuseRow.innerHTML = `<div>My info: ${filledFields}/5 fields saved${mine.name?` (${escapeXml(mine.name)})`:''}</div><div style="margin-top:6px;">Saved contacts: ${contacts.length}</div>`;
-  body.appendChild(reuseRow);
-
-  if(totalDocs===0){
-    const empty=document.createElement('div'); empty.className='note'; empty.style.marginTop='14px';
-    empty.textContent = 'Nothing generated yet — this fills in as you use the Resume Builder, Cover Letter Generator, Notice Generator, Batch Generator, or PDF Edit.';
-    body.appendChild(empty);
-  }
+  sidebar.appendChild(reuseRow);
 
   const clearBtn=document.createElement('button'); clearBtn.type='button'; clearBtn.className='small-btn'; clearBtn.style.marginTop='16px'; clearBtn.textContent='Clear activity history';
   clearBtn.onclick = ()=>{
@@ -5988,7 +5990,7 @@ function toolAIKitActivity(){
       openTool(toolIndex['My Activity'].tool, {push:false});
     }
   };
-  body.appendChild(clearBtn);
+  sidebar.appendChild(clearBtn);
 }
 
 /* ================= PDF EDIT: Print & Screen Mode =================
