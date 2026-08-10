@@ -1086,6 +1086,8 @@ body {
       <div class="tool-card" onclick="openToolDetail('AI Cover Letter', renderCoverLetter)"><div class="tool-icon">✉️</div><div class="tool-name">Cover Letter</div></div>
       <div class="tool-card" onclick="openToolDetail('Notice & Letter Generator', renderNoticeGenerator)"><div class="tool-icon">📋</div><div class="tool-name">Notice Generator</div></div>
       <div class="tool-card" onclick="openToolDetail('PDF Edit — Print & Screen', renderPDFEditPrintScreen)"><div class="tool-icon">🖨️</div><div class="tool-name">Print & Screen Mode</div></div>
+      <div class="tool-card" onclick="openToolDetail('Batch Document Generator', renderBatchDocGenerator)"><div class="tool-icon">📚</div><div class="tool-name">Batch Document Generator</div></div>
+      <div class="tool-card" onclick="openToolDetail('My Activity', renderMyActivity)"><div class="tool-icon">📊</div><div class="tool-name">My Activity</div></div>
     </div>
 
     <div class="section-title" style="margin-top: 20px;">Organize PDF</div>
@@ -1601,6 +1603,76 @@ function contactsDatalist(id){
   return dl;
 }
 
+/* Local-only usage counters for the "My Activity" dashboard — real counted
+   actions, nothing inferred or estimated. Only called from a tool's
+   success path, after a download actually happened. */
+function recordActivity(key, count=1){
+  const stats = loadActivityStats();
+  const entry = stats[key] || {count:0, lastUsed:null};
+  entry.count += count;
+  entry.lastUsed = new Date().toISOString();
+  stats[key] = entry;
+  try{ localStorage.setItem('pdflove.aiKitStats', JSON.stringify(stats)); }catch(e){}
+}
+function loadActivityStats(){
+  try{ return JSON.parse(localStorage.getItem('pdflove.aiKitStats')||'{}'); }catch(e){ return {}; }
+}
+const ACTIVITY_ROWS = [
+  ['resume','📄','Resumes generated'],
+  ['coverLetter','✉️','Cover letters generated'],
+  ['notice','📋','Notices generated'],
+  ['batch','📚','Documents generated via Batch Generator'],
+  ['pdfEditScreen','🖥️','PDFs normalized (Screen mode)'],
+  ['pdfEditPrint','🖨️','PDFs made print-ready (bleed + crop marks)'],
+];
+
+/* CSV/XLSX parsing shared by the Batch Document Generator. */
+function parseCsvText(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  const s = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  for(let i=0;i<s.length;i++){
+    const ch = s[i];
+    if(inQuotes){
+      if(ch === '"'){ if(s[i+1] === '"'){ field += '"'; i++; } else inQuotes = false; }
+      else field += ch;
+    } else {
+      if(ch === '"') inQuotes = true;
+      else if(ch === ','){ row.push(field); field=''; }
+      else if(ch === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else field += ch;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+async function parseTableFile(file){
+  const isCsv = /\.csv$/i.test(file.name) || file.type==='text/csv';
+  let rows;
+  if(isCsv){
+    rows = parseCsvText(await file.text());
+  } else {
+    await loadScript('vendor/xlsx.full.min.js', {fallbackOnError:false});
+    const wb = window.XLSX.read(await file.arrayBuffer(), {type:'array'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    rows = window.XLSX.utils.sheet_to_json(sheet, {header:1, defval:'', blankrows:false, raw:false});
+  }
+  if(!rows.length) return {headers:[], rows:[]};
+  const headers = rows[0].map(h=>String(h==null?'':h).trim());
+  const dataRows = rows.slice(1).filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  return {headers, rows:dataRows};
+}
+function guessColumn(headers, fieldId, fieldLabel){
+  const norm = s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+  const normHeaders = headers.map(norm);
+  let idx = normHeaders.indexOf(norm(fieldId));
+  if(idx===-1){
+    const labelWord = fieldLabel.split(/[\s(/]/)[0];
+    idx = normHeaders.indexOf(norm(labelWord));
+  }
+  return idx;
+}
+
 const STANDARD_PAGE_SIZES = { 'Letter (8.5×11in)':[612,792], 'A4 (210×297mm)':[595.28,841.89], 'Legal (8.5×14in)':[612,1008] };
 function ptToIn(pt){ return Math.round(pt/72*100)/100; }
 function mmToPt(mm){ return mm*72/25.4; }
@@ -1802,6 +1874,7 @@ function renderResumeATS(body){
       download(blob, name.replace(/[^\w\-]+/g,'_')+'-resume.pdf');
       log.textContent = '✓ Done! Made on your device, nothing uploaded.' + (warn.hit ? ' Some characters were simplified to "?".' : '');
       log.className = 'status-log ok';
+      recordActivity('resume');
       saveMyInfo({name, email: document.getElementById('res-email').value.trim(), phone: document.getElementById('res-phone').value.trim(), location: document.getElementById('res-location').value.trim(), link: document.getElementById('res-link').value.trim()});
     }catch(e){
       log.textContent = 'Could not build the PDF: '+(e.message||String(e));
@@ -1894,6 +1967,7 @@ function renderCoverLetter(body){
       download(blob, name.replace(/[^\w\-]+/g,'_')+'-cover-letter.pdf');
       log.textContent = '✓ Done! Made on your device, nothing uploaded.' + (warn ? ' Some characters were simplified to "?".' : '');
       log.className = 'status-log ok';
+      recordActivity('coverLetter');
       saveMyInfo({name, email: document.getElementById('cov-email').value.trim(), phone: document.getElementById('cov-phone').value.trim()});
       const managerName = document.getElementById('cov-manager').value.trim();
       if(managerName) saveContact(managerName, {company: document.getElementById('cov-company').value.trim()});
@@ -1904,34 +1978,38 @@ function renderCoverLetter(body){
   };
 }
 
-function renderNoticeGenerator(body){
-  const NOTICE_TEMPLATES = {
-    leave: { label:'Leave Application',
-      fields:[['from','Your name','Jordan Rivera'],['to','Manager / recipient','Alex Chen, Engineering Manager'],['reason','Type of leave','Sick leave'],['dates','Dates requested','Aug 12 – Aug 14, 2026'],['detail','Brief reason (optional)','Recovering from a minor illness']],
-      subject:(v)=>`Application for ${v.reason||'Leave'}`,
-      body:(v)=>`Dear ${v.to||'Manager'},\n\nI am writing to formally request ${v.reason?v.reason.toLowerCase():'leave'} for ${v.dates||'the dates below'}.${v.detail?' '+v.detail+'.':''}\n\nI will ensure my responsibilities are handed over before I leave, and I am reachable by email if anything urgent comes up.\n\nThank you for your understanding.\n\nSincerely,\n${v.from||'Your Name'}` },
-    warning: { label:'Warning Letter',
-      fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['issue','Issue being addressed','repeated late arrivals'],['policy','Policy / expectation referenced (optional)','company attendance policy'],['action','Required corrective action','arrive by 9:00 AM starting immediately']],
-      subject:(v)=>`Formal Warning — ${v.issue||'Policy Violation'}`,
-      body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter serves as a formal warning regarding ${v.issue||'a recent issue'}.${v.policy?` This is inconsistent with our ${v.policy}.`:''}\n\nGoing forward, we expect you to ${v.action||'address this immediately'}. Continued issues of this nature may result in further disciplinary action, up to and including termination.\n\nPlease reach out if you would like to discuss this further.\n\nSincerely,\n${v.from||'HR'}` },
-    termination: { label:'Termination Notice',
-      fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['lastday','Last working day','August 22, 2026'],['reason','Reason (optional, kept brief)','position elimination']],
-      subject:()=>'Notice of Termination of Employment',
-      body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter is to formally notify you that your employment will end effective ${v.lastday||'the date below'}.${v.reason?` This decision is due to ${v.reason}.`:''}\n\nPlease reach out to HR to discuss final pay, benefits continuation, and the return of any company property.\n\nWe appreciate your contributions and wish you the best in your next endeavor.\n\nSincerely,\n${v.from||'HR'}` },
-    payment: { label:'Payment Reminder Notice',
-      fields:[['from','Your name / business','Acme Rentals'],['to','Recipient name','Jordan Rivera'],['amount','Amount due','$1,200'],['duedate','Due date','August 1, 2026'],['ref','Reference (invoice #, unit #, etc.)','Invoice #INV-0042']],
-      subject:(v)=>`Payment Reminder — ${v.ref||'Outstanding Balance'}`,
-      body:(v)=>`Dear ${v.to||'Customer'},\n\nThis is a friendly reminder that a payment of ${v.amount||'the amount due'} was due on ${v.duedate||'the date on your invoice'}${v.ref?` (${v.ref})`:''} and remains outstanding.\n\nPlease arrange payment at your earliest convenience. If you have already sent payment, please disregard this notice.\n\nThank you,\n${v.from||'Your Name'}` },
-    general: { label:'General Formal Notice',
-      fields:[['from','Your name',''],['to','Recipient name',''],['subject','Subject of this notice','e.g. Notice regarding overdue matter'],['detail','Details of the notice','Describe the situation and what action you are requesting.'],['deadline','Response / action deadline (optional)','within 14 days']],
-      subject:(v)=>v.subject||'Formal Notice',
-      body:(v)=>`Dear ${v.to||'Sir/Madam'},\n\n${v.detail||'This letter serves as formal notice regarding the matter described above.'}${v.deadline?` We request that this be resolved ${v.deadline}.`:''}\n\nPlease treat this matter with the attention it requires.\n\nSincerely,\n${v.from||'Your Name'}` },
-  };
-  function buildNoticeFullText(tpl, values){
-    const dateStr = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
-    return [dateStr, '', tpl.subject(values), '', tpl.body(values)].join('\n');
-  }
+/* Hoisted to module scope — shared verbatim with the Batch Document
+   Generator below, matching desktop's frontend/index.html, so both tools
+   use the exact same template definitions instead of two copies that
+   could quietly drift apart. */
+const NOTICE_TEMPLATES = {
+  leave: { label:'Leave Application',
+    fields:[['from','Your name','Jordan Rivera'],['to','Manager / recipient','Alex Chen, Engineering Manager'],['reason','Type of leave','Sick leave'],['dates','Dates requested','Aug 12 – Aug 14, 2026'],['detail','Brief reason (optional)','Recovering from a minor illness']],
+    subject:(v)=>`Application for ${v.reason||'Leave'}`,
+    body:(v)=>`Dear ${v.to||'Manager'},\n\nI am writing to formally request ${v.reason?v.reason.toLowerCase():'leave'} for ${v.dates||'the dates below'}.${v.detail?' '+v.detail+'.':''}\n\nI will ensure my responsibilities are handed over before I leave, and I am reachable by email if anything urgent comes up.\n\nThank you for your understanding.\n\nSincerely,\n${v.from||'Your Name'}` },
+  warning: { label:'Warning Letter',
+    fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['issue','Issue being addressed','repeated late arrivals'],['policy','Policy / expectation referenced (optional)','company attendance policy'],['action','Required corrective action','arrive by 9:00 AM starting immediately']],
+    subject:(v)=>`Formal Warning — ${v.issue||'Policy Violation'}`,
+    body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter serves as a formal warning regarding ${v.issue||'a recent issue'}.${v.policy?` This is inconsistent with our ${v.policy}.`:''}\n\nGoing forward, we expect you to ${v.action||'address this immediately'}. Continued issues of this nature may result in further disciplinary action, up to and including termination.\n\nPlease reach out if you would like to discuss this further.\n\nSincerely,\n${v.from||'HR'}` },
+  termination: { label:'Termination Notice',
+    fields:[['from','Issued by (name, title)','Alex Chen, HR Manager'],['to','Employee name','Jordan Rivera'],['lastday','Last working day','August 22, 2026'],['reason','Reason (optional, kept brief)','position elimination']],
+    subject:()=>'Notice of Termination of Employment',
+    body:(v)=>`Dear ${v.to||'Employee'},\n\nThis letter is to formally notify you that your employment will end effective ${v.lastday||'the date below'}.${v.reason?` This decision is due to ${v.reason}.`:''}\n\nPlease reach out to HR to discuss final pay, benefits continuation, and the return of any company property.\n\nWe appreciate your contributions and wish you the best in your next endeavor.\n\nSincerely,\n${v.from||'HR'}` },
+  payment: { label:'Payment Reminder Notice',
+    fields:[['from','Your name / business','Acme Rentals'],['to','Recipient name','Jordan Rivera'],['amount','Amount due','$1,200'],['duedate','Due date','August 1, 2026'],['ref','Reference (invoice #, unit #, etc.)','Invoice #INV-0042']],
+    subject:(v)=>`Payment Reminder — ${v.ref||'Outstanding Balance'}`,
+    body:(v)=>`Dear ${v.to||'Customer'},\n\nThis is a friendly reminder that a payment of ${v.amount||'the amount due'} was due on ${v.duedate||'the date on your invoice'}${v.ref?` (${v.ref})`:''} and remains outstanding.\n\nPlease arrange payment at your earliest convenience. If you have already sent payment, please disregard this notice.\n\nThank you,\n${v.from||'Your Name'}` },
+  general: { label:'General Formal Notice',
+    fields:[['from','Your name',''],['to','Recipient name',''],['subject','Subject of this notice','e.g. Notice regarding overdue matter'],['detail','Details of the notice','Describe the situation and what action you are requesting.'],['deadline','Response / action deadline (optional)','within 14 days']],
+    subject:(v)=>v.subject||'Formal Notice',
+    body:(v)=>`Dear ${v.to||'Sir/Madam'},\n\n${v.detail||'This letter serves as formal notice regarding the matter described above.'}${v.deadline?` We request that this be resolved ${v.deadline}.`:''}\n\nPlease treat this matter with the attention it requires.\n\nSincerely,\n${v.from||'Your Name'}` },
+};
+function buildNoticeFullText(tpl, values){
+  const dateStr = new Date().toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+  return [dateStr, '', tpl.subject(values), '', tpl.body(values)].join('\n');
+}
 
+function renderNoticeGenerator(body){
   const disclaimer=document.createElement('div'); disclaimer.className='form-note';
   disclaimer.textContent = 'These are plain-language starting drafts, not legal advice. For anything with legal weight, have the final letter reviewed by qualified counsel or HR.';
   body.appendChild(disclaimer);
@@ -1984,6 +2062,7 @@ function renderNoticeGenerator(body){
       download(blob, NOTICE_TEMPLATES[select.value].label.toLowerCase().replace(/[^\w]+/g,'-')+'.pdf');
       log.textContent = '✓ Done! Made on your device, nothing uploaded.' + (warn ? ' Some characters were simplified to "?".' : '');
       log.className = 'status-log ok';
+      recordActivity('notice');
       const toName = readValues().to;
       if(toName) saveContact(toName);
     }catch(e){
@@ -1991,6 +2070,180 @@ function renderNoticeGenerator(body){
       log.className = 'status-log';
     }
   };
+}
+
+function renderBatchDocGenerator(body){
+  const note=document.createElement('div'); note.className='form-note';
+  note.textContent = 'Uses the same templates as Notice & Letter Generator. Your file is parsed and every PDF built entirely on-device — nothing is uploaded. First row of your file must be column headers.';
+  body.appendChild(note);
+  const disclaimer=document.createElement('div'); disclaimer.className='form-note';
+  disclaimer.textContent = 'These are plain-language starting drafts, not legal advice. For anything with legal weight, have the letters reviewed by qualified counsel or HR before sending.';
+  body.appendChild(disclaimer);
+
+  const s1=document.createElement('div'); s1.className='form-step'; s1.textContent='Choose a notice type'; body.appendChild(s1);
+  const select=document.createElement('select'); select.id='batch-type'; select.style.cssText='width:100%;padding:11px 12px;border:1px solid var(--gray-medium);border-radius:10px;font-size:14px;background:var(--white);color:var(--primary-dark);margin-bottom:12px;';
+  Object.entries(NOTICE_TEMPLATES).forEach(([key,t])=>{ const opt=document.createElement('option'); opt.value=key; opt.textContent=t.label; select.appendChild(opt); });
+  body.appendChild(select);
+
+  const s2=document.createElement('div'); s2.className='form-step'; s2.textContent='Upload recipients (.csv or .xlsx)'; body.appendChild(s2);
+  let table = null; // {headers, rows}
+  const fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='.csv,.xlsx,.xls,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  fileInput.style.cssText='width:100%;padding:11px 12px;border:1px solid var(--gray-medium);border-radius:10px;font-size:14px;background:var(--white);margin-bottom:8px;';
+  body.appendChild(fileInput);
+  const fileInfo=document.createElement('div'); fileInfo.style.cssText='margin:4px 0 8px;font-size:0.82rem;color:var(--gray-dark);'; body.appendChild(fileInfo);
+
+  const mappingSection=document.createElement('div'); mappingSection.style.display='none'; body.appendChild(mappingSection);
+  const s3=document.createElement('div'); s3.className='form-step'; s3.textContent='Match columns to fields'; mappingSection.appendChild(s3);
+  const mapWrap=document.createElement('div'); mappingSection.appendChild(mapWrap);
+  function renderMapping(){
+    const tpl = NOTICE_TEMPLATES[select.value];
+    mapWrap.innerHTML='';
+    tpl.fields.forEach(([id,label])=>{
+      const field=document.createElement('div'); field.className='form-field';
+      const guess = guessColumn(table.headers, id, label);
+      field.innerHTML = `<label>${label}</label><select class="batch-map" data-id="${id}">
+        <option value="-1">— Leave blank for every row —</option>
+        ${table.headers.map((h,i)=>`<option value="${i}"${i===guess?' selected':''}>${escapeXml(h)}</option>`).join('')}
+      </select>`;
+      mapWrap.appendChild(field);
+    });
+  }
+  select.onchange = ()=>{ if(table) renderMapping(); };
+
+  fileInput.onchange = async ()=>{
+    const file = fileInput.files[0];
+    if(!file) return;
+    try{
+      log.textContent = 'Reading file...';
+      log.className = 'status-log';
+      table = await parseTableFile(file);
+      if(!table.headers.length || !table.rows.length){ throw new Error('No data rows found — the first row must be column headers, with at least one row below it.'); }
+      fileInfo.textContent = `${file.name} — ${table.rows.length} row${table.rows.length===1?'':'s'}, columns: ${table.headers.join(', ')}`;
+      renderMapping();
+      mappingSection.style.display='block';
+      log.textContent = '';
+    }catch(e){
+      table = null; fileInfo.textContent=''; mappingSection.style.display='none';
+      log.textContent = e.message;
+    }
+  };
+
+  const previewBtn=document.createElement('button'); previewBtn.type='button'; previewBtn.className='small-btn'; previewBtn.textContent='👁 Preview first row'; mappingSection.appendChild(previewBtn);
+  const previewBox=document.createElement('div'); previewBox.className='form-note'; previewBox.style.display='none'; previewBox.style.whiteSpace='pre-wrap'; mappingSection.appendChild(previewBox);
+
+  function readMapping(){
+    const mapping={};
+    mapWrap.querySelectorAll('.batch-map').forEach(sel=>{ mapping[sel.dataset.id] = parseInt(sel.value,10); });
+    return mapping;
+  }
+  function valuesForRow(row, mapping){
+    const values={};
+    Object.entries(mapping).forEach(([id,colIdx])=>{
+      values[id] = colIdx>=0 ? String(row[colIdx]==null?'':row[colIdx]).trim() : '';
+    });
+    return values;
+  }
+  previewBtn.onclick = ()=>{
+    if(!table || !table.rows.length) return;
+    const tpl = NOTICE_TEMPLATES[select.value];
+    const values = valuesForRow(table.rows[0], readMapping());
+    previewBox.textContent = buildNoticeFullText(tpl, values);
+    previewBox.style.display='block';
+  };
+
+  const BATCH_ROW_LIMIT = 500;
+  const btn=document.createElement('button'); btn.className='big-action-btn'; btn.style.marginTop='14px'; btn.textContent='Generate All & Download ZIP'; mappingSection.appendChild(btn);
+  const log=document.createElement('div'); log.className='status-log'; body.appendChild(log);
+
+  btn.onclick = async ()=>{
+    if(!table || !table.rows.length){ log.textContent='Upload a spreadsheet first.'; log.className='status-log'; return; }
+    if(table.rows.length > BATCH_ROW_LIMIT){ log.textContent = `This tool supports up to ${BATCH_ROW_LIMIT} rows at a time — your file has ${table.rows.length}. Please split it.`; log.className='status-log'; return; }
+    const tpl = NOTICE_TEMPLATES[select.value];
+    const mapping = readMapping();
+    btn.disabled = true;
+    log.textContent = `Generating 0 of ${table.rows.length}...`;
+    log.className = 'status-log';
+    try{
+      const zip = new JSZip();
+      const usedNames = new Set();
+      function uniqueFilename(base){
+        let clean = base.replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,60) || 'document';
+        let candidate = clean, n = 2;
+        while(usedNames.has(candidate.toLowerCase())){ candidate = clean+'_'+n; n++; }
+        usedNames.add(candidate.toLowerCase());
+        return candidate;
+      }
+      let skipped = 0, anyWarn = false;
+      for(let i=0;i<table.rows.length;i++){
+        const values = valuesForRow(table.rows[i], mapping);
+        if(!values.to && !values.from){ skipped++; continue; }
+        const text = buildNoticeFullText(tpl, values);
+        const {bytes, warn} = await buildLetterPDF(text);
+        if(warn) anyWarn = true;
+        const filename = uniqueFilename(values.to || values.from || ('row-'+(i+1))) + '.pdf';
+        zip.file(filename, bytes);
+        log.textContent = `Generating ${i+1} of ${table.rows.length}...`;
+        if(i%5===4) await new Promise(r=>setTimeout(r,0));
+      }
+      const generated = table.rows.length - skipped;
+      if(generated===0){ log.textContent = 'No documents were generated — every row was missing both a "from" and a "to" value.'; btn.disabled=false; return; }
+      const zipBlob = await zip.generateAsync({type:'blob'});
+      download(zipBlob, 'batch-'+tpl.label.toLowerCase().replace(/[^\w]+/g,'-')+'.zip');
+      log.textContent = `✓ Done — ${generated} document${generated===1?'':'s'} generated${skipped?`, ${skipped} row${skipped===1?'':'s'} skipped (no name)`:''}.${anyWarn?' Some characters were simplified to "?" in a few documents.':''}`;
+      log.className = 'status-log ok';
+      recordActivity('batch', generated);
+    }catch(e){
+      log.textContent = 'Could not generate the batch: '+(e.message||String(e));
+      log.className = 'status-log';
+    }
+    btn.disabled = false;
+  };
+}
+
+function renderMyActivity(body){
+  const note=document.createElement('div'); note.className='form-note';
+  note.textContent = 'This is real counted usage, local to this browser only — nothing estimated, nothing synced. Clearing your browser data, or opening PDFLove in a different browser or device, resets it.';
+  body.appendChild(note);
+
+  const stats = loadActivityStats();
+  const docCountKeys = ['resume','coverLetter','notice','batch'];
+  const totalDocs = docCountKeys.reduce((sum,k)=>sum+(stats[k]?.count||0), 0);
+
+  const summary=document.createElement('div'); summary.style.cssText='text-align:center;margin:14px 0 20px;';
+  summary.innerHTML = `<div style="font-size:2.6rem;font-weight:800;color:var(--primary-red);">${totalDocs}</div><div style="font-size:0.9rem;opacity:0.7;">total documents generated</div>`;
+  body.appendChild(summary);
+
+  ACTIVITY_ROWS.forEach(([key,icon,label])=>{
+    const entry = stats[key];
+    const lastUsed = entry?.lastUsed ? new Date(entry.lastUsed).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) : '—';
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--gray-medium);border-radius:10px;margin-bottom:8px;';
+    row.innerHTML = `<span style="font-size:1.4rem;">${icon}</span><div style="flex:1;"><div style="font-weight:600;">${escapeXml(label)}</div><div style="font-size:0.8rem;opacity:0.65;">Last used: ${lastUsed}</div></div><div style="font-size:1.3rem;font-weight:700;">${entry?.count||0}</div>`;
+    body.appendChild(row);
+  });
+
+  const s2=document.createElement('div'); s2.className='form-step'; s2.textContent='Saved for reuse across tools'; body.appendChild(s2);
+  const mine = loadMyInfo();
+  const filledFields = ['name','email','phone','location','link'].filter(f=>mine[f]).length;
+  const contacts = loadContacts();
+  const reuseRow=document.createElement('div'); reuseRow.style.cssText='padding:12px;border:1px solid var(--gray-medium);border-radius:10px;';
+  reuseRow.innerHTML = `<div>My info: ${filledFields}/5 fields saved${mine.name?` (${escapeXml(mine.name)})`:''}</div><div style="margin-top:6px;">Saved contacts: ${contacts.length}</div>`;
+  body.appendChild(reuseRow);
+
+  if(totalDocs===0){
+    const empty=document.createElement('div'); empty.className='form-note'; empty.style.marginTop='14px';
+    empty.textContent = 'Nothing generated yet — this fills in as you use the Resume Builder, Cover Letter Generator, Notice Generator, Batch Generator, or PDF Edit.';
+    body.appendChild(empty);
+  }
+
+  const clearBtn=document.createElement('button'); clearBtn.type='button'; clearBtn.className='small-btn'; clearBtn.style.marginTop='16px'; clearBtn.textContent='Clear activity history';
+  clearBtn.onclick = ()=>{
+    if(confirm('Clear your local activity history? This does not affect your saved info or contacts.')){
+      localStorage.removeItem('pdflove.aiKitStats');
+      openToolDetail('My Activity', renderMyActivity);
+    }
+  };
+  body.appendChild(clearBtn);
 }
 
 function renderPDFEditPrintScreen(body){
@@ -2111,6 +2364,7 @@ function renderPDFEditPrintScreen(body){
       download(blob, file.name.replace(/\.pdf$/i,'')+suffix+'.pdf');
       log.textContent = '✓ Done — processed on-device, nothing uploaded.';
       log.className = 'status-log ok';
+      recordActivity(mode==='screen' ? 'pdfEditScreen' : 'pdfEditPrint');
     }catch(e){
       log.textContent = 'Could not process this PDF: '+(e.message||String(e));
       log.className = 'status-log';
