@@ -1155,9 +1155,30 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   .tab-btn .tab-title { font-weight: 600; font-size: 0.95rem; display: block; margin-bottom: 3px; }
   .tab-btn .tab-sub { font-size: 0.78rem; color: var(--ink-soft); }
   .tab-btn.active { border-color: var(--copper); background: rgba(229, 50, 45, 0.06); }
-  .big-input-row { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; }
-  .big-input-row input[type=number] { flex: 1; padding: 14px; font-size: 1.1rem; border: 1.5px solid var(--line); border-radius: 9px; background: var(--white); font-family: inherit; }
-  .big-input-row select { padding: 14px 10px; font-size: 1rem; border: 1.5px solid var(--line); border-radius: 9px; background: var(--white); font-family: inherit; }
+  /* Merged number+unit pill (e.g. "target size: 250 [KB v]") — one
+     bordered group instead of two separate boxes, unit picked from a
+     dropdown rather than baked into the label, so the same field works
+     whether the user is thinking in KB, MB, or GB. */
+  .big-input-row {
+    display: flex; align-items: stretch; margin: 10px 0;
+    border: 1.5px solid var(--sidebar-border, var(--line)); border-radius: 100px; overflow: hidden;
+    background: #fff; transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .big-input-row:focus-within { border-color: var(--workspace-accent, var(--copper)); box-shadow: 0 0 0 3px rgba(229,57,53,0.12); }
+  .big-input-row input[type=number] {
+    flex: 1; min-width: 0; padding: 12px 16px; font-size: 1.05rem; font-weight: 700;
+    border: none; background: transparent; font-family: inherit; color: var(--workspace-ink, var(--ink));
+  }
+  .big-input-row input[type=number]:focus { outline: none; }
+  .big-input-row select {
+    padding: 12px 32px 12px 14px; font-size: 0.9rem; font-weight: 600;
+    border: none; border-left: 1.5px solid var(--sidebar-border, var(--line)); background-color: #FAFAFA;
+    font-family: inherit; color: var(--workspace-ink, var(--ink)); cursor: pointer;
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; background-size: 14px;
+  }
+  .big-input-row select:focus { outline: none; }
   .helper-line { font-size: 0.82rem; color: var(--ink-soft); margin: 4px 0 14px; }
   .ad-slot { min-height: 0; overflow: hidden; }
   .ad-slot:empty { display: none; }
@@ -3462,13 +3483,24 @@ function toolSplitBySize(){
   addWorkspaceFab(main, dz);
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Target size per chunk (MB)</label><input type="number" id="sbs-mb" value="10" min="1">`;
+  field.innerHTML = `<label>Target size per chunk</label>
+    <div class="big-input-row">
+      <input type="number" id="sbs-val" value="10" min="0.1" step="any">
+      <select id="sbs-unit">
+        <option value="KB">KB (kilobytes)</option>
+        <option value="MB" selected>MB (megabytes)</option>
+        <option value="GB">GB (gigabytes)</option>
+      </select>
+    </div>`;
   sidebar.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; sidebar.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
-    const targetBytes = (parseFloat(document.getElementById('sbs-mb').value)||10) * 1024*1024;
+    const val = parseFloat(document.getElementById('sbs-val').value)||10;
+    const unit = document.getElementById('sbs-unit').value;
+    const mult = unit==='GB' ? 1024*1024*1024 : unit==='KB' ? 1024 : 1024*1024;
+    const targetBytes = val*mult;
     log.textContent='Analyzing on-device...';
     const bytes = await file.arrayBuffer();
     const src = await loadPdf(bytes);

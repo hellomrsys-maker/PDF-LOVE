@@ -1277,13 +1277,24 @@ function toolSplitBySize(){
   buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — ${fmtBytes(file.size)}`;}});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
   const field=document.createElement('div'); field.className='field';
-  field.innerHTML=`<label>Target size per chunk (MB)</label><input type="number" id="sbs-mb" value="10" min="1">`;
+  field.innerHTML = `<label>Target size per chunk</label>
+    <div class="big-input-row">
+      <input type="number" id="sbs-val" value="10" min="0.1" step="any">
+      <select id="sbs-unit">
+        <option value="KB">KB (kilobytes)</option>
+        <option value="MB" selected>MB (megabytes)</option>
+        <option value="GB">GB (gigabytes)</option>
+      </select>
+    </div>`;
   body.appendChild(field);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
-    const targetBytes = (parseFloat(document.getElementById('sbs-mb').value)||10) * 1024*1024;
+    const val = parseFloat(document.getElementById('sbs-val').value)||10;
+    const unit = document.getElementById('sbs-unit').value;
+    const mult = unit==='GB' ? 1024*1024*1024 : unit==='KB' ? 1024 : 1024*1024;
+    const targetBytes = val*mult;
     log.textContent='Analyzing on-device...';
     const bytes = await file.arrayBuffer();
     const src = await loadPdf(bytes);
