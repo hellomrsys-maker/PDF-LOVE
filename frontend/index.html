@@ -946,8 +946,12 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     background: var(--workspace-bg);
     border: 1px solid var(--sidebar-border); border-radius: 14px 0 0 14px;
     padding: 32px;
-    display: flex; align-items: flex-start; justify-content: center;
+    display: flex; flex-direction: column; align-items: stretch; gap: 14px;
   }
+  /* Single Asset Mode content (one centered preview card, e.g. .workspace-single)
+     centers itself within the column via margin:auto on its own rule — the
+     column stays top-aligned/stretched by default for the far more common
+     case of stacked dropzone+list / controls+canvas content. */
   /* Floating "add file" action — top-right of the workspace canvas. */
   .tool-fab {
     position: absolute; top: 18px; right: 18px; z-index: 5;
@@ -982,7 +986,7 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     padding: 2px 8px; border-radius: 100px; line-height: 1.4;
   }
   /* Single Asset Mode: one centered preview card. */
-  .workspace-single { background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.1); padding: 8px; }
+  .workspace-single { background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.1); padding: 8px; margin: auto; }
 
   .tool-sidebar {
     width: 320px; flex-shrink: 0; position: sticky; top: 90px;
@@ -1087,7 +1091,7 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   }
   .small-btn:hover { border-color: var(--copper); }
   .anno-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; max-height: 150px; overflow-y: auto; }
-  .sig-pad { border: 1px solid var(--line); border-radius: 8px; background: #fff; touch-action: none; cursor: crosshair; }
+  .sig-pad { border: 1px solid var(--line); border-radius: 8px; background: #fff; touch-action: none; cursor: crosshair; max-width: 100%; height: auto; }
   .tab-row { display: flex; gap: 8px; margin: 12px 0; }
   .tab-btn {
     flex: 1; padding: 14px 10px; border: 2px solid var(--glass-border); border-radius: 10px;
@@ -2227,9 +2231,9 @@ function toolMergePDF(){
 }
 
 function toolSplitPDF(){
-  const body = panelShell({title:'Split PDF', desc:'Extract a page range into a new PDF, or split into one file per page.'});
+  const { main, sidebar } = panelShellSplit({title:'Split PDF', desc:'Extract a page range into a new PDF, or split into one file per page.'});
   let file=null, pageCount=0;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     try{
       const src = await loadPdf(await file.arrayBuffer());
@@ -2240,19 +2244,20 @@ function toolSplitPDF(){
       document.getElementById('sp-from').max = pageCount;
     }catch(e){ file=null; pageCount=0; list.textContent=''; log.textContent = e.message; }
   }});
-  const list=document.createElement('div'); list.style.margin='10px 0'; list.style.fontSize='0.85rem'; body.appendChild(list);
+  addWorkspaceFab(main, dz);
+  const list=document.createElement('div'); list.style.margin='10px 0'; list.style.fontSize='0.85rem'; main.appendChild(list);
   const tabRow=document.createElement('div'); tabRow.className='tab-row';
   tabRow.innerHTML = `
     <button type="button" class="tab-btn active" data-mode="range"><span class="tab-title">Extract a page range</span><span class="tab-sub">e.g. pages 3–7 into one PDF</span></button>
     <button type="button" class="tab-btn" data-mode="each"><span class="tab-title">One file per page</span><span class="tab-sub">every page as its own PDF, in a .zip</span></button>
   `;
-  body.appendChild(tabRow);
+  sidebar.appendChild(tabRow);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
     <div class="field"><label>From page</label><input type="number" id="sp-from" min="1" value="1"></div>
     <div class="field"><label>To page</label><input type="number" id="sp-to" min="1" value="1"></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   tabRow.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick = ()=>{
       tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
@@ -2260,8 +2265,8 @@ function toolSplitPDF(){
       row.style.display = b.dataset.mode==='each' ? 'none' : 'flex';
     };
   });
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     const mode = tabRow.querySelector('.tab-btn.active').dataset.mode;
@@ -2319,10 +2324,11 @@ async function embedImageSmart(doc, fileOrBlob){
 }
 
 function toolImageToPDF(){
-  const body = panelShell({title:'Images to PDF', desc:'Combine images (JPG, PNG, WebP, GIF, BMP...) into a single PDF, one page each.'});
+  const { main, sidebar } = panelShellSplit({title:'Images to PDF', desc:'Combine images (JPG, PNG, WebP, GIF, BMP...) into a single PDF, one page each.'});
   let files=[];
-  buildDropzone(body, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
-  const list=document.createElement('div'); list.className='filelist'; body.appendChild(list);
+  const dz = buildDropzone(main, {multiple:true, accept:'image/*', onFiles:(f)=>{files=files.concat(f);renderList();}});
+  addWorkspaceFab(main, dz);
+  const list=document.createElement('div'); list.className='filelist'; main.appendChild(list);
   const sizeField=document.createElement('div'); sizeField.className='field';
   sizeField.innerHTML=`<label>Page size</label>
     <select id="i2p-size" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
@@ -2330,9 +2336,9 @@ function toolImageToPDF(){
       <option value="a4">A4 portrait, image fitted</option>
       <option value="letter">US Letter portrait, image fitted</option>
     </select>`;
-  body.appendChild(sizeField);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(sizeField);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   function renderList(){ fileRowList(list, files, i=>{files.splice(i,1);renderList();}); btn.disabled = files.length<1; }
   renderList();
   btn.onclick = async ()=>{
@@ -2367,12 +2373,13 @@ function toolImageToPDF(){
 }
 
 function toolPDFToJPG(){
-  const body = panelShell({title:'PDF to JPG', desc:'Render each page as a JPG image and download as a .zip.'});
+  const { main, sidebar } = panelShellSplit({title:'PDF to JPG', desc:'Render each page as a JPG image and download as a .zip.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; list.textContent=file?`${file.name} (${fmtBytes(file.size)})`:'';}});
-  const list=document.createElement('div'); list.style.margin='10px 0'; list.style.fontSize='0.85rem'; body.appendChild(list);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .zip'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; list.textContent=file?`${file.name} (${fmtBytes(file.size)})`:'';}});
+  addWorkspaceFab(main, dz);
+  const list=document.createElement('div'); list.style.margin='10px 0'; list.style.fontSize='0.85rem'; main.appendChild(list);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .zip'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     if(!(await memoryGuard(file, 6, log))) return;
@@ -2419,23 +2426,24 @@ async function compressCanvasToTarget(canvas, targetBytes, onProgress){
 }
 
 function toolCompressImage(){
-  const body = panelShell({title:'Make Image Smaller', desc:'Shrink a photo so it takes up less space, or so it fits an upload limit.'});
+  const { main, sidebar } = panelShellSplit({title:'Make Image Smaller', desc:'Shrink a photo so it takes up less space, or so it fits an upload limit.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; loadPreview();}});
-  const preview=document.createElement('div'); preview.style.margin='10px 0'; body.appendChild(preview);
+  const dz = buildDropzone(main, {multiple:false, accept:'image/*', onFiles:(f)=>{file=f[0]; loadPreview();}});
+  addWorkspaceFab(main, dz);
+  const preview=document.createElement('div'); preview.style.margin='10px 0'; main.appendChild(preview);
 
   const tabRow=document.createElement('div'); tabRow.className='tab-row';
   tabRow.innerHTML = `
     <button type="button" class="tab-btn active" data-mode="quality"><span class="tab-title">Just make it smaller</span><span class="tab-sub">Move a slider — simplest option</span></button>
     <button type="button" class="tab-btn" data-mode="target"><span class="tab-title">I need an exact size</span><span class="tab-sub">e.g. "must be under 200 KB"</span></button>
   `;
-  body.appendChild(tabRow);
+  sidebar.appendChild(tabRow);
 
   const qualityField=document.createElement('div'); qualityField.id='ci-quality-field';
   qualityField.innerHTML=`
     <div class="field"><label>How much smaller? <span id="q-val">80</span>%</label><input type="range" id="q-range" min="10" max="100" value="80"></div>
     <div class="helper-line">Lower number = smaller file, but the picture looks a bit rougher. 80% is a good balance.</div>`;
-  body.appendChild(qualityField);
+  sidebar.appendChild(qualityField);
 
   const targetField=document.createElement('div'); targetField.id='ci-target-field'; targetField.style.display='none';
   targetField.innerHTML = `
@@ -2448,12 +2456,12 @@ function toolCompressImage(){
       </select>
     </div>
     <div class="helper-line">We'll automatically try different settings until it fits — you don't need to know what "quality" means.</div>`;
-  body.appendChild(targetField);
+  sidebar.appendChild(targetField);
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Shrink & Download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Shrink & Download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
-  body.addEventListener('input', e=>{ if(e.target.id==='q-range') document.getElementById('q-val').textContent = e.target.value; });
+  sidebar.addEventListener('input', e=>{ if(e.target.id==='q-range') document.getElementById('q-val').textContent = e.target.value; });
   tabRow.querySelectorAll('.tab-btn').forEach(b=>{
     b.onclick = ()=>{
       tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
@@ -2495,9 +2503,9 @@ function toolCompressImage(){
 }
 
 function toolResizeImage(){
-  const body = panelShell({title:'Resize Image', desc:'Resize by pixels, or by real-world units (cm/mm/inch) at a given print resolution.'});
+  const { main, sidebar } = panelShellSplit({title:'Resize Image', desc:'Resize by pixels, or by real-world units (cm/mm/inch) at a given print resolution.'});
   let file=null, naturalW=0, naturalH=0;
-  buildDropzone(body, {multiple:false, accept:'image/*', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'image/*', onFiles: async (f)=>{
     file=f[0];
     const bitmap = await createImageBitmap(f[0]);
     naturalW = bitmap.width; naturalH = bitmap.height;
@@ -2505,7 +2513,8 @@ function toolResizeImage(){
     document.getElementById('rw').value = naturalW;
     document.getElementById('rh').value = naturalH;
   }});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
 
   const unitField=document.createElement('div'); unitField.className='field';
   unitField.innerHTML = `<label>Unit</label>
@@ -2515,31 +2524,31 @@ function toolResizeImage(){
       <option value="cm">Centimeters</option>
       <option value="mm">Millimeters</option>
     </select>`;
-  body.appendChild(unitField);
+  sidebar.appendChild(unitField);
 
   const dpiField=document.createElement('div'); dpiField.className='field'; dpiField.id='rz-dpi-field'; dpiField.style.display='none';
   dpiField.innerHTML = `<label>Resolution (DPI)</label><input type="number" id="rz-dpi" value="300">`;
-  body.appendChild(dpiField);
+  sidebar.appendChild(dpiField);
 
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
     <div class="field"><label>Width</label><input type="number" id="rw" value="800"></div>
     <div class="field"><label>Height</label><input type="number" id="rh" value="600"></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const lockField=document.createElement('label'); lockField.style.cssText='display:flex;gap:6px;align-items:center;font-size:0.85rem;margin:8px 0;';
   lockField.innerHTML = `<input type="checkbox" id="rz-lock" checked> Lock aspect ratio`;
-  body.appendChild(lockField);
+  sidebar.appendChild(lockField);
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Resize & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Resize & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
-  body.addEventListener('change', e=>{
+  sidebar.addEventListener('change', e=>{
     if(e.target.id==='rz-unit'){
       dpiField.style.display = e.target.value==='px' ? 'none' : 'block';
     }
   });
-  body.addEventListener('input', e=>{
+  sidebar.addEventListener('input', e=>{
     if(e.target.id==='rw' && document.getElementById('rz-lock').checked && naturalW){
       document.getElementById('rh').value = Math.round(parseFloat(e.target.value||0) * (naturalH/naturalW));
     }
@@ -2571,18 +2580,19 @@ function toolResizeImage(){
 }
 
 function toolRotatePDF(){
-  const body = panelShell({title:'Rotate PDF', desc:'Rotate every page by 90, 180, or 270 degrees.'});
+  const { main, sidebar } = panelShellSplit({title:'Rotate PDF', desc:'Rotate every page by 90, 180, or 270 degrees.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Rotation</label>
     <select id="rot" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       <option value="90">90°</option><option value="180">180°</option><option value="270">270°</option>
     </select>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Rotate & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Rotate & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     const deg = parseInt(document.getElementById('rot').value);
@@ -2645,18 +2655,19 @@ async function qpdfOptimize(bytes){
 }
 
 function toolProtectPDF(){
-  const body = panelShell({title:'Protect PDF', desc:'Add a real, standards-compliant password (AES-256) to a PDF — encryption runs in your browser via a WebAssembly build of qpdf.'});
+  const { main, sidebar } = panelShellSplit({title:'Protect PDF', desc:'Add a real, standards-compliant password (AES-256) to a PDF — encryption runs in your browser via a WebAssembly build of qpdf.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='On first use this downloads a small encryption engine (qpdf compiled to WebAssembly, ~2MB, open-source) — that is code, not your file. Your PDF itself is never sent anywhere; encryption happens entirely on this device.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Password</label><input type="text" id="pp-pass" placeholder="Choose a password">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Encrypt & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Encrypt & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     const pass = document.getElementById('pp-pass').value;
     if(!file){log.textContent='Choose a PDF first.';return;}
@@ -2679,18 +2690,19 @@ function toolProtectPDF(){
 }
 
 function toolUnlockPDF(){
-  const body = panelShell({title:'Unlock PDF', desc:'Remove password protection from a PDF you know the password to — decryption runs in your browser.'});
+  const { main, sidebar } = panelShellSplit({title:'Unlock PDF', desc:'Remove password protection from a PDF you know the password to — decryption runs in your browser.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Same engine as Protect PDF (qpdf via WebAssembly) — downloads once, then works fully offline. Your file is never uploaded.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Current password</label><input type="text" id="up-pass" placeholder="Enter the PDF's password">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Unlock & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Unlock & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     const pass = document.getElementById('up-pass').value;
     if(!file){log.textContent='Choose a PDF first.';return;}
@@ -6766,7 +6778,7 @@ function toolOrganizePDF(){
 }
 
 function toolSignPDF(){
-  const body = panelShell({title:'Sign PDF', desc:'Draw your signature, then click on the page to place it.'});
+  const { main, sidebar } = panelShellSplit({title:'Sign PDF', desc:'Draw your signature, then click on the page to place it.'});
   let file=null, pdfjsDoc=null, pageNum=1, sigDataUrl=null, placed=null;
 
   const sigWrap=document.createElement('div'); sigWrap.className='field';
@@ -6775,7 +6787,7 @@ function toolSignPDF(){
   sigWrap.appendChild(sigCanvas);
   const clearBtn=document.createElement('button'); clearBtn.className='small-btn'; clearBtn.textContent='Clear'; clearBtn.style.marginTop='6px';
   sigWrap.appendChild(clearBtn);
-  body.appendChild(sigWrap);
+  sidebar.appendChild(sigWrap);
 
   const sctx = sigCanvas.getContext('2d');
   sctx.lineWidth=2.5; sctx.lineCap='round'; sctx.strokeStyle='#1F2420';
@@ -6796,17 +6808,17 @@ function toolSignPDF(){
   ['mouseup','touchend','mouseleave'].forEach(ev=>sigCanvas.addEventListener(ev,()=>drawing=false));
   clearBtn.onclick = ()=>sctx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
 
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     pageNum=1; placed=null;
     renderPage();
   }});
-  const controls=document.createElement('div'); controls.className='pill-row'; body.appendChild(controls);
-  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save signed PDF'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; log.textContent='Draw a signature, open a PDF, then click the page to place it.'; body.appendChild(log);
+  const controls=document.createElement('div'); controls.className='pill-row'; main.appendChild(controls);
+  const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save signed PDF'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; log.textContent='Draw a signature, open a PDF, then click the page to place it.'; sidebar.appendChild(log);
 
   function buildControls(){
     controls.innerHTML = `<button class="small-btn" id="s-prev">‹ prev</button>
@@ -7009,27 +7021,28 @@ function toolCropPDF(){
 /* ================= NEW: gap-fill tools ================= */
 
 function toolCompressPDF(){
-  const body = panelShell({title:'Make PDF Smaller', desc:'Shrink a PDF so it fits an email or upload limit.'});
+  const { main, sidebar } = panelShellSplit({title:'Make PDF Smaller', desc:'Shrink a PDF so it fits an email or upload limit.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='This turns each page into a picture to shrink it, like most compressors do — great for scans and image-heavy files, not ideal if you need to keep the text selectable/searchable afterward.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — currently ${fmtBytes(file.size)}`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — currently ${fmtBytes(file.size)}`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
 
   const tabRow=document.createElement('div'); tabRow.className='tab-row';
   tabRow.innerHTML = `
     <button type="button" class="tab-btn active" data-mode="manual"><span class="tab-title">Just make it smaller</span><span class="tab-sub">Move sliders — simplest option</span></button>
     <button type="button" class="tab-btn" data-mode="target"><span class="tab-title">I need an exact size</span><span class="tab-sub">e.g. "must be under 2 MB"</span></button>
   `;
-  body.appendChild(tabRow);
+  sidebar.appendChild(tabRow);
 
   const manualRow=document.createElement('div'); manualRow.className='row'; manualRow.id='cp-manual-row';
   manualRow.innerHTML=`
     <div class="field"><label>How much smaller? <span id="cp-qval">70</span>%</label><input type="range" id="cp-quality" min="20" max="95" value="70"></div>
     <div class="field"><label>Picture sharpness: <span id="cp-sval">1.0x</span></label><input type="range" id="cp-scale" min="0.5" max="2" step="0.1" value="1.0"></div>
   `;
-  body.appendChild(manualRow);
+  sidebar.appendChild(manualRow);
 
   const targetField=document.createElement('div'); targetField.id='cp-target-field'; targetField.style.display='none';
   targetField.innerHTML = `
@@ -7043,12 +7056,12 @@ function toolCompressPDF(){
       </select>
     </div>
     <div class="helper-line">We'll automatically try a few settings until it fits.</div>`;
-  body.appendChild(targetField);
+  sidebar.appendChild(targetField);
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Shrink & Download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Shrink & Download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
-  body.addEventListener('input', e=>{
+  sidebar.addEventListener('input', e=>{
     if(e.target.id==='cp-quality') document.getElementById('cp-qval').textContent = e.target.value;
     if(e.target.id==='cp-scale') document.getElementById('cp-sval').textContent = e.target.value+'x';
   });
