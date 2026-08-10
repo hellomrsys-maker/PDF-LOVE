@@ -2726,17 +2726,17 @@ function toolUnlockPDF(){
 /* ================= ADVANCED: cleanup, extraction, metadata, accessibility ================= */
 
 function toolRemoveDuplicateBlank(){
-  const body = panelShell({title:'Remove Duplicate / Blank Pages', desc:'Scans every page, flags likely duplicates and blank pages, and lets you confirm before removing.'});
+  const { main, sidebar } = panelShellSplit({title:'Remove Duplicate / Blank Pages', desc:'Scans every page, flags likely duplicates and blank pages, and lets you confirm before removing.'});
   let file=null, pdfjsDoc=null, flagged=[];
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     await scan();
   }});
-  const grid=document.createElement('div'); grid.className='thumb-grid'; body.appendChild(grid);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Remove checked pages & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const grid=document.createElement('div'); grid.className='thumb-grid'; main.appendChild(grid);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Remove checked pages & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   async function hashCanvas(canvas){
     const ctx = canvas.getContext('2d');
@@ -2783,12 +2783,13 @@ function toolRemoveDuplicateBlank(){
 }
 
 function toolExtractImages(){
-  const body = panelShell({title:'Extract Images from PDF', desc:'Pull every embedded image out of a PDF and download as a .zip.'});
+  const { main, sidebar } = panelShellSplit({title:'Extract Images from PDF', desc:'Pull every embedded image out of a PDF and download as a .zip.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .zip'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .zip'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Scanning pages on-device...';
@@ -2828,9 +2829,9 @@ function toolExtractImages(){
 }
 
 function toolEditMetadata(){
-  const body = panelShell({title:'Edit PDF Metadata', desc:'View and change the title, author, subject, and keywords stored in a PDF.'});
+  const { main, sidebar } = panelShellSplit({title:'Edit PDF Metadata', desc:'View and change the title, author, subject, and keywords stored in a PDF.'});
   let file=null, doc=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     doc = await loadPdf(bytes);
@@ -2839,13 +2840,14 @@ function toolEditMetadata(){
     document.getElementById('md-subject').value = doc.getSubject() || '';
     document.getElementById('md-keywords').value = (doc.getKeywords() || '');
   }});
+  addWorkspaceFab(main, dz);
   ['Title','Author','Subject','Keywords'].forEach(k=>{
     const field=document.createElement('div'); field.className='field';
     field.innerHTML = `<label>${k}</label><input type="text" id="md-${k.toLowerCase()}">`;
-    body.appendChild(field);
+    sidebar.appendChild(field);
   });
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Save & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file || !doc){log.textContent='Choose a PDF first.';return;}
     log.textContent='Saving on-device...';
@@ -2860,14 +2862,15 @@ function toolEditMetadata(){
 }
 
 function toolPDFToSpeech(){
-  const body = panelShell({title:'Read PDF Aloud', desc:'Extracts the text and reads it using your browser\'s built-in text-to-speech — no upload, no AI model download.'});
+  const { main, sidebar } = panelShellSplit({title:'Read PDF Aloud', desc:'Extracts the text and reads it using your browser\'s built-in text-to-speech — no upload, no AI model download.'});
   let file=null, pagesText=[];
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     log.textContent='Extracting text on-device...';
     pagesText = await extractPdfPagesText(file);
     log.textContent = `Loaded ${pagesText.length} page(s). Press play.`;
   }});
+  addWorkspaceFab(main, dz);
   const controls=document.createElement('div'); controls.className='pill-row';
   controls.innerHTML = `
     <button class="small-btn" id="tts-play">▶ Play</button>
@@ -2877,8 +2880,8 @@ function toolPDFToSpeech(){
       <option value="0.8">0.8x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option>
     </select>
   `;
-  body.appendChild(controls);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(controls);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   let utter=null;
   controls.querySelector('#tts-play').onclick = ()=>{
     if(!pagesText.length){log.textContent='Choose a PDF first.';return;}
@@ -2895,15 +2898,16 @@ function toolPDFToSpeech(){
 /* ================= NEW: legal/office workflow tools ================= */
 
 function toolBatesNumbering(){
-  const body = panelShell({title:'Page Numbering & Document ID', desc:'Two kinds of numbers you can stamp on every page: a number that goes up page by page (like SMITH-000001, 000002...), and/or a fixed number that stays exactly the same on every page (like a GST number or invoice number).'});
+  const { main, sidebar } = panelShellSplit({title:'Page Numbering & Document ID', desc:'Two kinds of numbers you can stamp on every page: a number that goes up page by page (like SMITH-000001, 000002...), and/or a fixed number that stays exactly the same on every page (like a GST number or invoice number).'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
 
   // --- Section 1: sequential (unified) number ---
   const sec1Toggle=document.createElement('label'); sec1Toggle.style.cssText='display:flex;gap:8px;align-items:center;font-weight:600;margin:16px 0 6px;';
   sec1Toggle.innerHTML = `<input type="checkbox" id="bn-seq-on" checked> Number that goes up on each page`;
-  body.appendChild(sec1Toggle);
+  sidebar.appendChild(sec1Toggle);
   const seqWrap=document.createElement('div'); seqWrap.id='bn-seq-wrap';
   seqWrap.innerHTML = `
     <div class="helper-line">Example: with prefix "SMITH-" and 6 digits, page 1 gets SMITH-000001, page 2 gets SMITH-000002, and so on. Or pick "Simple" below for a plain "Page 1 of 47" style.</div>
@@ -2932,8 +2936,8 @@ function toolBatesNumbering(){
         <option value="top-left">Top left</option>
       </select>
     </div>`;
-  body.appendChild(seqWrap);
-  body.addEventListener('change', e=>{
+  sidebar.appendChild(seqWrap);
+  sidebar.addEventListener('change', e=>{
     if(e.target.id==='bn-style'){
       document.getElementById('bn-custom-fields').style.display = e.target.value==='simple' ? 'none' : 'block';
     }
@@ -2942,7 +2946,7 @@ function toolBatesNumbering(){
   // --- Section 2: fixed (non-changing) IDs, e.g. GST number ---
   const sec2Toggle=document.createElement('label'); sec2Toggle.style.cssText='display:flex;gap:8px;align-items:center;font-weight:600;margin:20px 0 6px;';
   sec2Toggle.innerHTML = `<input type="checkbox" id="bn-fixed-on"> A fixed number that's the same on every page (e.g. GST number, PAN, invoice no.)`;
-  body.appendChild(sec2Toggle);
+  sidebar.appendChild(sec2Toggle);
   const fixedWrap=document.createElement('div'); fixedWrap.id='bn-fixed-wrap'; fixedWrap.style.display='none';
   fixedWrap.innerHTML = `<div class="helper-line">Add as many as you need — each stamps identically on every page, right below the previous one.</div>`;
   const fixedList=document.createElement('div'); fixedList.id='bn-fixed-list';
@@ -2958,7 +2962,7 @@ function toolBatesNumbering(){
       <option value="bottom-right">Bottom right</option>
     </select>`;
   fixedWrap.appendChild(fixedPosField);
-  body.appendChild(fixedWrap);
+  sidebar.appendChild(fixedWrap);
 
   function addFixedRow(labelVal='GST No.', valueVal=''){
     const row=document.createElement('div'); row.className='row'; row.style.marginBottom='6px';
@@ -2973,13 +2977,13 @@ function toolBatesNumbering(){
   addFixedRow('GST No.', '');
   addFixedBtn.onclick = ()=>addFixedRow('', '');
 
-  body.addEventListener('change', e=>{
+  sidebar.addEventListener('change', e=>{
     if(e.target.id==='bn-seq-on') seqWrap.style.display = e.target.checked ? 'block' : 'none';
     if(e.target.id==='bn-fixed-on') fixedWrap.style.display = e.target.checked ? 'block' : 'none';
   });
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add Numbers & Download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add Numbers & Download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function posToXY(pos, width, height, lineIndex=0){
     const lineH = 12;
@@ -3040,19 +3044,20 @@ function toolBatesNumbering(){
 }
 
 function toolHeaderFooter(){
-  const body = panelShell({title:'Add Header & Footer', desc:'Stamp persistent text in the top and/or bottom margin of every page — title, date, or custom text.'});
+  const { main, sidebar } = panelShellSplit({title:'Add Header & Footer', desc:'Stamp persistent text in the top and/or bottom margin of every page — title, date, or custom text.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field1=document.createElement('div'); field1.className='field';
   field1.innerHTML=`<label>Header text (leave blank to skip)</label><input type="text" id="hf-header" placeholder="e.g. Confidential Draft">`;
-  body.appendChild(field1);
+  sidebar.appendChild(field1);
   const field2=document.createElement('div'); field2.className='field';
   field2.innerHTML=`<label>Footer text (leave blank to skip)</label><input type="text" id="hf-footer" placeholder="e.g. \${date}">`;
-  body.appendChild(field2);
-  const note=document.createElement('div'); note.className='note'; note.textContent='Use ${date} in either field to insert today\'s date automatically.'; body.appendChild(note);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Apply & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field2);
+  const note=document.createElement('div'); note.className='note'; note.textContent='Use ${date} in either field to insert today\'s date automatically.'; sidebar.appendChild(note);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Apply & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Stamping on-device...';
@@ -3074,19 +3079,20 @@ function toolHeaderFooter(){
 }
 
 function toolNUp(){
-  const body = panelShell({title:'Multiple Pages per Sheet (N-up)', desc:'Combine 2 or 4 PDF pages onto a single printed sheet.'});
+  const { main, sidebar } = panelShellSplit({title:'Multiple Pages per Sheet (N-up)', desc:'Combine 2 or 4 PDF pages onto a single printed sheet.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Layout</label>
     <select id="nup-count" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
       <option value="2">2 pages per sheet</option>
       <option value="4">4 pages per sheet</option>
     </select>`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Build & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Build & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     const n = parseInt(document.getElementById('nup-count').value);
@@ -3118,13 +3124,19 @@ function toolNUp(){
 }
 
 function toolInsertReplacePage(){
-  const body = panelShell({title:'Insert / Replace Page', desc:'Insert a new blank page, or replace an existing page with one from another PDF/image.'});
+  const { main, sidebar } = panelShellSplit({title:'Insert / Replace Page', desc:'Insert a new blank page, or replace an existing page with one from another PDF/image.'});
   let baseFile=null, insertFile=null;
   const field0=document.createElement('div'); field0.className='field';
   field0.innerHTML=`<label>Base PDF</label>`;
-  body.appendChild(field0);
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{baseFile=f[0]; info.textContent=`${baseFile.name} (${fmtBytes(baseFile.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  main.appendChild(field0);
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{baseFile=f[0]; info.textContent=`${baseFile.name} (${fmtBytes(baseFile.size)})`;}});
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const field1=document.createElement('div'); field1.className='field';
+  field1.innerHTML=`<label>Source file (for insert-file / replace) — PDF or image</label>`;
+  main.appendChild(field1);
+  buildDropzone(main, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{insertFile=f[0]; info2.textContent=insertFile?`${insertFile.name} (${fmtBytes(insertFile.size)})`:'';}});
+  const info2=document.createElement('div'); info2.style.margin='10px 0'; info2.style.fontSize='0.85rem'; main.appendChild(info2);
+
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
     <div class="field"><label>Action</label>
@@ -3136,14 +3148,9 @@ function toolInsertReplacePage(){
     </div>
     <div class="field"><label>At page #</label><input type="number" id="ir-at" value="1"></div>
   `;
-  body.appendChild(row);
-  const field1=document.createElement('div'); field1.className='field';
-  field1.innerHTML=`<label>Source file (for insert-file / replace) — PDF or image</label>`;
-  body.appendChild(field1);
-  buildDropzone(body, {multiple:false, accept:'application/pdf,image/*', onFiles:(f)=>{insertFile=f[0]; info2.textContent=insertFile?`${insertFile.name} (${fmtBytes(insertFile.size)})`:'';}});
-  const info2=document.createElement('div'); info2.style.margin='10px 0'; info2.style.fontSize='0.85rem'; body.appendChild(info2);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Apply & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(row);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Apply & download'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!baseFile){log.textContent='Choose a base PDF first.';return;}
     const action = document.getElementById('ir-action').value;
@@ -3187,15 +3194,16 @@ function toolInsertReplacePage(){
 }
 
 function toolSplitByBookmark(){
-  const body = panelShell({title:'Split by Bookmark', desc:'If this PDF has an outline/bookmarks, split it into one file per top-level bookmark section.'});
+  const { main, sidebar } = panelShellSplit({title:'Split by Bookmark', desc:'If this PDF has an outline/bookmarks, split it into one file per top-level bookmark section.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Requires a PDF that already has bookmarks (View > Sidebar > Bookmarks in most readers will show if it does). If none are found, use Split PDF with a manual page range instead.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Reading outline on-device...';
@@ -3233,15 +3241,16 @@ function toolSplitByBookmark(){
 }
 
 function toolSplitBySize(){
-  const body = panelShell({title:'Split by File Size', desc:'Break a large PDF into chunks under a target size — useful for email attachment limits.'});
+  const { main, sidebar } = panelShellSplit({title:'Split by File Size', desc:'Break a large PDF into chunks under a target size — useful for email attachment limits.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — ${fmtBytes(file.size)}`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — ${fmtBytes(file.size)}`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Target size per chunk (MB)</label><input type="number" id="sbs-mb" value="10" min="1">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Split & download .zip'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     const targetBytes = (parseFloat(document.getElementById('sbs-mb').value)||10) * 1024*1024;
@@ -3271,15 +3280,16 @@ function toolSplitBySize(){
 }
 
 function toolTableToCSV(){
-  const body = panelShell({title:'Extract Table to CSV', desc:'Detects column alignment from text positions and exports as CSV. Works best on simple, grid-aligned tables — complex or merged-cell tables may not extract cleanly.'});
+  const { main, sidebar } = panelShellSplit({title:'Extract Table to CSV', desc:'Detects column alignment from text positions and exports as CSV. Works best on simple, grid-aligned tables — complex or merged-cell tables may not extract cleanly.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Page number</label><input type="number" id="tcsv-page" value="1" min="1">`;
-  body.appendChild(field);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .csv'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(field);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Extract & download .csv'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     const pageNum = parseInt(document.getElementById('tcsv-page').value)||1;
@@ -3304,26 +3314,27 @@ function toolTableToCSV(){
 }
 
 function toolBookmarkEditor(){
-  const body = panelShell({title:'Bookmarks / Table of Contents', desc:'View this PDF\'s existing bookmarks, or add a simple new one pointing to a page.'});
+  const { main, sidebar } = panelShellSplit({title:'Bookmarks / Table of Contents', desc:'View this PDF\'s existing bookmarks, or add a simple new one pointing to a page.'});
   let file=null, pdfjsDoc=null, doc=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes.slice(0));
     doc = await loadPdf(bytes);
     await renderOutline();
   }});
-  const outlineWrap=document.createElement('div'); outlineWrap.style.margin='12px 0'; body.appendChild(outlineWrap);
+  addWorkspaceFab(main, dz);
+  const outlineWrap=document.createElement('div'); outlineWrap.style.margin='12px 0'; main.appendChild(outlineWrap);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML=`
     <div class="field"><label>New bookmark title</label><input type="text" id="bm-title" placeholder="Chapter name"></div>
     <div class="field"><label>Points to page</label><input type="number" id="bm-page" value="1"></div>
   `;
-  body.appendChild(row);
+  sidebar.appendChild(row);
   const note=document.createElement('div'); note.className='note';
   note.textContent='pdf-lib has limited support for writing new outline entries — this note lists what exists and lets you note where you\'d add one; for heavy bookmark restructuring, a desktop PDF editor is more reliable.';
-  body.appendChild(note);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  sidebar.appendChild(note);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   async function renderOutline(){
     const outline = await pdfjsDoc.getOutline();
@@ -3672,12 +3683,13 @@ function toolAskDockbench(prefill){
 }
 
 function toolPDFToText(){
-  const body = panelShell({title:'PDF to Text', desc:'Extracts plain text, no formatting — good for pasting into other apps or feeding into other tools.'});
+  const { main, sidebar } = panelShellSplit({title:'PDF to Text', desc:'Extracts plain text, no formatting — good for pasting into other apps or feeding into other tools.'});
   let file=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .txt'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} (${fmtBytes(file.size)})`;}});
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Convert & download .txt'; sidebar.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose a PDF first.';return;}
     log.textContent='Extracting text on-device...';
@@ -3692,18 +3704,19 @@ function toolPDFToText(){
 }
 
 function toolSearchRedact(){
-  const body = panelShell({title:'Search & Redact', desc:'Auto-find and permanently blank out every match of a pattern — SSNs, emails, phone numbers, or custom text — across the whole document in one pass.'});
+  const { main, sidebar } = panelShellSplit({title:'Search & Redact', desc:'Auto-find and permanently blank out every match of a pattern — SSNs, emails, phone numbers, or custom text — across the whole document in one pass.'});
   const note=document.createElement('div'); note.className='note';
   note.textContent='Like the manual Redact tool, this rasterizes each page so the covered text truly cannot be recovered — pages lose selectable text as a result. Use for final, share-ready documents.';
-  body.appendChild(note);
+  main.appendChild(note);
   let file=null, pdfjsDoc=null;
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     info.textContent = `${file.name} — ${pdfjsDoc.numPages} page(s)`;
   }});
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  addWorkspaceFab(main, dz);
+  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Pattern to find</label>
     <select id="sr-preset" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;margin-bottom:8px;">
@@ -3714,13 +3727,13 @@ function toolSearchRedact(){
       <option value="custom">Custom text</option>
     </select>
     <input type="text" id="sr-custom" placeholder="Custom text or exact phrase..." style="display:none;">`;
-  body.appendChild(field);
-  body.addEventListener('change', e=>{
+  sidebar.appendChild(field);
+  sidebar.addEventListener('change', e=>{
     if(e.target.id==='sr-preset') document.getElementById('sr-custom').style.display = e.target.value==='custom' ? 'block' : 'none';
   });
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Find matches, then redact'; body.appendChild(btn);
-  const resultsWrap=document.createElement('div'); body.appendChild(resultsWrap);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Find matches, then redact'; sidebar.appendChild(btn);
+  const resultsWrap=document.createElement('div'); sidebar.appendChild(resultsWrap);
+  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   const patterns = {
     ssn: /\b\d{3}-\d{2}-\d{4}\b/g,
