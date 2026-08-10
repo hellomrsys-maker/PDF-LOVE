@@ -2298,6 +2298,36 @@ async function pdfFileThumbGrid(container, files, {onRemove, onReorder}={}){
   }
 }
 
+/* Read-only page-by-page preview grid for a single already-processed
+   PDF — the "review your result before downloading" screen: every page
+   numbered and thumbnailed, click any one to see it full-size. Renders
+   progressively and guards against a stale render (e.g. user clicked
+   "try different settings" and reprocessed before this one finished). */
+async function pdfPageThumbGrid(container, pdfjsDoc){
+  const token = (container._pptgToken = (container._pptgToken||0) + 1);
+  container.innerHTML=''; container.classList.add('workspace-grid');
+  for(let i=1; i<=pdfjsDoc.numPages; i++){
+    if(container._pptgToken !== token) return;
+    const t=document.createElement('div'); t.className='workspace-thumb';
+    const ph=document.createElement('div');
+    ph.style.cssText='width:100%;aspect-ratio:0.77;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);font-size:0.72rem;';
+    ph.textContent='Loading…';
+    t.appendChild(ph);
+    const badge=document.createElement('div'); badge.className='workspace-thumb-badge'; badge.textContent=i;
+    t.appendChild(badge);
+    const name=document.createElement('div'); name.className='workspace-thumb-name'; name.textContent='Page '+i;
+    t.appendChild(name);
+    container.appendChild(t);
+    try{
+      const {canvas} = await renderPdfPageToCanvas(pdfjsDoc, i, 0.6);
+      if(container._pptgToken !== token) return;
+      canvas.style.cssText='width:100%;border-radius:6px;display:block;cursor:zoom-in;';
+      canvas.onclick=()=>openImageLightbox(canvas.toDataURL('image/png'), 'Page '+i);
+      ph.replaceWith(canvas);
+    }catch(e){ ph.textContent='Preview unavailable'; }
+  }
+}
+
 function panelShell({title, desc}){
   panel.innerHTML = `
     <nav class="tool-crumb">
@@ -7229,123 +7259,155 @@ function toolCropPDF(){
 
 function toolCompressPDF(){
   const { main, sidebar } = panelShellSplit({title:'Make PDF Smaller', desc:'Shrink a PDF so it fits an email or upload limit.'});
-  const note=document.createElement('div'); note.className='note';
-  note.textContent='This turns each page into a picture to shrink it, like most compressors do — great for scans and image-heavy files, not ideal if you need to keep the text selectable/searchable afterward.';
-  main.appendChild(note);
   let file=null;
-  const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — currently ${fmtBytes(file.size)}`;}});
-  addWorkspaceFab(main, dz);
-  const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
 
-  const tabRow=document.createElement('div'); tabRow.className='tab-row';
-  tabRow.innerHTML = `
-    <button type="button" class="tab-btn active" data-mode="manual"><span class="tab-title">Just make it smaller</span><span class="tab-sub">Move sliders — simplest option</span></button>
-    <button type="button" class="tab-btn" data-mode="target"><span class="tab-title">I need an exact size</span><span class="tab-sub">e.g. "must be under 2 MB"</span></button>
-  `;
-  sidebar.appendChild(tabRow);
+  function renderSetupStage(){
+    main.innerHTML=''; sidebar.innerHTML='';
+    const note=document.createElement('div'); note.className='note';
+    note.textContent='This turns each page into a picture to shrink it, like most compressors do — great for scans and image-heavy files, not ideal if you need to keep the text selectable/searchable afterward.';
+    main.appendChild(note);
+    const dz = buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles:(f)=>{file=f[0]; info.textContent=`${file.name} — currently ${fmtBytes(file.size)}`;}});
+    addWorkspaceFab(main, dz);
+    const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; main.appendChild(info);
+    if(file) info.textContent = `${file.name} — currently ${fmtBytes(file.size)}`;
 
-  const manualRow=document.createElement('div'); manualRow.className='row'; manualRow.id='cp-manual-row';
-  manualRow.innerHTML=`
-    <div class="field"><label>How much smaller? <span id="cp-qval">70</span>%</label><input type="range" id="cp-quality" min="20" max="95" value="70"></div>
-    <div class="field"><label>Picture sharpness: <span id="cp-sval">1.0x</span></label><input type="range" id="cp-scale" min="0.5" max="2" step="0.1" value="1.0"></div>
-  `;
-  sidebar.appendChild(manualRow);
+    const tabRow=document.createElement('div'); tabRow.className='tab-row';
+    tabRow.innerHTML = `
+      <button type="button" class="tab-btn active" data-mode="manual"><span class="tab-title">Just make it smaller</span><span class="tab-sub">Move sliders — simplest option</span></button>
+      <button type="button" class="tab-btn" data-mode="target"><span class="tab-title">I need an exact size</span><span class="tab-sub">e.g. "must be under 2 MB"</span></button>
+    `;
+    sidebar.appendChild(tabRow);
 
-  const targetField=document.createElement('div'); targetField.id='cp-target-field'; targetField.style.display='none';
-  targetField.innerHTML = `
-    <div class="field"><label>The final file must be smaller than:</label></div>
-    <div class="big-input-row">
-      <input type="number" id="cp-target-val" value="2">
-      <select id="cp-target-unit">
-        <option value="KB">KB (kilobytes)</option>
-        <option value="MB" selected>MB (megabytes)</option>
-        <option value="GB">GB (gigabytes)</option>
-      </select>
-    </div>
-    <div class="helper-line">We'll automatically try a few settings until it fits.</div>`;
-  sidebar.appendChild(targetField);
+    const manualRow=document.createElement('div'); manualRow.className='row'; manualRow.id='cp-manual-row';
+    manualRow.innerHTML=`
+      <div class="field"><label>How much smaller? <span id="cp-qval">70</span>%</label><input type="range" id="cp-quality" min="20" max="95" value="70"></div>
+      <div class="field"><label>Picture sharpness: <span id="cp-sval">1.0x</span></label><input type="range" id="cp-scale" min="0.5" max="2" step="0.1" value="1.0"></div>
+    `;
+    sidebar.appendChild(manualRow);
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Shrink & Download'; sidebar.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
+    const targetField=document.createElement('div'); targetField.id='cp-target-field'; targetField.style.display='none';
+    targetField.innerHTML = `
+      <div class="field"><label>The final file must be smaller than:</label></div>
+      <div class="big-input-row">
+        <input type="number" id="cp-target-val" value="2">
+        <select id="cp-target-unit">
+          <option value="KB">KB (kilobytes)</option>
+          <option value="MB" selected>MB (megabytes)</option>
+          <option value="GB">GB (gigabytes)</option>
+        </select>
+      </div>
+      <div class="helper-line">We'll automatically try a few settings until it fits.</div>`;
+    sidebar.appendChild(targetField);
 
-  sidebar.addEventListener('input', e=>{
-    if(e.target.id==='cp-quality') document.getElementById('cp-qval').textContent = e.target.value;
-    if(e.target.id==='cp-scale') document.getElementById('cp-sval').textContent = e.target.value+'x';
-  });
-  tabRow.querySelectorAll('.tab-btn').forEach(b=>{
-    b.onclick = ()=>{
-      tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      const isTarget = b.dataset.mode==='target';
-      manualRow.style.display = isTarget ? 'none' : 'flex';
-      targetField.style.display = isTarget ? 'block' : 'none';
-    };
-  });
+    const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Shrink & Preview'; sidebar.appendChild(btn);
+    const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
-  async function buildAtQuality(pdf, q, scale, onProgress){
-    const out = await PDFDocument.create();
-    for(let i=1;i<=pdf.numPages;i++){
-      const { canvas } = await renderPdfPageToCanvas(pdf, i, scale);
-      const blob = await new Promise(res=>canvas.toBlob(res,'image/jpeg', q));
-      const imgBytes = await blob.arrayBuffer();
-      const img = await out.embedJpg(imgBytes);
-      const page = out.addPage([canvas.width/scale, canvas.height/scale]);
-      page.drawImage(img, {x:0,y:0,width:canvas.width/scale,height:canvas.height/scale});
-      if(onProgress) onProgress(i, pdf.numPages);
+    sidebar.addEventListener('input', e=>{
+      if(e.target.id==='cp-quality') document.getElementById('cp-qval').textContent = e.target.value;
+      if(e.target.id==='cp-scale') document.getElementById('cp-sval').textContent = e.target.value+'x';
+    });
+    tabRow.querySelectorAll('.tab-btn').forEach(b=>{
+      b.onclick = ()=>{
+        tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        const isTarget = b.dataset.mode==='target';
+        manualRow.style.display = isTarget ? 'none' : 'flex';
+        targetField.style.display = isTarget ? 'block' : 'none';
+      };
+    });
+
+    async function buildAtQuality(pdf, q, scale, onProgress){
+      const out = await PDFDocument.create();
+      for(let i=1;i<=pdf.numPages;i++){
+        const { canvas } = await renderPdfPageToCanvas(pdf, i, scale);
+        const blob = await new Promise(res=>canvas.toBlob(res,'image/jpeg', q));
+        const imgBytes = await blob.arrayBuffer();
+        const img = await out.embedJpg(imgBytes);
+        const page = out.addPage([canvas.width/scale, canvas.height/scale]);
+        page.drawImage(img, {x:0,y:0,width:canvas.width/scale,height:canvas.height/scale});
+        if(onProgress) onProgress(i, pdf.numPages);
+      }
+      return new Blob([await out.save()],{type:'application/pdf'});
     }
-    return new Blob([await out.save()],{type:'application/pdf'});
+
+    btn.onclick = async ()=>{
+      if(!file){log.textContent='Choose a PDF first.';return;}
+      if(!(await memoryGuard(file, 5, log))) return;
+      const mode = tabRow.querySelector('.tab-btn.active').dataset.mode;
+      const bytes = await file.arrayBuffer();
+      const pdf = await getPdfDoc(bytes);
+      let outBlob;
+
+      if(mode==='target'){
+        const val = parseFloat(document.getElementById('cp-target-val').value)||2;
+        const unit = document.getElementById('cp-target-unit').value;
+        const mult = unit==='GB' ? 1024*1024*1024 : unit==='MB' ? 1024*1024 : 1024;
+        const targetBytes = val*mult;
+        if(targetBytes >= file.size){ log.textContent = `It's already smaller than that (${fmtBytes(file.size)}) — nothing to do.`; return; }
+        log.textContent = 'Working on it (this tries a few passes)...';
+        let lo=0.15, hi=0.9, best=null, scale=1.0;
+        for(let attempt=0; attempt<5; attempt++){
+          const q = (lo+hi)/2;
+          outBlob = await buildAtQuality(pdf, q, scale, (i,n)=>log.textContent=`Trying setting ${attempt+1} of 5 — page ${i} of ${n}...`);
+          if(outBlob.size > targetBytes){ hi = q; } else { best = outBlob; lo = q; }
+          if(Math.abs(outBlob.size-targetBytes) < targetBytes*0.05) break;
+        }
+        if(best) outBlob = best;
+        if(outBlob.size > targetBytes){
+          log.textContent = 'Still working, trying a stronger setting...';
+          outBlob = await buildAtQuality(pdf, 0.35, 0.6, (i,n)=>log.textContent=`Final pass — page ${i} of ${n}...`);
+        }
+      } else {
+        const q = parseInt(document.getElementById('cp-quality').value)/100;
+        const scale = parseFloat(document.getElementById('cp-scale').value);
+        log.textContent='Working on it...';
+        outBlob = await buildAtQuality(pdf, q, scale, (i,n)=>log.textContent=`Page ${i} of ${n}...`);
+      }
+
+      // Lossless structural pass on top (qpdf/WASM): object streams +
+      // stream recompression — the same class of optimization Ghostscript
+      // does server-side, here entirely on-device.
+      log.textContent='Optimizing the file structure...';
+      const optimized = await qpdfOptimize(new Uint8Array(await outBlob.arrayBuffer()));
+      outBlob = new Blob([optimized], {type:'application/pdf'});
+      if(outBlob.size >= file.size){
+        log.textContent = `This PDF is already about as small as this method can make it (${fmtBytes(file.size)}). Try lower sharpness, or it may simply be well-optimized already.`;
+        return;
+      }
+
+      const outName = file.name.replace(/\.pdf$/i,'')+'-compressed.pdf';
+      const pct = Math.round((1-outBlob.size/file.size)*100);
+      renderReviewStage(outBlob, outName, `
+        <div style="font-size:1.6rem;font-weight:800;color:var(--workspace-accent);">${pct}% smaller</div>
+        <div style="font-size:0.85rem;color:#666;margin-top:2px;">${fmtBytes(file.size)} → ${fmtBytes(outBlob.size)}</div>
+      `);
+    };
   }
 
-  btn.onclick = async ()=>{
-    if(!file){log.textContent='Choose a PDF first.';return;}
-    if(!(await memoryGuard(file, 5, log))) return;
-    const mode = tabRow.querySelector('.tab-btn.active').dataset.mode;
-    const bytes = await file.arrayBuffer();
-    const pdf = await getPdfDoc(bytes);
-    let outBlob;
+  async function renderReviewStage(outBlob, outName, statsHtml){
+    main.innerHTML=''; sidebar.innerHTML='';
+    const heading=document.createElement('div'); heading.className='helper-line'; heading.style.fontWeight='600';
+    heading.textContent='Preview your result — click any page to view it full-size';
+    main.appendChild(heading);
+    const grid=document.createElement('div'); main.appendChild(grid);
+    const pdfjsDoc = await getPdfDoc(await outBlob.arrayBuffer());
+    pdfPageThumbGrid(grid, pdfjsDoc);
 
-    if(mode==='target'){
-      const val = parseFloat(document.getElementById('cp-target-val').value)||2;
-      const unit = document.getElementById('cp-target-unit').value;
-      const mult = unit==='GB' ? 1024*1024*1024 : unit==='MB' ? 1024*1024 : 1024;
-      const targetBytes = val*mult;
-      if(targetBytes >= file.size){ log.textContent = `It's already smaller than that (${fmtBytes(file.size)}) — nothing to do.`; return; }
-      log.textContent = 'Working on it (this tries a few passes)...';
-      let lo=0.15, hi=0.9, best=null, scale=1.0;
-      for(let attempt=0; attempt<5; attempt++){
-        const q = (lo+hi)/2;
-        outBlob = await buildAtQuality(pdf, q, scale, (i,n)=>log.textContent=`Trying setting ${attempt+1} of 5 — page ${i} of ${n}...`);
-        if(outBlob.size > targetBytes){ hi = q; } else { best = outBlob; lo = q; }
-        if(Math.abs(outBlob.size-targetBytes) < targetBytes*0.05) break;
-      }
-      if(best) outBlob = best;
-      if(outBlob.size > targetBytes){
-        log.textContent = 'Still working, trying a stronger setting...';
-        outBlob = await buildAtQuality(pdf, 0.35, 0.6, (i,n)=>log.textContent=`Final pass — page ${i} of ${n}...`);
-      }
-    } else {
-      const q = parseInt(document.getElementById('cp-quality').value)/100;
-      const scale = parseFloat(document.getElementById('cp-scale').value);
-      log.textContent='Working on it...';
-      outBlob = await buildAtQuality(pdf, q, scale, (i,n)=>log.textContent=`Page ${i} of ${n}...`);
-    }
+    const stats=document.createElement('div'); stats.style.cssText='text-align:center;padding:16px 0;'; stats.innerHTML=statsHtml;
+    sidebar.appendChild(stats);
+    const backBtn=document.createElement('button'); backBtn.type='button'; backBtn.className='small-btn'; backBtn.textContent='← Try different settings';
+    backBtn.onclick = renderSetupStage;
+    sidebar.appendChild(backBtn);
+    const dlBtn=document.createElement('button'); dlBtn.className='primary-btn'; dlBtn.textContent='Download'; sidebar.appendChild(dlBtn);
+    const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
+    dlBtn.onclick = ()=>{
+      download(outBlob, outName);
+      log.innerHTML = '<span class="ok">✓ Downloaded — nothing was uploaded, this happened on your device.</span>';
+      offerChain(outBlob, outName, log);
+    };
+  }
 
-    // Lossless structural pass on top (qpdf/WASM): object streams +
-    // stream recompression — the same class of optimization Ghostscript
-    // does server-side, here entirely on-device.
-    log.textContent='Optimizing the file structure...';
-    const optimized = await qpdfOptimize(new Uint8Array(await outBlob.arrayBuffer()));
-    outBlob = new Blob([optimized], {type:'application/pdf'});
-    if(outBlob.size >= file.size){
-      log.textContent = `This PDF is already about as small as this method can make it (${fmtBytes(file.size)}). Try lower sharpness, or it may simply be well-optimized already.`;
-      return;
-    }
-
-    const outName = file.name.replace(/\.pdf$/i,'')+'-compressed.pdf';
-    download(outBlob, outName);
-    log.innerHTML = `<span class="ok">✓ Done! ${fmtBytes(file.size)} → ${fmtBytes(outBlob.size)} (${Math.round((1-outBlob.size/file.size)*100)}% smaller). Nothing was uploaded — this happened on your device.</span>`;
-    offerChain(outBlob, outName, log);
-  };
+  renderSetupStage();
 }
 
 function toolHtmlToPDF(){
