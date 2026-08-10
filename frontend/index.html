@@ -157,7 +157,9 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--glass-border);
-    padding: 16px 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -169,6 +171,7 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
     align-items: center;
     justify-content: space-between;
     gap: 30px;
+    width: 100%;
   }
 
   .logo {
@@ -921,30 +924,103 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   }
   .tool-foot { text-align: center; color: var(--sage); font-size: 0.82rem; margin: 22px auto 0; padding: 0 20px; }
 
-  /* Two-pane tool layout: file/preview area on the left (grows to fill
-     space), a fixed-width options sidebar on the right that stays visible
-     while scrolling a long preview. Collapses to a single stacked column
-     on narrow/mobile screens, sidebar first so the controls and action
-     button are reachable without scrolling past a long file preview. */
+  /* "Workspace + Contextual Sidebar" layout: a left canvas that holds the
+     file/preview/thumbnail-grid, and a fixed-width right sidebar carrying
+     the tool's title, its controls, and a bottom-anchored primary action.
+     Solid surfaces (not the translucent glass used elsewhere in the app)
+     — this is a working area the user reads and clicks precisely inside,
+     not a decorative panel, so it stays high-contrast and opaque. */
+  :root {
+    --workspace-bg: #F4F4F7;
+    --sidebar-border: #E0E0E0;
+    --workspace-accent: #E53935;
+    --workspace-ink: #212121;
+  }
   .tool-split {
-    display: flex; gap: 22px; align-items: flex-start;
-    max-width: 1080px; margin: 0 auto; padding: 0 20px 30px;
+    display: flex; gap: 0; align-items: stretch;
+    max-width: 1200px; margin: 0 auto; padding: 0 20px 30px;
+    min-height: calc(100vh - 190px);
   }
   .tool-main {
-    flex: 1; min-width: 0; min-height: 260px;
-    background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border); border-radius: 14px; padding: 22px;
+    flex: 1; min-width: 0; position: relative;
+    background: var(--workspace-bg);
+    border: 1px solid var(--sidebar-border); border-radius: 14px 0 0 14px;
+    padding: 32px;
+    display: flex; align-items: flex-start; justify-content: center;
   }
+  /* Floating "add file" action — top-right of the workspace canvas. */
+  .tool-fab {
+    position: absolute; top: 18px; right: 18px; z-index: 5;
+    width: 48px; height: 48px; border-radius: 50%; border: none;
+    background: var(--workspace-accent); color: #fff; font-size: 1.5rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; line-height: 1;
+    cursor: pointer; box-shadow: 0 4px 14px rgba(229,57,53,0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tool-fab:hover { transform: scale(1.06); box-shadow: 0 6px 18px rgba(229,57,53,0.5); }
+
+  /* Grid Mode: draggable page thumbnails with a bottom badge number —
+     used by tools that operate on individual pages (Organize, Split,
+     Crop-adjacent tools), as opposed to Single Asset Mode's one centered
+     preview card. */
+  .workspace-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px; width: 100%;
+  }
+  .workspace-thumb {
+    position: relative; background: #fff; border: 1px solid var(--sidebar-border);
+    border-radius: 10px; padding: 10px; cursor: grab;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .workspace-thumb:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .workspace-thumb.selected { border-color: var(--workspace-accent); box-shadow: 0 0 0 2px rgba(229,57,53,0.25); }
+  .workspace-thumb canvas, .workspace-thumb img { width: 100%; display: block; border-radius: 4px; }
+  .workspace-thumb-badge {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    background: var(--workspace-ink); color: #fff; font-size: 0.72rem; font-weight: 600;
+    padding: 2px 8px; border-radius: 100px; line-height: 1.4;
+  }
+  /* Single Asset Mode: one centered preview card. */
+  .workspace-single { background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.1); padding: 8px; }
+
   .tool-sidebar {
     width: 320px; flex-shrink: 0; position: sticky; top: 90px;
-    background: var(--glass-bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--glass-border); border-radius: 14px; padding: 22px;
+    max-height: calc(100vh - 110px);
+    background: #FFFFFF; border: 1px solid var(--sidebar-border); border-left: none;
+    border-radius: 0 14px 14px 0; padding: 24px;
+    display: flex; flex-direction: column;
   }
-  .tool-sidebar h1 { font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; color: var(--ink); line-height: 1.2; }
-  .tool-sidebar-desc { margin: 0 0 18px; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.5; }
+  .tool-sidebar h1 { font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; color: var(--workspace-ink); line-height: 1.2; }
+  .tool-sidebar-desc { margin: 0 0 18px; color: #666; font-size: 0.88rem; line-height: 1.5; }
+  #panel-sidebar { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
+  /* The primary action is the last thing appended by every tool, so
+     margin-top:auto pushes it to the bottom of the available sidebar
+     height without any tool needing to know about a separate "footer"
+     region — everything above it scrolls, it stays anchored. */
+  #panel-sidebar > .primary-btn { margin-top: auto; }
+  .tool-sidebar .primary-btn {
+    background: var(--workspace-accent); border-radius: 100px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .tool-sidebar .primary-btn:hover { background: #C62828; }
+  .tool-sidebar .primary-btn::after { content: '→'; font-weight: 700; }
+
+  /* Segmented toggle / radio-card controls for sidebar options. */
+  .sidebar-option-card {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 12px 14px; margin-bottom: 8px; border-radius: 10px;
+    border: 1.5px solid var(--sidebar-border); background: #fff; cursor: pointer;
+    font-family: inherit; font-size: 0.88rem; color: var(--workspace-ink); text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .sidebar-option-card:hover { border-color: #bbb; }
+  .sidebar-option-card.active { border-color: var(--workspace-accent); background: rgba(229,57,53,0.05); box-shadow: 0 0 0 1px var(--workspace-accent); }
+
   @media (max-width: 860px) {
-    .tool-split { flex-direction: column-reverse; }
-    .tool-sidebar { width: 100%; position: static; }
+    .tool-split { flex-direction: column-reverse; min-height: 0; }
+    .tool-main { border-radius: 14px; }
+    .tool-sidebar { width: 100%; position: static; max-height: none; border-left: 1px solid var(--sidebar-border); border-radius: 14px; }
   }
 
   .dropzone {
@@ -2110,12 +2186,25 @@ function panelShellSplit({title, desc}){
   return { main: document.getElementById('panel-main'), sidebar: document.getElementById('panel-sidebar') };
 }
 
+/* Floating "+" action button for the workspace canvas — reuses the
+   dropzone's own hidden file input rather than duplicating file-picking
+   logic, so adding via the FAB behaves identically to using the dropzone
+   (same accept filter, same onFiles handler, same multi-file support). */
+function addWorkspaceFab(main, dropzoneEl){
+  const fab=document.createElement('button'); fab.type='button'; fab.className='tool-fab';
+  fab.setAttribute('aria-label','Add files'); fab.textContent='+';
+  fab.onclick = ()=>dropzoneEl.querySelector('input[type=file]').click();
+  main.appendChild(fab);
+  return fab;
+}
+
 /* ================= TOOL DEFINITIONS ================= */
 
 function toolMergePDF(){
   const { main, sidebar } = panelShellSplit({title:'Merge PDF', desc:'Combine multiple PDFs into one, in the order you add them.'});
   let files=[];
-  buildDropzone(main, {multiple:true, accept:'application/pdf', onFiles:(f)=>{files=files.concat(f.filter(x=>x.type==='application/pdf'||x.name.endsWith('.pdf')));renderList();}});
+  const dz = buildDropzone(main, {multiple:true, accept:'application/pdf', onFiles:(f)=>{files=files.concat(f.filter(x=>x.type==='application/pdf'||x.name.endsWith('.pdf')));renderList();}});
+  addWorkspaceFab(main, dz);
   const list=document.createElement('div'); list.className='filelist'; main.appendChild(list);
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Merge & download'; sidebar.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
