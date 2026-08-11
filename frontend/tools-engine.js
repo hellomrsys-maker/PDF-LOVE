@@ -582,8 +582,8 @@ function toolCompressImage(){
 }
 
 function toolResizeImage(){
-  const body = panelShell({title:'Resize Image', desc:'Resize by pixels, or by real-world units (cm/mm/inch) at a given print resolution.'});
-  let file=null, naturalW=0, naturalH=0;
+  const body = panelShell({title:'Resize Image', desc:'Make an image bigger or smaller — exact pixels, a percent, or a real-world print size.'});
+  let file=null, naturalW=0, naturalH=0, mode='px', pct=50, dpi=300;
   buildDropzone(body, {multiple:false, accept:'image/*', onFiles: async (f)=>{
     file=f[0];
     const bitmap = await createImageBitmap(f[0]);
@@ -591,40 +591,105 @@ function toolResizeImage(){
     info.textContent = `${file.name} — ${fmtBytes(file.size)} — original ${naturalW}×${naturalH}px`;
     document.getElementById('rw').value = naturalW;
     document.getElementById('rh').value = naturalH;
+    updatePercentPreview();
   }});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
 
+  const tabRow=document.createElement('div'); tabRow.className='tab-row';
+  tabRow.innerHTML = `
+    <button type="button" class="tab-btn active" data-mode="px"><span class="tab-title">Exact size</span><span class="tab-sub">Type width &amp; height</span></button>
+    <button type="button" class="tab-btn" data-mode="percent"><span class="tab-title">Scale by percent</span><span class="tab-sub">e.g. "half size"</span></button>
+    <button type="button" class="tab-btn" data-mode="print"><span class="tab-title">Print size</span><span class="tab-sub">Inches / cm / mm</span></button>
+  `;
+  body.appendChild(tabRow);
+
+  const pxWrap=document.createElement('div');
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=`
+    <div class="field"><label>Width (px)</label><input type="number" id="rw" value="800"></div>
+    <div class="field"><label>Height (px)</label><input type="number" id="rh" value="600"></div>
+  `;
+  pxWrap.appendChild(row);
+  const lockField=document.createElement('label'); lockField.style.cssText='display:flex;gap:6px;align-items:center;font-size:0.85rem;margin:8px 0;';
+  lockField.innerHTML = `<input type="checkbox" id="rz-lock" checked> Lock aspect ratio`;
+  pxWrap.appendChild(lockField);
+  body.appendChild(pxWrap);
+
+  const percentWrap=document.createElement('div'); percentWrap.style.display='none';
+  const percentPresets=document.createElement('div'); percentPresets.className='tab-row';
+  percentPresets.innerHTML = ['25','50','75','100'].map(p=>`<button type="button" class="tab-btn${p==='50'?' active':''}" data-pct="${p}"><span class="tab-title">${p}%</span></button>`).join('');
+  percentWrap.appendChild(percentPresets);
+  const percentField=document.createElement('div'); percentField.className='field';
+  percentField.innerHTML = `<label>Or type a custom percent</label><input type="number" id="rz-pct" value="50" min="1" max="500">`;
+  percentWrap.appendChild(percentField);
+  const percentPreview=document.createElement('div'); percentPreview.className='helper-line'; percentPreview.id='rz-percent-preview'; percentWrap.appendChild(percentPreview);
+  body.appendChild(percentWrap);
+
+  const printWrap=document.createElement('div'); printWrap.style.display='none';
   const unitField=document.createElement('div'); unitField.className='field';
   unitField.innerHTML = `<label>Unit</label>
     <select id="rz-unit" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
-      <option value="px" selected>Pixels</option>
-      <option value="in">Inches</option>
+      <option value="in" selected>Inches</option>
       <option value="cm">Centimeters</option>
       <option value="mm">Millimeters</option>
     </select>`;
-  body.appendChild(unitField);
-
-  const dpiField=document.createElement('div'); dpiField.className='field'; dpiField.id='rz-dpi-field'; dpiField.style.display='none';
-  dpiField.innerHTML = `<label>Resolution (DPI)</label><input type="number" id="rz-dpi" value="300">`;
-  body.appendChild(dpiField);
-
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML=`
-    <div class="field"><label>Width</label><input type="number" id="rw" value="800"></div>
-    <div class="field"><label>Height</label><input type="number" id="rh" value="600"></div>
+  printWrap.appendChild(unitField);
+  const printRow=document.createElement('div'); printRow.className='row';
+  printRow.innerHTML=`
+    <div class="field"><label>Width</label><input type="number" id="rpw" value="4" step="any"></div>
+    <div class="field"><label>Height</label><input type="number" id="rph" value="6" step="any"></div>
   `;
-  body.appendChild(row);
-  const lockField=document.createElement('label'); lockField.style.cssText='display:flex;gap:6px;align-items:center;font-size:0.85rem;margin:8px 0;';
-  lockField.innerHTML = `<input type="checkbox" id="rz-lock" checked> Lock aspect ratio`;
-  body.appendChild(lockField);
+  printWrap.appendChild(printRow);
+  const dpiLabel=document.createElement('div'); dpiLabel.className='helper-line'; dpiLabel.style.fontWeight='600'; dpiLabel.textContent='Print quality'; printWrap.appendChild(dpiLabel);
+  const dpiRow=document.createElement('div'); dpiRow.className='tab-row';
+  dpiRow.innerHTML = `
+    <button type="button" class="tab-btn" data-dpi="150"><span class="tab-title">Draft</span><span class="tab-sub">good enough to check layout</span></button>
+    <button type="button" class="tab-btn active" data-dpi="300"><span class="tab-title">Standard</span><span class="tab-sub">sharp for photos &amp; documents</span></button>
+    <button type="button" class="tab-btn" data-dpi="600"><span class="tab-title">High quality</span><span class="tab-sub">large posters, fine detail</span></button>
+  `;
+  printWrap.appendChild(dpiRow);
+  const printPreview=document.createElement('div'); printPreview.className='helper-line'; printPreview.id='rz-print-preview'; printWrap.appendChild(printPreview);
+  body.appendChild(printWrap);
 
-  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Resize & download'; body.appendChild(btn);
-  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
+  function updatePercentPreview(){
+    percentPreview.textContent = naturalW ? `→ ${Math.round(naturalW*pct/100)}×${Math.round(naturalH*pct/100)}px` : '';
+  }
+  function updatePrintPreview(){
+    const unit = document.getElementById('rz-unit').value;
+    const w = parseFloat(document.getElementById('rpw').value)||0;
+    const h = parseFloat(document.getElementById('rph').value)||0;
+    const toInches = unit==='in' ? 1 : unit==='cm' ? 1/2.54 : 1/25.4;
+    printPreview.textContent = `→ ${Math.round(w*toInches*dpi)}×${Math.round(h*toInches*dpi)}px`;
+  }
 
-  body.addEventListener('change', e=>{
-    if(e.target.id==='rz-unit'){
-      dpiField.style.display = e.target.value==='px' ? 'none' : 'block';
-    }
+  tabRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick = ()=>{
+      tabRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      mode = b.dataset.mode;
+      pxWrap.style.display = mode==='px' ? 'block' : 'none';
+      percentWrap.style.display = mode==='percent' ? 'block' : 'none';
+      printWrap.style.display = mode==='print' ? 'block' : 'none';
+      if(mode==='percent') updatePercentPreview();
+      if(mode==='print') updatePrintPreview();
+    };
+  });
+  percentPresets.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick=()=>{
+      percentPresets.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      pct = parseFloat(b.dataset.pct);
+      document.getElementById('rz-pct').value = pct;
+      updatePercentPreview();
+    };
+  });
+  dpiRow.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick=()=>{
+      dpiRow.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      dpi = parseInt(b.dataset.dpi);
+      updatePrintPreview();
+    };
   });
   body.addEventListener('input', e=>{
     if(e.target.id==='rw' && document.getElementById('rz-lock').checked && naturalW){
@@ -633,19 +698,32 @@ function toolResizeImage(){
     if(e.target.id==='rh' && document.getElementById('rz-lock').checked && naturalH){
       document.getElementById('rw').value = Math.round(parseFloat(e.target.value||0) * (naturalW/naturalH));
     }
+    if(e.target.id==='rz-pct'){
+      pct = parseFloat(e.target.value)||100;
+      percentPresets.querySelectorAll('.tab-btn').forEach(x=>x.classList.toggle('active', parseFloat(x.dataset.pct)===pct));
+      updatePercentPreview();
+    }
+    if(e.target.id==='rpw' || e.target.id==='rph') updatePrintPreview();
   });
+  body.addEventListener('change', e=>{ if(e.target.id==='rz-unit') updatePrintPreview(); });
+
+  const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Resize & download'; body.appendChild(btn);
+  const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
   btn.onclick = async ()=>{
     if(!file){log.textContent='Choose an image first.';return;}
-    const unit = document.getElementById('rz-unit').value;
-    const dpi = parseInt(document.getElementById('rz-dpi').value)||300;
-    let w = parseFloat(document.getElementById('rw').value);
-    let h = parseFloat(document.getElementById('rh').value);
-    if(unit!=='px'){
+    let w, h;
+    if(mode==='px'){
+      w = Math.round(parseFloat(document.getElementById('rw').value)||naturalW);
+      h = Math.round(parseFloat(document.getElementById('rh').value)||naturalH);
+    } else if(mode==='percent'){
+      w = Math.round(naturalW*pct/100); h = Math.round(naturalH*pct/100);
+    } else {
+      const unit = document.getElementById('rz-unit').value;
       const toInches = unit==='in' ? 1 : unit==='cm' ? 1/2.54 : 1/25.4;
-      w = Math.round(w * toInches * dpi);
-      h = Math.round(h * toInches * dpi);
-    } else { w = Math.round(w); h = Math.round(h); }
+      w = Math.round((parseFloat(document.getElementById('rpw').value)||0) * toInches * dpi);
+      h = Math.round((parseFloat(document.getElementById('rph').value)||0) * toInches * dpi);
+    }
     log.textContent = `Resizing to ${w}×${h}px on-device...`;
     const bitmap = await createImageBitmap(file);
     const canvas = document.createElement('canvas');
@@ -3196,12 +3274,19 @@ function toolAddWatermark(){
   const field=document.createElement('div'); field.className='field';
   field.innerHTML=`<label>Watermark text</label><input type="text" id="wm-text" value="CONFIDENTIAL">`;
   body.appendChild(field);
-  const row=document.createElement('div'); row.className='row';
-  row.innerHTML=`
-    <div class="field"><label>Font size</label><input type="number" id="wm-size" value="48"></div>
-    <div class="field"><label>Opacity (0-1)</label><input type="number" id="wm-op" value="0.25" step="0.05"></div>
-  `;
-  body.appendChild(row);
+  const field2=document.createElement('div'); field2.className='field';
+  field2.innerHTML = `<label>Text size</label>
+    <select id="wm-size" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:7px;background:var(--paper);font-family:inherit;">
+      <option value="28">Small</option>
+      <option value="48" selected>Medium</option>
+      <option value="72">Large</option>
+    </select>`;
+  body.appendChild(field2);
+  const opField=document.createElement('div'); opField.className='field';
+  opField.innerHTML = `<label>How visible? <span id="wm-op-val">25</span>%</label><input type="range" id="wm-op" min="5" max="100" value="25">
+    <div class="helper-line">Lower = more see-through, so it doesn't hide the page underneath. Higher = bolder and harder to miss.</div>`;
+  body.appendChild(opField);
+  body.addEventListener('input', e=>{ if(e.target.id==='wm-op') document.getElementById('wm-op-val').textContent = e.target.value; });
   const btn=document.createElement('button'); btn.className='primary-btn'; btn.textContent='Add watermark & download'; body.appendChild(btn);
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
   btn.onclick = async ()=>{
@@ -3212,7 +3297,7 @@ function toolAddWatermark(){
     const font = await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);
     const text = document.getElementById('wm-text').value || 'CONFIDENTIAL';
     const size = parseInt(document.getElementById('wm-size').value)||48;
-    const op = parseFloat(document.getElementById('wm-op').value)||0.25;
+    const op = (parseFloat(document.getElementById('wm-op').value)||25)/100;
     doc.getPages().forEach(p=>{
       const { width, height } = p.getSize();
       p.drawText(text, {
