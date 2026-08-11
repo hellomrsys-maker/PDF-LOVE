@@ -1180,6 +1180,25 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   }
   .big-input-row select:focus { outline: none; }
   .helper-line { font-size: 0.82rem; color: var(--ink-soft); margin: 4px 0 14px; }
+  /* Fixed bottom quick-nav — Home / PDF Edit / AI Kit, always reachable
+     regardless of scroll position, on every screen (home, hub, or a tool
+     page). Desktop/website only; mobile has its own bottom nav. */
+  .floating-nav {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+    z-index: 500; display: flex; gap: 4px; padding: 6px;
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border, rgba(0,0,0,0.08)); border-radius: 100px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+  }
+  .floating-nav-btn {
+    display: flex; align-items: center; gap: 7px; border: none; background: transparent;
+    font-family: inherit; font-weight: 600; font-size: 0.86rem; color: var(--ink-soft, #555);
+    padding: 10px 18px; border-radius: 100px; cursor: pointer; transition: all 0.15s ease; white-space: nowrap;
+  }
+  .floating-nav-btn:hover { background: rgba(0,0,0,0.05); color: var(--ink, #222); }
+  .floating-nav-btn.active { background: var(--copper, #E5322D); color: #fff; }
+  .floating-nav-btn .fn-ico { font-size: 1rem; }
+  @media (max-width: 720px) { .floating-nav { display: none; } }
   /* PDF Edits / PDF AI Kit hub pages — a curated landing page per job-to-
      be-done, distinct from the flat "All tools" grid. Reuses .hero/
      .category-filters/.tools/.tool-card so it matches the homepage exactly;
@@ -1693,6 +1712,12 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   <div id="tool-page"></div>
 </div>
 
+<nav class="floating-nav" id="floating-nav" aria-label="Quick navigation">
+  <button type="button" class="floating-nav-btn" data-floating="home"><span class="fn-ico">🏠</span>Home</button>
+  <button type="button" class="floating-nav-btn" data-floating="edit"><span class="fn-ico">✏️</span>PDF Edit</button>
+  <button type="button" class="floating-nav-btn" data-floating="ai"><span class="fn-ico">🤖</span>AI Kit</button>
+</nav>
+
 <script>
 window.addEventListener('DOMContentLoaded', function(){
 const { PDFDocument, degrees } = PDFLib;
@@ -1909,9 +1934,11 @@ function showHome({push=true}={}){
   if(push){
     const u = new URL(location.href);
     u.searchParams.delete('tool');
+    u.searchParams.delete('hub');
     history.pushState({view:'home'}, '', u);
   }
   window.scrollTo({top:0, behavior:'auto'});
+  updateFloatingNav('home');
 }
 function closePanel(){
   // Prefer real Back so the history stack stays honest; fall back to a
@@ -1920,6 +1947,22 @@ function closePanel(){
   else showHome();
 }
 window.closePanel = closePanel; // called from inline onclick="" in generated markup
+
+// Fixed bottom quick-nav (Home / PDF Edit / AI Kit) — stays in sync with
+// whichever of the three it currently matches; a plain tool page matches
+// none of them, so all three go unhighlighted rather than showing a wrong one.
+function updateFloatingNav(active){
+  document.querySelectorAll('.floating-nav-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.floating===active);
+  });
+}
+document.querySelectorAll('.floating-nav-btn').forEach(b=>{
+  b.onclick = ()=>{
+    const kind = b.dataset.floating;
+    if(kind==='home') showHome();
+    else renderHub(kind);
+  };
+});
 
 function fmtBytes(b){
   if(b<1024) return b+' B';
@@ -9163,10 +9206,12 @@ function openTool(t, {push=true}={}){
   if(push){
     const u = new URL(location.href);
     u.searchParams.set('tool', t.name);
+    u.searchParams.delete('hub');
     u.searchParams.delete('ask');
     history.pushState({view:'tool', name:t.name}, '', u);
   }
   t.fn();   // every tool calls panelShell(), which swaps the view in
+  updateFloatingNav(null);
 }
 
 // Back/forward move between the grid and a tool, and a ?tool= URL opens
@@ -9298,6 +9343,7 @@ function renderHub(kind, {push=true}={}){
     history.pushState({view:'hub', kind}, '', u);
   }
   window.scrollTo({top:0, behavior:'auto'});
+  updateFloatingNav(kind);
 
   const crumb=document.createElement('nav'); crumb.className='tool-crumb container';
   crumb.innerHTML=`<button class="crumb-back" type="button">← All tools</button>`;
@@ -9537,6 +9583,7 @@ document.getElementById('no-results-ask').onclick = ()=>{
     return;
   }
   history.replaceState({view:'home'}, '', location.href);
+  updateFloatingNav('home');
   const q = params.get('ask');
   if(q && q.trim()) toolAskDockbench(q.trim());
 })();
