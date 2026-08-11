@@ -4508,6 +4508,9 @@ function toolVideoToGIF(){
     file=f[0];
     try{
       video = await loadVideoFile(file);
+      video.controls = true; video.muted = false;
+      video.style.cssText='max-width:100%;border-radius:8px;margin:8px 0;';
+      previewWrap.innerHTML=''; previewWrap.appendChild(video);
       info.textContent = `${file.name} — ${video.duration.toFixed(1)}s, ${video.videoWidth}×${video.videoHeight}`;
       document.getElementById('vg-end').value = Math.min(3, video.duration).toFixed(1);
       document.getElementById('vg-end').max = video.duration;
@@ -4515,6 +4518,8 @@ function toolVideoToGIF(){
     }catch(e){ file=null; log.textContent=e.message; }
   }});
   const info=document.createElement('div'); info.style.margin='10px 0'; info.style.fontSize='0.85rem'; body.appendChild(info);
+  const previewWrap=document.createElement('div'); body.appendChild(previewWrap);
+  const scrubHint=document.createElement('div'); scrubHint.className='helper-line'; scrubHint.textContent='Play or drag the video above to find your moment, then type the seconds you see below.'; body.appendChild(scrubHint);
   const row=document.createElement('div'); row.className='row';
   row.innerHTML = `
     <div class="field"><label>Start at (seconds)</label><input type="number" id="vg-start" value="0" min="0" step="0.1"></div>
