@@ -756,16 +756,8 @@ body[data-theme="dark"] {
       <div class="banner-subtitle">Everything runs on this device — nothing is ever uploaded.</div>
     </div>
 
-    <div class="section-title">Browse by what you need</div>
-    <div class="tools-grid">
-      <div class="tool-card" onclick="openToolDetail('PDF Edits', renderEditHub)">
-        <div class="tool-icon">✏️</div>
-        <div class="tool-name">PDF Edits</div>
-      </div>
-      <div class="tool-card" onclick="openToolDetail('PDF AI Kit', renderAIKitHub)">
-        <div class="tool-icon">🤖</div>
-        <div class="tool-name">PDF AI Kit</div>
-      </div>
+    <div class="settings-item" onclick="switchPage('tools')" style="margin-bottom: 16px;">
+      <div class="settings-label">🗂️ Browse all 89 tools</div>
     </div>
 
     <div class="section-title">Popular tools</div>
@@ -989,9 +981,13 @@ body[data-theme="dark"] {
     <div class="nav-icon">📁</div>
     <div>Files</div>
   </div>
-  <div class="nav-item" data-nav="tools" onclick="switchPage('tools')">
-    <div class="nav-icon">🔧</div>
-    <div>Tools</div>
+  <div class="nav-item" data-nav="edit" onclick="openHubNav('edit')">
+    <div class="nav-icon">✏️</div>
+    <div>Edit</div>
+  </div>
+  <div class="nav-item" data-nav="aikit" onclick="openHubNav('ai')">
+    <div class="nav-icon">🤖</div>
+    <div>AI Kit</div>
   </div>
   <div class="nav-item" data-nav="scanner" onclick="switchPage('scanner')">
     <div class="nav-icon">📸</div>
@@ -1071,6 +1067,23 @@ function openToolDetail(title, renderFn){
 }
 function closeToolDetail(){
   document.getElementById('tool-detail').classList.remove('active');
+  // A hub opened from the bottom nav (openHubNav) highlights its own
+  // nav-item without changing which content-section is behind it, so on
+  // close, restore highlighting to whatever page is actually showing —
+  // otherwise "Edit"/"AI Kit" would stay lit after backing out to Home.
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const shownPage = document.querySelector('.content-section.active');
+  if(shownPage){
+    const navItem = document.querySelector(`.nav-item[data-nav="${shownPage.dataset.page}"]`);
+    if(navItem) navItem.classList.add('active');
+  }
+}
+function openHubNav(kind){
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navItem = document.querySelector(`.nav-item[data-nav="${kind==='edit'?'edit':'aikit'}"]`);
+  if(navItem) navItem.classList.add('active');
+  if(kind==='edit') openToolDetail('PDF Edits', renderEditHub);
+  else openToolDetail('PDF AI Kit', renderAIKitHub);
 }
 
 /* ================= PDF Edits / PDF AI Kit hubs (mobile) =================
