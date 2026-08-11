@@ -9370,7 +9370,8 @@ function renderHub(kind, {push=true}={}){
       choices.querySelectorAll('.tab-btn').forEach(b=>{
         b.onclick = ()=>{
           const singlePageOnly = b.dataset.mode==='first';
-          openTool({name:'PDF Editor', fn:()=>toolPDFEditor({singlePageOnly, initialFile:droppedFile})});
+          const pdfEditorTool = hubPick(editTools, ['PDF Editor'])[0];
+          openTool({...pdfEditorTool, fn:()=>toolPDFEditor({singlePageOnly, initialFile:droppedFile})});
         };
       });
     }});
