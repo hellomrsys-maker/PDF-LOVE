@@ -756,6 +756,18 @@ body[data-theme="dark"] {
       <div class="banner-subtitle">Everything runs on this device — nothing is ever uploaded.</div>
     </div>
 
+    <div class="section-title">Browse by what you need</div>
+    <div class="tools-grid">
+      <div class="tool-card" onclick="openToolDetail('PDF Edits', renderEditHub)">
+        <div class="tool-icon">✏️</div>
+        <div class="tool-name">PDF Edits</div>
+      </div>
+      <div class="tool-card" onclick="openToolDetail('PDF AI Kit', renderAIKitHub)">
+        <div class="tool-icon">🤖</div>
+        <div class="tool-name">PDF AI Kit</div>
+      </div>
+    </div>
+
     <div class="section-title">Popular tools</div>
     <div class="tools-grid">
       <div class="tool-card" onclick="toolMergePDF()">
@@ -1059,6 +1071,120 @@ function openToolDetail(title, renderFn){
 }
 function closeToolDetail(){
   document.getElementById('tool-detail').classList.remove('active');
+}
+
+/* ================= PDF Edits / PDF AI Kit hubs (mobile) =================
+   Curated landing screens for the two broadest jobs-to-be-done, opened via
+   openToolDetail() like any other tool. Every card calls the exact same
+   tool function already used elsewhere on this page — this only changes
+   how they're grouped and presented. Kept in sync with the equivalent
+   desktop hub in index.html (same tab grouping, same tool set). */
+function hubToolGrid(container, items){
+  container.innerHTML='';
+  container.className='tools-grid';
+  items.forEach(it=>{
+    const card=document.createElement('div'); card.className='tool-card';
+    card.innerHTML = `<div class="tool-icon">${it.icon}</div><div class="tool-name">${it.name}</div>`;
+    card.onclick = it.action;
+    container.appendChild(card);
+  });
+}
+function hubTabs(body, tabs){
+  const tabRow=document.createElement('div'); tabRow.className='tab-row'; tabRow.style.flexWrap='wrap';
+  tabRow.innerHTML = tabs.map((t,i)=>`<button type="button" class="tab-btn${i===0?' active':''}" data-tab="${t.id}" style="flex:1 1 45%;"><span class="tab-title">${t.label}</span></button>`).join('');
+  body.appendChild(tabRow);
+  const grid=document.createElement('div'); body.appendChild(grid);
+  function show(id){
+    tabRow.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===id));
+    hubToolGrid(grid, (tabs.find(t=>t.id===id) || tabs[0]).items);
+  }
+  tabRow.querySelectorAll('.tab-btn').forEach(b=>{ b.onclick=()=>show(b.dataset.tab); });
+  show(tabs[0].id);
+}
+
+function renderEditHub(body){
+  const desc=document.createElement('div'); desc.className='note';
+  desc.textContent = "Everything for changing what's on the page — mark it up, reorder it, sign it, lock it down.";
+  body.appendChild(desc);
+
+  const qs=document.createElement('div'); qs.className='home-banner';
+  qs.innerHTML = `<div class="banner-title" style="font-size:16px;">Just want to start editing?</div><div class="banner-subtitle">Drop a PDF and jump straight in.</div>`;
+  body.appendChild(qs);
+  const choices=document.createElement('div'); choices.style.cssText='display:none;gap:10px;margin:0 0 20px;';
+  choices.innerHTML = `
+    <button type="button" class="tab-btn" data-mode="whole" style="flex:1;"><span class="tab-title">Whole document</span></button>
+    <button type="button" class="tab-btn" data-mode="first" style="flex:1;"><span class="tab-title">Just page 1</span></button>
+  `;
+  body.appendChild(choices);
+  buildDropzone(qs, {multiple:false, accept:'application/pdf', onFiles:(f)=>{
+    const droppedFile = f[0];
+    choices.style.display='flex';
+    choices.querySelectorAll('.tab-btn').forEach(b=>{
+      b.onclick = ()=>{
+        const singlePageOnly = b.dataset.mode==='first';
+        toolPDFEditor({singlePageOnly, initialFile:droppedFile});
+      };
+    });
+  }});
+
+  hubTabs(body, [
+    {id:'mark', label:'Mark & Annotate', items:[
+      {icon:'✎', name:'PDF Editor', action:()=>toolPDFEditor()},
+      {icon:'🖍️', name:'Highlight Text', action:toolHighlightPDF},
+      {icon:'💧', name:'Add Watermark', action:toolAddWatermark},
+      {icon:'🔖', name:'Digital Stamp', action:toolDigitalStamp},
+      {icon:'▦', name:'Header & Footer', action:toolHeaderFooter},
+      {icon:'№', name:'Page Numbering', action:toolBatesNumbering},
+    ]},
+    {id:'organize', label:'Organize Pages', items:[
+      {icon:'🗂️', name:'Organize PDF', action:toolOrganizePDF},
+      {icon:'↻', name:'Rotate PDF', action:toolRotatePDF},
+      {icon:'⎘', name:'Insert / Replace Page', action:toolInsertReplacePage},
+      {icon:'⊞', name:'Multiple Pages / Sheet', action:toolNUp},
+      {icon:'⧉', name:'Crop PDF', action:toolCropPDF},
+    ]},
+    {id:'sign', label:'Sign & Secure', items:[
+      {icon:'✒️', name:'Sign PDF', action:toolSignPDF},
+      {icon:'Ab', name:'PDF Forms', action:toolPDFForms},
+      {icon:'▢', name:'Redact / Remove Watermark', action:toolRedact},
+      {icon:'🔍', name:'Search & Redact', action:toolSearchRedact},
+    ]},
+    {id:'finish', label:'Finishing Touches', items:[
+      {icon:'🖨️', name:'Print & Screen Mode', action:()=>openToolDetail('PDF Edit — Print & Screen', renderPDFEditPrintScreen)},
+      {icon:'▭', name:'Flatten PDF', action:toolFlattenPDF},
+      {icon:'🧼', name:'Sanitize PDF', action:toolSanitizePDF},
+      {icon:'◐', name:'Grayscale PDF', action:toolGrayscalePDF},
+      {icon:'ⓘ', name:'Edit Metadata', action:toolEditMetadata},
+    ]},
+  ]);
+}
+
+function renderAIKitHub(body){
+  const desc=document.createElement('div'); desc.className='note';
+  desc.textContent = 'AI that runs on your own device — summarize, translate, and generate real documents from a few details.';
+  body.appendChild(desc);
+
+  hubTabs(body, [
+    {id:'ai', label:'AI', items:[
+      {icon:'🧠', name:'AI Summarize', action:toolAISummarizeLocal},
+      {icon:'🌐', name:'Translate Text', action:toolAITranslateLocal},
+      {icon:'🎙️', name:'Voice to Text', action:toolVoiceToText},
+      {icon:'🖼️', name:'Describe a Photo', action:toolImageCaptioner},
+      {icon:'📊', name:'My Activity', action:()=>openToolDetail('My Activity', renderMyActivity)},
+    ]},
+    {id:'resume', label:'Resume & Cover', items:[
+      {icon:'📄', name:'AI Resume Builder', action:()=>openToolDetail('AI Resume Builder (ATS)', renderResumeATS)},
+      {icon:'✉️', name:'AI Cover Letter', action:()=>openToolDetail('AI Cover Letter', renderCoverLetter)},
+    ]},
+    {id:'invoice', label:'Invoice', items:[
+      {icon:'🧾', name:'Invoice Generator', action:toolInvoiceGenerator},
+    ]},
+    {id:'notice', label:'Notice & More', items:[
+      {icon:'📋', name:'Notice Generator', action:()=>openToolDetail('Notice & Letter Generator', renderNoticeGenerator)},
+      {icon:'📚', name:'Batch Document Generator', action:()=>openToolDetail('Batch Document Generator', renderBatchDocGenerator)},
+      {icon:'🏅', name:'Certificate / Award Maker', action:toolCertificateGenerator},
+    ]},
+  ]);
 }
 
 /* Desktop-compatible panelShell()/buildDropzone() — the ~76 shared tool

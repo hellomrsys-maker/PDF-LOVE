@@ -1180,6 +1180,19 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
   }
   .big-input-row select:focus { outline: none; }
   .helper-line { font-size: 0.82rem; color: var(--ink-soft); margin: 4px 0 14px; }
+  /* PDF Edits / PDF AI Kit hub pages — a curated landing page per job-to-
+     be-done, distinct from the flat "All tools" grid. Reuses .hero/
+     .category-filters/.tools/.tool-card so it matches the homepage exactly;
+     only the quickstart block below is new. */
+  .hub-quickstart {
+    max-width: 640px; margin: -8px auto 36px; padding: 22px 24px; border-radius: 16px;
+    background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border); text-align: center;
+  }
+  .hub-quickstart h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .hub-quickstart p { margin: 0 0 14px; font-size: 0.88rem; color: var(--ink-soft); }
+  .hub-quickstart-choices { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .hub-quickstart-choices .tab-btn { flex: 1; min-width: 220px; }
   .ad-slot { min-height: 0; overflow: hidden; }
   .ad-slot:empty { display: none; }
   .assist-hero { display: flex; gap: 8px; margin: 0 0 28px; max-width: 56ch; }
@@ -1337,6 +1350,8 @@ if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
         <button class="nav-link" data-jump="Merge PDF">MERGE PDF</button>
         <button class="nav-link" data-jump="Split PDF">SPLIT PDF</button>
         <button class="nav-link" data-jump="Make PDF Smaller">COMPRESS PDF</button>
+        <button class="nav-link" data-hub="edit">PDF EDITS</button>
+        <button class="nav-link" data-hub="ai">PDF AI KIT</button>
         <div class="navdrop">
           <button class="nav-link navlink" data-drop="convert" aria-expanded="false">CONVERT PDF <span class="chevron">⌄</span></button>
           <div class="dropdown-panel dropdown-convert" id="dropdown-convert">
@@ -6912,8 +6927,10 @@ async function renderPdfPageToCanvas(pdf, pageNum, scale){
   return { canvas, viewport, page };
 }
 
-function toolPDFEditor(){
-  const { main, sidebar } = panelShellSplit({title:'PDF Editor', desc:'Click anywhere on a page to drop a text box, then save. Good for filling forms, adding notes, or labeling scans.'});
+function toolPDFEditor({singlePageOnly=false, initialFile=null}={}){
+  const { main, sidebar } = panelShellSplit(singlePageOnly
+    ? {title:'PDF Editor — First Page', desc:'Click anywhere on page 1 to drop a text box, then save. For the rest of the document, use "Edit the whole document" instead.'}
+    : {title:'PDF Editor', desc:'Click anywhere on a page to drop a text box, then save. Good for filling forms, adding notes, or labeling scans.'});
   let file=null, pdfjsDoc=null, pageNum=1, scale=1.3;
   let annotations = []; // {page, xRatio, yRatio, text, size}
   let undoStack = [];
@@ -6922,14 +6939,16 @@ function toolPDFEditor(){
   function pushUndo(){ undoStack.push(JSON.stringify(annotations)); if(undoStack.length>50) undoStack.shift(); }
   function undo(){ if(undoStack.length===0) return; annotations = JSON.parse(undoStack.pop()); renderList(); renderPage(); }
 
-  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  async function loadFile(f){
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     pageNum = 1; annotations = []; undoStack = [];
     buildControls();
     renderPage();
-  }});
+  }
+  buildDropzone(main, {multiple:false, accept:'application/pdf', onFiles: loadFile});
+  if(initialFile) loadFile([initialFile]);
 
   const controls=document.createElement('div'); controls.className='pill-row'; main.appendChild(controls);
   const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; main.appendChild(canvasWrap);
@@ -6939,14 +6958,18 @@ function toolPDFEditor(){
   const log=document.createElement('div'); log.className='runlog'; sidebar.appendChild(log);
 
   function buildControls(){
-    controls.innerHTML = `
-      <button class="small-btn" id="prevp">‹ prev</button>
+    controls.innerHTML = singlePageOnly
+      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem">page 1 of ${pdfjsDoc.numPages} — locked to page 1</span>
+         <button class="small-btn" id="undo-btn">↶ Undo</button>`
+      : `<button class="small-btn" id="prevp">‹ prev</button>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem">page ${pageNum} / ${pdfjsDoc.numPages}</span>
       <button class="small-btn" id="nextp">next ›</button>
       <button class="small-btn" id="undo-btn">↶ Undo</button>
     `;
-    document.getElementById('prevp').onclick = ()=>{ if(pageNum>1){pageNum--; renderPage();} };
-    document.getElementById('nextp').onclick = ()=>{ if(pageNum<pdfjsDoc.numPages){pageNum++; renderPage();} };
+    if(!singlePageOnly){
+      document.getElementById('prevp').onclick = ()=>{ if(pageNum>1){pageNum--; renderPage();} };
+      document.getElementById('nextp').onclick = ()=>{ if(pageNum<pdfjsDoc.numPages){pageNum++; renderPage();} };
+    }
     document.getElementById('undo-btn').onclick = undo;
     addRow.innerHTML = `
       <input type="text" id="anno-text" placeholder="Text to place..." style="flex:1;min-width:160px;">
@@ -9151,6 +9174,7 @@ function openTool(t, {push=true}={}){
 window.addEventListener('popstate', (e)=>{
   const st = e.state;
   if(st && st.view === 'tool' && toolIndex[st.name]) openTool(toolIndex[st.name].tool, {push:false});
+  else if(st && st.view === 'hub') renderHub(st.kind, {push:false});
   else showHome({push:false});
 });
 const CATEGORY_COLORS = {
@@ -9233,6 +9257,99 @@ const aiTools = [
   {icon:'🖼️', name:'Describe a Photo / Alt-Text (On Your Device)', desc:'AI vision model writes a description — great for accessibility.', fn:toolImageCaptioner},
 ];
 renderGrid('ai-tools', aiTools);
+
+/* ---------- PDF Edits / PDF AI Kit hub pages ----------
+   Curated landing pages for the two broadest jobs-to-be-done ("I need to
+   change this PDF" / "I need AI to help write or read something") — a
+   faster front door than scrolling the flat "All tools" grid. Every card
+   here is the exact same tool object already registered above; this only
+   changes how they're grouped and presented, so favorites/recents/search
+   all keep working unchanged. */
+function hubPick(arr, names){ return names.map(n=>arr.find(t=>t.name===n)).filter(Boolean); }
+const EDIT_HUB_TABS = [
+  {id:'mark', label:'Mark & Annotate', items: [...hubPick(editTools,['PDF Editor','Highlight Important Text','Add Watermark','Digital Stamp']), ...hubPick(pdfTools,['Add Header & Footer','Page Numbering & Document ID'])]},
+  {id:'organize', label:'Organize Pages', items: hubPick(pdfTools,['Organize PDF','Rotate PDF','Insert / Replace Page','Put Multiple Pages on One Sheet','Crop PDF'])},
+  {id:'sign', label:'Sign & Secure', items: [...hubPick(editTools,['Sign PDF','PDF Forms','Redact / Remove Watermark']), ...hubPick(pdfTools,['Search & Redact'])]},
+  {id:'finish', label:'Finishing Touches', items: [...hubPick(editTools,['PDF Edit — Print & Screen Mode']), ...hubPick(pdfTools,['Flatten PDF','Sanitize PDF','Grayscale PDF','Edit Metadata'])]},
+];
+const AI_HUB_TABS = [
+  {id:'ai', label:'AI', items: hubPick(aiTools,['AI Summarize (On Your Device)','Translate Text (On Your Device)','Voice to Text (On Your Device)','Describe a Photo / Alt-Text (On Your Device)','My Activity'])},
+  {id:'resume', label:'Resume & Cover', items: hubPick(aiTools,['AI Resume Builder (ATS)','AI Cover Letter Generator'])},
+  {id:'invoice', label:'Invoice', items: hubPick(imgTools,['Invoice Generator'])},
+  {id:'notice', label:'Notice & More', items: [...hubPick(aiTools,['Notice & Letter Generator','Batch Document Generator']), ...hubPick(imgTools,['Certificate / Award Maker'])]},
+];
+const HUB_CONFIG = {
+  edit: {title:'PDF Edits', subtitle:'Everything for changing what\'s on the page — mark it up, reorder it, sign it, lock it down.', tabs:EDIT_HUB_TABS, quickstart:true},
+  ai:   {title:'PDF AI Kit', subtitle:'AI that runs on your own device — summarize, translate, and generate real documents from a few details.', tabs:AI_HUB_TABS, quickstart:false},
+};
+function renderHub(kind, {push=true}={}){
+  const cfg = HUB_CONFIG[kind];
+  if(!cfg){ showHome(); return; }
+  currentToolName = null;
+  panel.innerHTML = '';
+  toolView.hidden = false;
+  homeView.hidden = true;
+  document.body.classList.add('on-tool');
+  document.title = cfg.title+' — '+BASE_TITLE;
+  if(push){
+    const u = new URL(location.href);
+    u.searchParams.delete('tool'); u.searchParams.delete('ask');
+    u.searchParams.set('hub', kind);
+    history.pushState({view:'hub', kind}, '', u);
+  }
+  window.scrollTo({top:0, behavior:'auto'});
+
+  const crumb=document.createElement('nav'); crumb.className='tool-crumb container';
+  crumb.innerHTML=`<button class="crumb-back" type="button">← All tools</button>`;
+  crumb.querySelector('.crumb-back').onclick = closePanel;
+  panel.appendChild(crumb);
+
+  const hero=document.createElement('div'); hero.className='hero';
+  hero.innerHTML = `<div class="container"><h1>${cfg.title}</h1><p class="hero-subtitle">${escapeXml(cfg.subtitle)}</p></div>`;
+  panel.appendChild(hero);
+
+  const container=document.createElement('div'); container.className='container'; panel.appendChild(container);
+
+  if(cfg.quickstart){
+    const qs=document.createElement('div'); qs.className='hub-quickstart';
+    qs.innerHTML = `<h3>Just want to start editing?</h3><p>Drop a PDF and jump straight in — no need to hunt for the right tool below.</p>`;
+    const choices=document.createElement('div'); choices.className='hub-quickstart-choices'; choices.style.display='none';
+    choices.innerHTML = `
+      <button type="button" class="tab-btn" data-mode="whole"><span class="tab-title">Edit the whole document</span><span class="tab-sub">Browse every page, normal editing</span></button>
+      <button type="button" class="tab-btn" data-mode="first"><span class="tab-title">Just fix the first page</span><span class="tab-sub">Simpler view, locked to page 1</span></button>
+    `;
+    buildDropzone(qs, {multiple:false, accept:'application/pdf', onFiles:(f)=>{
+      const droppedFile = f[0];
+      choices.style.display='flex';
+      choices.querySelectorAll('.tab-btn').forEach(b=>{
+        b.onclick = ()=>{
+          const singlePageOnly = b.dataset.mode==='first';
+          openTool({name:'PDF Editor', fn:()=>toolPDFEditor({singlePageOnly, initialFile:droppedFile})});
+        };
+      });
+    }});
+    qs.appendChild(choices);
+    container.appendChild(qs);
+  }
+
+  const subnav=document.createElement('div'); subnav.className='category-filters'; container.appendChild(subnav);
+  const grid=document.createElement('div'); grid.className='tools'; grid.style.marginTop='18px'; container.appendChild(grid);
+
+  function showTab(tabId){
+    subnav.querySelectorAll('.cat-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabId));
+    const tab = cfg.tabs.find(t=>t.id===tabId) || cfg.tabs[0];
+    grid.replaceChildren(...tab.items.map(t=>makeCard(t, kind==='edit'?'edit-tools':'ai-tools')));
+  }
+  cfg.tabs.forEach((t,i)=>{
+    const b=document.createElement('button'); b.className='cat-tab'+(i===0?' active':''); b.dataset.tab=t.id; b.textContent=t.label;
+    b.onclick = ()=>showTab(t.id);
+    subnav.appendChild(b);
+  });
+  showTab(cfg.tabs[0].id);
+}
+document.querySelectorAll('[data-hub]').forEach(el=>{
+  el.addEventListener('click', ()=>{ closeAllDropdowns(); renderHub(el.dataset.hub); });
+});
 
 /* ---------- navigation: category tabs, home rows, search ---------- */
 const CATEGORIES = [
@@ -9403,13 +9520,20 @@ document.getElementById('no-results-ask').onclick = ()=>{
   toolAskDockbench(q);
 };
 // Deep links, evaluated once on load: ?tool=<name> opens that tool's page,
-// ?ask=<question> opens the assistant. ?tool= wins if somehow both appear.
+// ?hub=edit|ai opens a hub landing page, ?ask=<question> opens the
+// assistant. ?tool= wins if somehow more than one appears.
 (function openFromQueryParam(){
   const params = new URLSearchParams(location.search);
   const toolName = params.get('tool');
   if(toolName && toolIndex[toolName]){
     history.replaceState({view:'tool', name:toolName}, '', location.href);
     openTool(toolIndex[toolName].tool, {push:false});
+    return;
+  }
+  const hub = params.get('hub');
+  if(hub && HUB_CONFIG[hub]){
+    history.replaceState({view:'hub', kind:hub}, '', location.href);
+    renderHub(hub, {push:false});
     return;
   }
   history.replaceState({view:'home'}, '', location.href);

@@ -3155,8 +3155,10 @@ async function renderPdfPageToCanvas(pdf, pageNum, scale){
   return { canvas, viewport, page };
 }
 
-function toolPDFEditor(){
-  const body = panelShell({title:'PDF Editor', desc:'Click anywhere on a page to drop a text box, then save. Good for filling forms, adding notes, or labeling scans.'});
+function toolPDFEditor({singlePageOnly=false, initialFile=null}={}){
+  const body = panelShell(singlePageOnly
+    ? {title:'PDF Editor — First Page', desc:'Click anywhere on page 1 to drop a text box, then save. For the rest of the document, use "Edit the whole document" instead.'}
+    : {title:'PDF Editor', desc:'Click anywhere on a page to drop a text box, then save. Good for filling forms, adding notes, or labeling scans.'});
   let file=null, pdfjsDoc=null, pageNum=1, scale=1.3;
   let annotations = []; // {page, xRatio, yRatio, text, size}
   let undoStack = [];
@@ -3165,14 +3167,16 @@ function toolPDFEditor(){
   function pushUndo(){ undoStack.push(JSON.stringify(annotations)); if(undoStack.length>50) undoStack.shift(); }
   function undo(){ if(undoStack.length===0) return; annotations = JSON.parse(undoStack.pop()); renderList(); renderPage(); }
 
-  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: async (f)=>{
+  async function loadFile(f){
     file=f[0];
     const bytes = await file.arrayBuffer();
     pdfjsDoc = await getPdfDoc(bytes);
     pageNum = 1; annotations = []; undoStack = [];
     buildControls();
     renderPage();
-  }});
+  }
+  buildDropzone(body, {multiple:false, accept:'application/pdf', onFiles: loadFile});
+  if(initialFile) loadFile([initialFile]);
 
   const controls=document.createElement('div'); controls.className='pill-row'; body.appendChild(controls);
   const canvasWrap=document.createElement('div'); canvasWrap.className='canvas-wrap'; body.appendChild(canvasWrap);
@@ -3182,14 +3186,18 @@ function toolPDFEditor(){
   const log=document.createElement('div'); log.className='runlog'; body.appendChild(log);
 
   function buildControls(){
-    controls.innerHTML = `
-      <button class="small-btn" id="prevp">‹ prev</button>
+    controls.innerHTML = singlePageOnly
+      ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem">page 1 of ${pdfjsDoc.numPages} — locked to page 1</span>
+         <button class="small-btn" id="undo-btn">↶ Undo</button>`
+      : `<button class="small-btn" id="prevp">‹ prev</button>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem">page ${pageNum} / ${pdfjsDoc.numPages}</span>
       <button class="small-btn" id="nextp">next ›</button>
       <button class="small-btn" id="undo-btn">↶ Undo</button>
     `;
-    document.getElementById('prevp').onclick = ()=>{ if(pageNum>1){pageNum--; renderPage();} };
-    document.getElementById('nextp').onclick = ()=>{ if(pageNum<pdfjsDoc.numPages){pageNum++; renderPage();} };
+    if(!singlePageOnly){
+      document.getElementById('prevp').onclick = ()=>{ if(pageNum>1){pageNum--; renderPage();} };
+      document.getElementById('nextp').onclick = ()=>{ if(pageNum<pdfjsDoc.numPages){pageNum++; renderPage();} };
+    }
     document.getElementById('undo-btn').onclick = undo;
     addRow.innerHTML = `
       <input type="text" id="anno-text" placeholder="Text to place..." style="flex:1;min-width:160px;">
